@@ -1,3 +1,4 @@
+
 /*
  *  diy_player.ino - Sound player on eMMC with control by sensing
  *  Copyright 2018 Sony Semiconductor Solutions Corporation
@@ -62,11 +63,11 @@ void setup()
 
   /* Transition to player mode */
 
-  theAudio->setPlayerMode(AS_SETPLAYER_OUTPUTDEVICE_SPHP);
+  theAudio->setPlayerMode(AS_SETPLAYER_OUTPUTDEVICE_SPHP,AS_SP_DRV_MODE_4DRIVER);
 
   /* Init player WAV/192kHz/Stereo, WAV decoder file should be placed at eMMC */
 
-  theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_WAV, "/mnt/vfat/BIN", AS_SAMPLINGRATE_192000,AS_CHANNEL_STEREO);
+  theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_WAV, "/mnt/spif/BIN", AS_SAMPLINGRATE_192000,AS_CHANNEL_STEREO);
 
   /* Set volume -24dB */
 
@@ -130,7 +131,7 @@ static int start_play()
 static bool stop_play()
 {
   theAudio->stopPlayer(AudioClass::Player0);
-  sleep(100000);
+  usleep(100000);
   ledOff(LED0);
 
   /* Restart? */
@@ -233,4 +234,3 @@ void loop()
   
   usleep(20000);
 }
-
