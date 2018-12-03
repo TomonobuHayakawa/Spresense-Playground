@@ -44,8 +44,8 @@ void setup()
   puts("initialization Audio Library");
 
   theAudio->setRenderingClockMode(AS_CLKMODE_HIRES);
-  theAudio->setPlayerMode(AS_SETPLAYER_OUTPUTDEVICE_SPHP);
-  theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_WAV, "/mnt/vfat/BIN", AS_SAMPLINGRATE_192000,AS_CHANNEL_STEREO);
+  theAudio->setPlayerMode(AS_SETPLAYER_OUTPUTDEVICE_SPHP,AS_SP_DRV_MODE_4DRIVER);
+  theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_WAV, "/mnt/spif/BIN", AS_SAMPLINGRATE_192000,AS_BITLENGTH_24, AS_CHANNEL_STEREO);
   theAudio->setVolume(-240, 0, 0);
 
 }
@@ -87,7 +87,7 @@ static int start_play()
 static bool stop_play()
 {
   theAudio->stopPlayer(AudioClass::Player0);
-  sleep(100000);
+  usleep(100000);
   ledOff(LED0);
 
   /* Restart? */
@@ -140,7 +140,7 @@ void loop()
       if(stop_play()){
         start_play();
       }else{
-        state = 0;
+       state = 0;
       }
     }
   }
