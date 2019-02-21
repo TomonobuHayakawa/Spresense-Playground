@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <SD.h>
+#include <eMMC.h>
 
 #include <Audio.h>
 
@@ -31,10 +31,10 @@ static int start_play()
 {
   static int track_no = 1;
   if(track_no == 1){
-    theFile = SD.open("track1.wav");
+    theFile = eMMC.open("track0.wav");
     track_no = 0;
   }else {
-    theFile = SD.open("track0.wav");
+    theFile = eMMC.open("track1.wav");
     track_no = 1;    
   }
 
@@ -63,7 +63,7 @@ static int start_play()
 void setup()
 {
 
-  SD.begin();
+  eMMC.begin();
 
   // start audio system
   theAudio = AudioClass::getInstance();
@@ -73,7 +73,7 @@ void setup()
 
   theAudio->setRenderingClockMode(AS_CLKMODE_HIRES);
   theAudio->setPlayerMode(AS_SETPLAYER_OUTPUTDEVICE_SPHP,AS_SP_DRV_MODE_4DRIVER);
-  theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_WAV, "/mnt/sd0/BIN", AS_SAMPLINGRATE_192000,AS_BITLENGTH_24,AS_CHANNEL_STEREO);
+  theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_WAV, "/mnt/vfat/BIN", AS_SAMPLINGRATE_192000,AS_BITLENGTH_24,AS_CHANNEL_STEREO);
   theAudio->setVolume(-10, 0, 0);
 
   start_play();
@@ -94,7 +94,7 @@ static bool stop_play()
 /*-------------------------------------------------------------*/
 void loop()
 {
-  puts("loop!!");
+//  puts("loop!!");
 
   static int state = 0;
 

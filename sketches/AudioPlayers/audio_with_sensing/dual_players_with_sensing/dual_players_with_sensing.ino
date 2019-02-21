@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <SD.h>
 #include <Audio.h>
+#include <SD.h>
 
 #include <Wire.h>
 #include <KX122.h>
@@ -29,8 +29,8 @@ AudioClass *theAudio;
 
 File mainFile, subFile;
 
-#define MAIN_FILE "sound0.mp3"
-#define SUB_FILE  "sound1.mp3"
+#define MAIN_FILE "ayaka.mp3"
+#define SUB_FILE  "chicago.mp3"
 
 /**
  *  @brief Open play file and start playing
@@ -42,21 +42,35 @@ static void start_players()
 {
   /* Open play files */
 
-  mainFile = SD.open(MAIN_FILE);
-  subFile =  SD.open(SUB_FILE);
+//  mainFile = SD.open(MAIN_FILE);
+//  subFile =  SD.open(SUB_FILE);
+ mainFile = SD.open("ayaka.mp3");
+ subFile =  SD.open("chicago.mp3");
 
   printf("Open! %d\n", mainFile);
   printf("Open! %d\n", subFile);
 
   /* Supply audio data in some degree before start playing */
 
-  int err = theAudio->writeFrames(AudioClass::Player0, mainFile);
-  err = theAudio->writeFrames(AudioClass::Player1, subFile);
-
-  if (err != 0)
+ /* Send first frames to be decoded */
+  err_t err = theAudio->writeFrames(AudioClass::Player0,mainFile);
+  if (err)
     {
-      printf("File Read Error! =%d\n", err);
+      printf("Main player: File Read Error! =%d\n",err);
+      mainFile.close();
+      exit(1);
     }
+
+
+/*  err = theAudio->writeFrames(AudioClass::Player1,subFile);
+  if (err)
+    {
+      printf("Sub player: File Read Error! =%d\n",err);
+      subFile.close();
+      exit(1);
+    }*/
+
+//while(1);
 
   puts("Play!");
 
@@ -67,7 +81,7 @@ static void start_players()
   /* Start main/sub player */
 
   theAudio->startPlayer(AudioClass::Player0);
-  theAudio->startPlayer(AudioClass::Player1);
+//  theAudio->startPlayer(AudioClass::Player1);
 
   puts("start!");  
 }
@@ -83,7 +97,10 @@ static void start_players()
 void setup()
 {
 
-  SD.begin();
+//  SD.begin();
+  while (!SD.begin()) {
+    ; /* wait until SD card is mounted. */
+  }
 
   /* start Sensing. */
 
@@ -98,7 +115,7 @@ void setup()
   theAudio->begin();
 
   /* Transition to Player mode */
-
+  theAudio->setRenderingClockMode(AS_CLKMODE_NORMAL);
   theAudio->setPlayerMode(AS_SETPLAYER_OUTPUTDEVICE_SPHP);
 
   /*
@@ -106,14 +123,31 @@ void setup()
    * Search for MP3 decoder in "/mnt/sd0/BIN" directory
    */
 
-  theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_MP3, AS_SAMPLINGRATE_48000, AS_CHANNEL_STEREO);
+//  err_t err = theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_MP3, AS_SAMPLINGRATE_48000, AS_CHANNEL_STEREO);
+  err_t err = theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_MP3, "/mnt/sd0/BIN", AS_SAMPLINGRATE_AUTO, AS_CHANNEL_STEREO);
+
+  /* Verify player initialize */
+  if (err != AUDIOLIB_ECODE_OK)
+  {
+    printf("Player0 initialize error\n");
+    exit(1);
+  }
 
   /*
    * Set sub player to decode stereo mp3. Stream sample rate is set to 48000kHz
    * Search for MP3 decoder in "/mnt/sd0/BIN" directory
    */
 
-  theAudio->initPlayer(AudioClass::Player1, AS_CODECTYPE_MP3, AS_SAMPLINGRATE_48000, AS_CHANNEL_STEREO);
+//  err = theAudio->initPlayer(AudioClass::Player1, AS_CODECTYPE_MP3, AS_SAMPLINGRATE_48000, AS_CHANNEL_STEREO);
+  err = theAudio->initPlayer(AudioClass::Player1, AS_CODECTYPE_MP3, "/mnt/sd0/BIN", AS_SAMPLINGRATE_AUTO, AS_CHANNEL_STEREO);
+
+  /* Verify player initialize */
+  if (err != AUDIOLIB_ECODE_OK)
+  {
+    printf("Player1 initialize error\n");
+    exit(1);
+  }
+
 
   /* Start play */
 
@@ -134,9 +168,11 @@ void loop()
 
   /* for examle. Chack Bottom... */
 
+//int err = 0 ;
   int err = theAudio->writeFrames(AudioClass::Player0, mainFile);
-  theAudio->writeFrames(AudioClass::Player1, subFile);
+//  theAudio->writeFrames(AudioClass::Player1, subFile);
 
+  puts("loop2!!");
  /* Stop from 1st player. */
 
   if (err != 0)
@@ -172,4 +208,3 @@ void loop()
 
   theAudio->setVolume(-80, main_db, sub_db);
 }
-
