@@ -111,6 +111,7 @@ void send_sigfox(int16_t i0,int16_t i1,int16_t i2,int16_t i3,int16_t i4,int16_t 
   puts("send");
   Serial2.write("AT$SF=");
   sprintf(val,"%04x%04x%04x%04x%04x%04x", i0,i1,i2,i3,i4,i5);
+  output2 = String(val);
   Serial.println(output2);
   Serial2.println(output2);
 
