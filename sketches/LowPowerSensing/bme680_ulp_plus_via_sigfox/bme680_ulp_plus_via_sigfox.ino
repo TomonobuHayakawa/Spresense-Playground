@@ -90,9 +90,29 @@ void setup(void)
   checkIaqSensorStatus();
 
   // Print the header
-//  output = "Timestamp [ms], raw temperature [°C], pressure [hPa], raw relative humidity [%], gas [Ohm], IAQ, IAQ accuracy, temperature [°C], relative humidity [%]";
-  output = "Timestamp [ms], pressure [hPa], IAQ, IAQ accuracy, temperature [°C], relative humidity [%]";
+
+//  output = "Timestamp [ms], raw temperature [��C], pressure [hPa], raw relative humidity [%], gas [Ohm], IAQ, IAQ accuracy, temperature [��C], relative humidity [%]";
+  output = "Timestamp [ms], pressure [hPa], IAQ, IAQ accuracy, temperature [��C], relative humidity [%]";
   Serial.println(output);
+}
+
+void send_sigfox(int16_t i0,int16_t i1,int16_t i2,int16_t i3,int16_t i4,int16_t i5)
+{
+  String output2;
+  char val[24];
+  Serial2.write("0x00");
+  sleep(1);
+
+  puts("send");
+  Serial2.write("AT$SF=");
+  sprintf(val,"%04x%04x%04x%04x%04x%04x", i0,i1,i2,i3,i4,i5);
+  Serial.println(output2);
+  Serial2.println(output2);
+
+  sleep(10);
+  result();
+  puts("end");
+  
 }
 
 void send_sigfox(float f0,float f1,float f2)
@@ -126,6 +146,8 @@ void send_sigfox(float f0,float f1,float f2)
 void loop(void)
 {
 
+  int16_t mvolt;
+
   unsigned long time_trigger = millis();
   if (iaqSensor.run()) { // If new data is available
 
@@ -143,12 +165,17 @@ void loop(void)
 /*    send_sigfox(iaqSensor.pressure);
     send_sigfox(iaqSensor.iaqEstimate);
     send_sigfox(iaqSensor.temperature);
-    send_sigfox(iaqSensor.humidity);*/
-//    send_sigfox(iaqSensor.pressure);
-//    send_sigfox(iaqSensor.temperature,iaqSensor.humidity);
-    send_sigfox(iaqSensor.temperature,iaqSensor.humidity,iaqSensor.iaqEstimate);
+    send_sigfox(iaqSensor.humidity);
+    send_sigfox(iaqSensor.pressure);*/
+//    send_sigfox(iaqSensor.temperature,iaqSensor.humidity,iaqSensor.iaqEstimate);
 
-
+    send_sigfox((int16_t)(iaqSensor.temperature*100),
+                (int16_t)(iaqSensor.humidity*100),
+                (int16_t)(iaqSensor.pressure/100),
+                (int16_t)(iaqSensor.iaqEstimate),
+                (int16_t)(iaqSensor.iaqAccuracy),
+                mvolt);
+                
     updateState();
   } else {
     checkIaqSensorStatus();
