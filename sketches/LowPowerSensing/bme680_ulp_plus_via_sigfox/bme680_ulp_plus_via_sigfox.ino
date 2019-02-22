@@ -90,8 +90,9 @@ void setup(void)
   checkIaqSensorStatus();
 
   // Print the header
-//  output = "Timestamp [ms], raw temperature [¡ëC], pressure [hPa], raw relative humidity [%], gas [Ohm], IAQ, IAQ accuracy, temperature [¡ëC], relative humidity [%]";
-  output = "Timestamp [ms], pressure [hPa], IAQ, IAQ accuracy, temperature [¡ëC], relative humidity [%]";
+
+//  output = "Timestamp [ms], raw temperature [ï¿½ï¿½C], pressure [hPa], raw relative humidity [%], gas [Ohm], IAQ, IAQ accuracy, temperature [ï¿½ï¿½C], relative humidity [%]";
+  output = "Timestamp [ms], pressure [hPa], IAQ, IAQ accuracy, temperature [ï¿½ï¿½C], relative humidity [%]";
   Serial.println(output);
 }
 
@@ -144,6 +145,7 @@ void send_sigfox(float f0,float f1,float f2)
 // Function that is looped forever
 void loop(void)
 {
+
   int16_t mvolt;
 
   unsigned long time_trigger = millis();
