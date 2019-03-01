@@ -1,0 +1,40 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config TEST_AUDIO_PLAYER
+    bool "Audio player test"
+    default n
+
+if TEST_AUDIO_PLAYER
+
+config TEST_AUDIO_PLAYER_APP_NAME
+	string "Application name"
+	default "player"
+	
+config TEST_AUDIO_PLAYER_PROGNAME
+	string "Program name"
+	default "audio_player"
+
+config TEST_AUDIO_PLAYER_PRIORITY
+	int "Audio player task priority"
+	default 100
+
+config TEST_AUDIO_PLAYER_STACKSIZE
+	int "Audio player stack size"
+	default 2048
+
+config TEST_AUDIO_PLAYER_FILE_MOUNTPT
+	string "play file mount path"
+	default "/mnt/vfat/AUDIO"
+	---help---
+		The path to the play file mount point. Default: /mnt/vfat/AUDIO
+
+config TEST_AUDIO_PLAYER_USE_SUBPLAYER
+    bool "Use subplayer" 
+    default y
+    ---help---
+        Use subplayer or not
+
+endif
