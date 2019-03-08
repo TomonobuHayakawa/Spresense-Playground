@@ -1,0 +1,54 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY
+	bool "Audio player legacy example"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio player example
+
+if EXAMPLES_AUDIO_PLAYER_LEGACY
+
+choice
+	prompt "Output device selection"
+	default EXAMPLES_AUDIO_PLAYER_LEGACY_OUTPUT_DEV_SPHP
+	---help---
+		Set the device type of output to use
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY_OUTPUT_DEV_SPHP
+	bool "Speaker/Headphone output"
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY_OUTPUT_DEV_I2S
+	bool "I2S output"
+endchoice
+
+choice
+	prompt "player mode selection"
+	default EXAMPLES_AUDIO_PLAYER_LEGACY_MODE_NORMAL
+	---help---
+		Set the operation mode of player capability.
+		To play include Hi-Res file, select Hi-Res mode.
+		If it is not Hi-Res file, select Normal mode.
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY_MODE_NORMAL
+	bool "Normal mode"
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY_MODE_HIRES
+	bool "Hi-Res mode"
+endchoice
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY_PROGNAME
+	string "Program name"
+	default "audio_player_legacy"
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY_PRIORITY
+	int "Audio player task priority"
+	default 150
+
+config EXAMPLES_AUDIO_PLAYER_LEGACY_STACKSIZE
+	int "Audio player stack size"
+	default 2048
+endif
