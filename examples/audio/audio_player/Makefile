@@ -1,7 +1,7 @@
 ############################################################################
-# test/audio_player/Makefile
+# audio_player/Makefile
 #
-#   Copyright (C) 2017 Sony Corporation. All rights reserved.
+#   Copyright (C) 2019 Sony Corporation. All rights reserved.
 #   Author: Tomonobu Hayakawa<Tomonobu.Hayakawa@sony.com>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,47 +33,36 @@
 #
 ############################################################################
 
+-include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 include $(APPDIR)/Make.defs
 
 # Audio application info
 
-CONFIG_TEST_AUDIO_PLAYER_APP_NAME ?= player
 CONFIG_TEST_AUDIO_PLAYER_PRIORITY ?= SCHED_PRIORITY_DEFAULT
 CONFIG_TEST_AUDIO_PLAYER_STACKSIZE ?= 2096
 
-APPNAME = $(CONFIG_TEST_AUDIO_PLAYER_APP_NAME)
+APPNAME = player
 PRIORITY = $(CONFIG_TEST_AUDIO_PLAYER_PRIORITY)
 STACKSIZE = $(CONFIG_TEST_AUDIO_PLAYER_STACKSIZE)
 
-# Audio Example paths
-
-AUDIO_TOPDIR  = $(SDKDIR)/modules/audio
-AUDIO_INC_DIR = $(AUDIO_TOPDIR)/include
-APPSDIR       = $(SDKDIR)/system
-
 # Audio Example
 
-ASRCS =
-CSRCS =
-CXXSRCS =
 MAINSRC = audio_player_main.cxx
 
+# Audio Example paths
+
+AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
+
+# Audio Example flags
+
 ifeq ($(WINTOOL),y)
-CXXFLAGS += -I"${shell cygpath -w $(APPSDIR)/include}"
-CXXFLAGS += -I"${shell cygpath -w $(SDKDIR)/modules/include}"
-CXXFLAGS += -I"${shell cygpath -w $(AUDIO_TOPDIR)}"
-CXXFLAGS += -I"${shell cygpath -w $(AUDIO_INC_DIR)}"
-
-CXXFLAGS += -I"${shell cygpath -w ./include}"
+CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
 else
-CXXFLAGS += -I$(APPSDIR)/include
-CXXFLAGS += -I$(SDKDIR)/modules/include
-CXXFLAGS += -I$(AUDIO_TOPDIR)
-CXXFLAGS += -I$(AUDIO_INC_DIR)
-
-CXXFLAGS += -I./include
+CXXFLAGS += -I $(AUDIODIR)
 endif
+
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE

@@ -2,7 +2,7 @@
 # test/audio_player/Make.defs
 # Adds selected applications to apps/ build
 #
-#   Copyright (C) 2017 Sony Corporation. All rights reserved.
+#   Copyright (C) 2019 Sony Corporation. All rights reserved.
 #   Author: Tomonobu Hayakawa<Tomonobu.Hayakawa@sony.com>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_TEST_AUDIO_PLAYER),y)
+ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER),y)
 CONFIGURED_APPS += audio_player
-CLEANDIRS += audio_player
 endif

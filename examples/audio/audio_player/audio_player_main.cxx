@@ -1,5 +1,5 @@
 /****************************************************************************
- * test/audio_player/audio_player_main.cxx
+ * audio_player/audio_player_main.cxx
  *
  *   Copyright (C) 2017 Sony Corporation. All rights reserved.
  *   Author: Tomonobu Hayakawa<Tomonobu.Hayakawa@sony.com>
@@ -51,24 +51,21 @@
 #include <sys/wait.h>
 #include <arch/board/board.h>
 
+#include <arch/chip/cxd56_audio.h>
 #include <arch/chip/pm.h>
 #include <sys/stat.h>
 
-#include "memutils/os_utils/chateau_osal.h"
-#include "audio/audio_high_level_api.h"
-#include "memutils/simple_fifo/CMN_SimpleFifo.h"
-#include "memutils/memory_manager/MemHandle.h"
-#include "memutils/message/Message.h"
-#include "msgq_id.h"
-#include "mem_layout.h"
-#include "memory_layout.h"
-
-#include "playlist/playlist.h"
-#include <arch/chip/cxd56_audio.h>
-
-#include "fixed_fence.h"
-#include "msgq_pool.h"
-#include "pool_layout.h"
+#include <audio/audio_high_level_api.h>
+#include <audio/utilities/playlist.h>
+#include <memutils/simple_fifo/CMN_SimpleFifo.h>
+#include <memutils/memory_manager/MemHandle.h>
+#include <memutils/message/Message.h>
+#include "include/msgq_id.h"
+#include "include/mem_layout.h"
+#include "include/memory_layout.h"
+#include "include/msgq_pool.h"
+#include "include/pool_layout.h"
+#include "include/fixed_fence.h"
 
 #if !defined(CONFIG_SDK_AUDIO) || !defined(CONFIG_AUDIOUTILS_PLAYER)
 #error "Configs [SDK audio] and [Audio player] are required."
@@ -97,10 +94,8 @@
 #endif
 #define SIMPLE_FIFO_FRAME_NUM   (9)
 #define SIMPLE_FIFO_BUF_SIZE    (WRITE_SIMPLE_FIFO_SIZE * SIMPLE_FIFO_FRAME_NUM)
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 #define SIMPLE_FIFO_FRAME_SUB_NUM   (9)
 #define SIMPLE_FIFO_BUF_SUB_SIZE    (WRITE_SIMPLE_FIFO_SIZE * SIMPLE_FIFO_FRAME_SUB_NUM)
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
 #define AUDIO_CODEC_DSP_VOL_STEP  5
 
@@ -121,7 +116,6 @@ AsPlayerInputDeviceHdlrForRAM m_cur_input_device_handler;
 static pid_t s_player_daemon_pid = -1;
 int32_t m_main_file_size = 0;
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 uint32_t m_simple_fifo_buf_sub[SIMPLE_FIFO_BUF_SUB_SIZE/sizeof(uint32_t)];
 uint8_t m_ram_buf_sub[WRITE_SIMPLE_FIFO_SIZE];
 CMN_SimpleFifoHandle m_simple_fifo_handle_sub;
@@ -129,7 +123,6 @@ AsPlayerInputDeviceHdlrForRAM m_cur_input_device_handler_sub;
 static pid_t s_sub_daemon_pid = -1;
 bool sub_task_suspend = false;
 int32_t m_sub_file_size = 0;
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
 Playlist* p_playlist_ins;
@@ -140,9 +133,7 @@ char s_track_info[128];
 typedef struct
 {
   uint32_t  state;
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   uint32_t  subplayer_state;
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
   uint8_t   output_device;
   int32_t   audio_codec_dsp_vol;
   DIR       *dirp;
@@ -183,16 +174,14 @@ static int app_init_i2s_param(void);
 static int app_set_volume(int *audio_codec_dsp_vol, int master_db);
 static int app_set_incVol(int step_cnt, int *audio_codec_dsp_vol);
 static int app_set_decVol(int step_cnt, int *audio_codec_dsp_vol);
-static int app_set_player_status(uint8_t output_device);
+static int app_set_player_status(void);
 static int app_init_player(uint8_t codec_type, uint32_t sampling_rate, uint8_t channel_number, uint8_t bit_length);
 static int app_play_player(void);
 static int app_stop_player(int fd, int mode);
 static int app_pause_player(void);
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 static int app_init_subplayer(void);
 static int app_play_subplayer(void);
 static int app_stop_subplayer(void);
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 static int app_adjust_clkrecovery(int dir, uint32_t times);
 static int app_set_lr_gain(uint16_t l_gain, uint16_t r_gain);
 static int app_init_simple_fifo(CMN_SimpleFifoHandle* handle, uint32_t* fifo_buf, int32_t fifo_size, AsPlayerInputDeviceHdlrForRAM* dev_handle);
@@ -273,316 +262,387 @@ static void app_attention_callback(const ErrorAttentionParam *attparam)
 /*--------------------------------------------------------------------------*/
 static int app_power_on(void)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_POWERON;
-    command.header.command_code  = AUDCMD_POWERON;
-    command.header.sub_code      = 0x00;
-    command.power_on_param.enable_sound_effect = AS_DISABLE_SOUNDEFFECT;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_POWERON;
+  command.header.command_code  = AUDCMD_POWERON;
+  command.header.sub_code      = 0x00;
+  command.power_on_param.enable_sound_effect = AS_DISABLE_SOUNDEFFECT;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_STATUSCHANGED) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_STATUSCHANGED)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_power_off(void)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_SET_POWEROFF_STATUS;
-    command.header.command_code  = AUDCMD_SETPOWEROFFSTATUS;
-    command.header.sub_code      = 0x00;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SET_POWEROFF_STATUS;
+  command.header.command_code  = AUDCMD_SETPOWEROFFSTATUS;
+  command.header.sub_code      = 0x00;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_STATUSCHANGED) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_STATUSCHANGED)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_set_ready_status(void)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_SET_READY_STATUS;
-    command.header.command_code  = AUDCMD_SETREADYSTATUS;
-    command.header.sub_code      = 0x00;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SET_READY_STATUS;
+  command.header.command_code  = AUDCMD_SETREADYSTATUS;
+  command.header.sub_code      = 0x00;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_STATUSCHANGED) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_STATUSCHANGED)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_init_output_select(uint8_t output_device)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_INITOUTPUTSELECT;
-    command.header.command_code  = AUDCMD_INITOUTPUTSELECT;
-    command.header.sub_code      = 0;
-    if (output_device == AS_SETPLAYER_OUTPUTDEVICE_SPHP) {
-      command.init_output_select_param.output_device_sel = AS_OUT_SP;
-    }
-    else {
-      command.init_output_select_param.output_device_sel = AS_OUT_I2S;
-    }
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INITOUTPUTSELECT;
+  command.header.command_code  = AUDCMD_INITOUTPUTSELECT;
+  command.header.sub_code      = 0;
+  command.init_output_select_param.output_device_sel =
+    (output_device == AS_SETPLAYER_OUTPUTDEVICE_SPHP)
+      ? AS_OUT_SP : AS_OUT_I2S;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_INITOUTPUTSELECTCMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_INITOUTPUTSELECTCMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_init_i2s_param(void)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_INITI2SPARAM;
-    command.header.command_code  = AUDCMD_INITI2SPARAM;
-    command.header.sub_code      = 0;
-    command.init_i2s_param.i2s_id = AS_I2S1;
-    command.init_i2s_param.rate = 48000;
-    command.init_i2s_param.bypass_mode_en = AS_I2S_BYPASS_MODE_DISABLE;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INITI2SPARAM;
+  command.header.command_code  = AUDCMD_INITI2SPARAM;
+  command.header.sub_code      = 0;
+  command.init_i2s_param.i2s_id = AS_I2S1;
+  command.init_i2s_param.rate = 48000;
+  command.init_i2s_param.bypass_mode_en = AS_I2S_BYPASS_MODE_DISABLE;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_INITI2SPARAMCMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_INITI2SPARAMCMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_set_volume(int *audio_codec_dsp_vol, int master_db)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_SETVOLUME;
-    command.header.command_code  = AUDCMD_SETVOLUME;
-    command.header.sub_code      = 0;
-    command.set_volume_param.input1_db = 0;
-    command.set_volume_param.input2_db = 0;
-    command.set_volume_param.master_db = master_db;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SETVOLUME;
+  command.header.command_code  = AUDCMD_SETVOLUME;
+  command.header.sub_code      = 0;
+  command.set_volume_param.input1_db = 0;
+  command.set_volume_param.input2_db = 0;
+  command.set_volume_param.master_db = master_db;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_SETVOLUMECMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_SETVOLUMECMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    *audio_codec_dsp_vol = AS_AC_CODEC_VOL_DAC;
-    return 0;
+
+  *audio_codec_dsp_vol = AS_AC_CODEC_VOL_DAC;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_set_incVol(int step_cnt, int *audio_codec_dsp_vol)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_SETVOLUME;
-    command.header.command_code  = AUDCMD_SETVOLUME;
-    command.header.sub_code      = 0;
-    if( AS_VOLUME_MAX >= *audio_codec_dsp_vol + (AUDIO_CODEC_DSP_VOL_STEP * step_cnt) ){
-        *audio_codec_dsp_vol += (AUDIO_CODEC_DSP_VOL_STEP * step_cnt);
-        command.set_volume_param.master_db = *audio_codec_dsp_vol;
-    } else {
-        command.set_volume_param.master_db = AS_VOLUME_HOLD;
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SETVOLUME;
+  command.header.command_code  = AUDCMD_SETVOLUME;
+  command.header.sub_code      = 0;
+  if (AS_VOLUME_MAX >= *audio_codec_dsp_vol + (AUDIO_CODEC_DSP_VOL_STEP * step_cnt))
+    {
+      *audio_codec_dsp_vol += (AUDIO_CODEC_DSP_VOL_STEP * step_cnt);
+      command.set_volume_param.master_db = *audio_codec_dsp_vol;
     }
-    command.set_volume_param.input1_db = 0;
-    command.set_volume_param.input2_db = AS_VOLUME_HOLD;
-    AS_SendAudioCommand(&command);
+  else
+    {
+      command.set_volume_param.master_db = AS_VOLUME_HOLD;
+    }
+  command.set_volume_param.input1_db = 0;
+  command.set_volume_param.input2_db = AS_VOLUME_HOLD;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_SETVOLUMECMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_SETVOLUMECMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_set_decVol(int step_cnt, int32_t *audio_codec_dsp_vol)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_SETVOLUME;
-    command.header.command_code  = AUDCMD_SETVOLUME;
-    command.header.sub_code      = 0;
-    if( AS_VOLUME_MIN <= *audio_codec_dsp_vol - (AUDIO_CODEC_DSP_VOL_STEP * step_cnt) ){
-        *audio_codec_dsp_vol -= (AUDIO_CODEC_DSP_VOL_STEP * step_cnt);
-        command.set_volume_param.master_db = *audio_codec_dsp_vol;
-    } else {
-        command.set_volume_param.master_db = AS_VOLUME_HOLD;
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SETVOLUME;
+  command.header.command_code  = AUDCMD_SETVOLUME;
+  command.header.sub_code      = 0;
+  if (AS_VOLUME_MIN <= *audio_codec_dsp_vol - (AUDIO_CODEC_DSP_VOL_STEP * step_cnt))
+    {
+      *audio_codec_dsp_vol -= (AUDIO_CODEC_DSP_VOL_STEP * step_cnt);
+      command.set_volume_param.master_db = *audio_codec_dsp_vol;
     }
-    command.set_volume_param.input1_db = 0;
-    command.set_volume_param.input2_db = AS_VOLUME_HOLD;
-    AS_SendAudioCommand(&command);
+  else
+    {
+      command.set_volume_param.master_db = AS_VOLUME_HOLD;
+    }
+  command.set_volume_param.input1_db = 0;
+  command.set_volume_param.input2_db = AS_VOLUME_HOLD;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_SETVOLUMECMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_SETVOLUMECMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
-static int app_set_player_status(uint8_t output_device)
+static int app_set_player_status(void)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_SET_PLAYER_STATUS;
-    command.header.command_code = AUDCMD_SETPLAYERSTATUS;
-    command.header.sub_code = 0x00;
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
-    command.set_player_sts_param.active_player  = AS_ACTPLAYER_BOTH;
-    command.set_player_sts_param.player0.input_device   = AS_SETPLAYER_INPUTDEVICE_RAM;
-    command.set_player_sts_param.player0.ram_handler    = &m_cur_input_device_handler;
-    command.set_player_sts_param.player0.output_device  = output_device;
-    command.set_player_sts_param.player1.input_device   = AS_SETPLAYER_INPUTDEVICE_RAM;
-    command.set_player_sts_param.player1.ram_handler    = &m_cur_input_device_handler_sub;
-    command.set_player_sts_param.player1.output_device  = output_device;
-#else
-    command.set_player_sts_param.active_player  = AS_ACTPLAYER_MAIN;
-    command.set_player_sts_param.player0.input_device   = AS_SETPLAYER_INPUTDEVICE_RAM;
-    command.set_player_sts_param.player0.ram_handler    = &m_cur_input_device_handler;
-    command.set_player_sts_param.player0.output_device  = output_device;
-    command.set_player_sts_param.player1.input_device   = 0x00;
-    command.set_player_sts_param.player1.ram_handler    = NULL;
-    command.set_player_sts_param.player1.output_device  = 0x00;
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SET_PLAYER_STATUS;
+  command.header.command_code = AUDCMD_SETPLAYERSTATUS;
+  command.header.sub_code = 0x00;
+  command.set_player_sts_param.active_player  = AS_ACTPLAYER_BOTH;
+  command.set_player_sts_param.player0.input_device   = AS_SETPLAYER_INPUTDEVICE_RAM;
+  command.set_player_sts_param.player0.ram_handler    = &m_cur_input_device_handler;
+  command.set_player_sts_param.player0.output_device  = 0;/*don't care*/
+  command.set_player_sts_param.player1.input_device   = AS_SETPLAYER_INPUTDEVICE_RAM;
+  command.set_player_sts_param.player1.ram_handler    = &m_cur_input_device_handler_sub;
+  command.set_player_sts_param.player1.output_device  = 0;/*don't care*/
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_STATUSCHANGED) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_STATUSCHANGED)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_init_player(uint8_t codec_type, uint32_t sampling_rate, uint8_t channel_number, uint8_t bit_length)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_INIT_PLAYER;
-    command.header.command_code = AUDCMD_INITPLAYER;
-    command.header.sub_code = 0x00;
-    command.player.player_id                = AS_PLAYER_ID_0;
-    command.player.init_param.codec_type    = codec_type;
-    command.player.init_param.bit_length    = bit_length;
-    command.player.init_param.channel_number= channel_number;
-    command.player.init_param.sampling_rate = sampling_rate;
-    snprintf(command.player.init_param.dsp_path, AS_AUDIO_DSP_PATH_LEN, "%s", "/mnt/sd0/BIN");
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INIT_PLAYER;
+  command.header.command_code = AUDCMD_INITPLAYER;
+  command.header.sub_code = 0x00;
+  command.player.player_id                = AS_PLAYER_ID_0;
+  command.player.init_param.codec_type    = codec_type;
+  command.player.init_param.bit_length    = bit_length;
+  command.player.init_param.channel_number= channel_number;
+  command.player.init_param.sampling_rate = sampling_rate;
+  snprintf(command.player.init_param.dsp_path, AS_AUDIO_DSP_PATH_LEN, "%s", "/mnt/sd0/BIN");
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_INITPLAYERCMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_INITPLAYERCMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_play_player(void)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_PLAY_PLAYER;
-    command.header.command_code = AUDCMD_PLAYPLAYER;
-    command.header.sub_code = 0x00;
-    command.player.player_id = AS_PLAYER_ID_0;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_PLAY_PLAYER;
+  command.header.command_code = AUDCMD_PLAYPLAYER;
+  command.header.sub_code = 0x00;
+  command.player.player_id = AS_PLAYER_ID_0;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_PLAYCMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x) Error subcode(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code, result.error_response_param.error_sub_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_PLAYCMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x) Error subcode(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code,
+             result.error_response_param.error_sub_code);
+
+      return 1;
     }
-    return 0;
+
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_stop_player(int fd, int mode)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_STOP_PLAYER;
-    command.header.command_code = AUDCMD_STOPPLAYER;
-    command.header.sub_code = 0x00;
-    command.player.player_id            = AS_PLAYER_ID_0;
-    command.player.stop_param.stop_mode = mode;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_STOP_PLAYER;
+  command.header.command_code = AUDCMD_STOPPLAYER;
+  command.header.sub_code = 0x00;
+  command.player.player_id            = AS_PLAYER_ID_0;
+  command.player.stop_param.stop_mode = mode;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_STOPCMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_STOPCMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
 
-	if (mode == AS_STOPPLAYER_NORMAL) {
-	    CMN_SimpleFifoClear(&m_simple_fifo_handle);
-    	close(fd);
-	}
+  if (mode == AS_STOPPLAYER_NORMAL)
+    {
+      CMN_SimpleFifoClear(&m_simple_fifo_handle);
+      close(fd);
+    }
 
-    return 0;
+  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 static int app_pause_player(void)
 {
-    AudioCommand command;
-    command.header.packet_length = LENGTH_STOP_PLAYER;
-    command.header.command_code = AUDCMD_STOPPLAYER;
-    command.header.sub_code = 0x00;
-    command.player.player_id            = AS_PLAYER_ID_0;
-    command.player.stop_param.stop_mode = AS_STOPPLAYER_NORMAL;
-    AS_SendAudioCommand(&command);
+  AudioCommand command;
+  command.header.packet_length = LENGTH_STOP_PLAYER;
+  command.header.command_code = AUDCMD_STOPPLAYER;
+  command.header.sub_code = 0x00;
+  command.player.player_id            = AS_PLAYER_ID_0;
+  command.player.stop_param.stop_mode = AS_STOPPLAYER_NORMAL;
+  AS_SendAudioCommand(&command);
 
-    AudioResult result;
-    AS_ReceiveAudioResult(&result);
-    if (result.header.result_code != AUDRLT_STOPCMPLT) {
-        printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
-                command.header.command_code, result.header.result_code, result.error_response_param.module_id, result.error_response_param.error_code);
-        return 1;
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  if (result.header.result_code != AUDRLT_STOPCMPLT)
+    {
+      printf("ERROR: Command (0x%x) fails. Result code(0x%x) Module id(0x%x) Error code(0x%x)\n",
+             command.header.command_code,
+             result.header.result_code,
+             result.error_response_param.module_id,
+             result.error_response_param.error_code);
+
+      return 1;
     }
 
-    return 0;
+  return 0;
 }
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 /*--------------------------------------------------------------------------*/
 static int app_init_subplayer(void)
 {
@@ -594,8 +654,8 @@ static int app_init_subplayer(void)
   command.player.init_param.codec_type    = AS_CODECTYPE_MP3;
   command.player.init_param.bit_length    = AS_BITLENGTH_16;
   command.player.init_param.channel_number= AS_CHANNEL_STEREO;
-  command.player.init_param.sampling_rate = AS_SAMPLINGRATE_44100;
-  snprintf(command.player.init_param.dsp_path, AS_AUDIO_DSP_PATH_LEN, "%s", "/mnt/spif/BIN");
+  command.player.init_param.sampling_rate = AS_SAMPLINGRATE_48000;
+  snprintf(command.player.init_param.dsp_path, AS_AUDIO_DSP_PATH_LEN, "%s", "/mnt/sd0/BIN");
   AS_SendAudioCommand(&command);
 
   AudioResult result;
@@ -654,7 +714,6 @@ static int app_stop_subplayer(void)
 
   return 0;
 }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
 /*--------------------------------------------------------------------------*/
 static int app_adjust_clkrecovery(int dir, uint32_t times)
@@ -957,10 +1016,8 @@ typedef enum
   PauseEvent,
   ReleaseEvent,
   RenderDoneEvent,
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   SubStartEvent,
   SubStopEvent,
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
   IncVolEvent,
   DecVolEvent,
   ClkRcvEvent,
@@ -1013,10 +1070,8 @@ static int audioPlayer_play(char* parg, mqd_t mqd, mqd_t mqd_sub);
 static int audioPlayer_stop(char* parg, mqd_t mqd, mqd_t mqd_sub);
 static int audioPlayer_pause(char* parg, mqd_t mqd, mqd_t mqd_sub);
 static int audioPlayer_release(char* parg, mqd_t mqd, mqd_t mqd_sub);
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 static int audioPlayer_subplay(char* parg, mqd_t mqd, mqd_t mqd_sub);
 static int audioPlayer_substop(char* parg, mqd_t mqd, mqd_t mqd_sub);
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 static int audioPlayer_incVol(char* parg, mqd_t mqd, mqd_t mqd_sub);
 static int audioPlayer_decVol(char* parg, mqd_t mqd, mqd_t mqd_sub);
 static int audioPlayer_clkrcv(char* parg, mqd_t mqd, mqd_t mqd_sub);
@@ -1031,19 +1086,17 @@ static PlayerCmd player_cmds[] =
 {
     { "h",                  "",                 audioPlayer_cmdHelp,        "Display help for commands. ex)player> h" },
     { "help",               "",                 audioPlayer_cmdHelp,        "Display help for commands. ex)player> help" },
-    { "outDevice",          "device",           audioPlayer_outDevice,      "Used output device.        ex)player> outDevice SPHP\n                               prarameter: device[SPHP or I2S]\n                                caution) First run required after starting player application" },
+    { "outDevice",          "device",           audioPlayer_outDevice,      "Set output device.         ex)player> outDevice SPHP\n                               prarameter: device[SPHP or I2S]\n                                caution) First run required after starting player application" },
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
-    { "play",               "",                 audioPlayer_play,           "Start to play.             ex)player> play" },
+    { "play",               "",                 audioPlayer_play,           "Start player.              ex)player> play" },
 #else
-    { "play",               "track info",       audioPlayer_play,           "Start to play.             ex)player> play music.mp3,2,16,48000,mp3\n                               prarameter: track info[filename,ch num,bit length,sampling rate,codec]" },
+    { "play",               "track info",       audioPlayer_play,           "Start player.              ex)player> play music.mp3,2,16,48000,mp3\n                               prarameter: track info[filename,ch num,bit length,sampling rate,codec]" },
 #endif
     { "stop",               "",                 audioPlayer_stop,           "Stop player.               ex)player> stop" },
     { "pause",              "",                 audioPlayer_pause,          "Pause player.              ex)player> pause\n                                caution) Request 'release' or 'stop' to release the pause. However, 'stop' will end playing" },
     { "release",            "",                 audioPlayer_release,        "Release pause.             ex)player> release" },
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
-    { "sfxplay",            "",                 audioPlayer_subplay,        "Start to sfx.              ex)player> sfxplay" },
-    { "sfxstop",            "",                 audioPlayer_substop,        "Stop sfx.                  ex)player> sfxstop" },
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
+    { "subplay",            "",                 audioPlayer_subplay,        "Start subplayer.           ex)player> subplay" },
+    { "substop",            "",                 audioPlayer_substop,        "Stop subplayer.            ex)player> substop" },
     { "incVol",             "stepValue",        audioPlayer_incVol,         "Increase digital volume.   ex)player> incVol 10\n                               prarameter: stepValue[1 step: +0.5dB]\n                                caution) If the output device is I2S the request is invalid" },
     { "decVol",             "stepValue",        audioPlayer_decVol,         "Decrease digital volume.   ex)player> decVol 10\n                               prarameter: stepValue[1 step: -0.5dB]\n                                caution) If the output device is I2S the request is invalid" },
     { "clkrcv",             "",                 audioPlayer_clkrcv,         "Excute clock recovery.     ex)player> clkrcv 10" },
@@ -1247,10 +1300,8 @@ static bool player_start(PlayerEventParam* param);
 static bool player_stop(PlayerEventParam* param);
 static bool player_pause(PlayerEventParam* param);
 static bool player_release(PlayerEventParam* param);
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 static bool player_substart(PlayerEventParam* param);
 static bool player_substop(PlayerEventParam* param);
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 static bool player_push_es(PlayerEventParam* param);
 static bool player_next(PlayerEventParam* param);
 static bool player_incvol(PlayerEventParam* param);
@@ -1269,10 +1320,8 @@ static MsgProc MsgProcTbl[NumPlayerEvent][NumPlayerState] = {
 /* PauseEvent      */ {&player_ignore,       &player_ignore,       &player_pause,     &player_pause,    &player_ignore   },
 /* ReleaseEvent    */ {&player_ignore,       &player_ignore,       &player_release,   &player_release,  &player_ignore   },
 /* RenderDoneEvent */ {&player_ignoreRender, &player_ignoreRender, &player_push_es,   &player_next,     &player_ignoreRender   },
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 /* SubStartEvent   */ {&player_ignore,       &player_substart,     &player_substart,  &player_substart, &player_ignore   },
 /* SubStopEvent    */ {&player_ignore,       &player_substop,      &player_substop,   &player_substop,  &player_ignore   },
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 /* IncVolEvent     */ {&player_ignore,       &player_incvol,       &player_incvol,    &player_incvol,   &player_incvol   },
 /* DecVolEvent     */ {&player_ignore,       &player_decvol,       &player_decvol,    &player_decvol,   &player_decvol   },
 /* ClkRcvEvent     */ {&player_ignore,       &player_clkrcv,       &player_clkrcv,    &player_clkrcv,   &player_clkrcv   },
@@ -1340,7 +1389,7 @@ static bool player_init(PlayerEventParam* param)
     }
 
   /* Set Player Status */
-  if (app_set_player_status(param->output_device))
+  if (app_set_player_status())
     {
       return false;
     }
@@ -1361,9 +1410,7 @@ static bool player_init(PlayerEventParam* param)
     }
 
   p_player->state = ReadyState;
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   p_player->subplayer_state = ReadyState;
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
   return true;
 }
@@ -1565,7 +1612,6 @@ static bool player_release(PlayerEventParam* param)
 }
 
 /*--------------------------------------------------------------------------*/
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 static bool player_substart(PlayerEventParam* param)
 {
   player_freq_lock(PM_CPUFREQLOCK_FLAG_HV);  /* TODO: Currently HV only */
@@ -1600,7 +1646,6 @@ static bool player_substop(PlayerEventParam* param)
 
   return true;
 }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
 /*--------------------------------------------------------------------------*/
 
@@ -1720,13 +1765,11 @@ static bool player_poweroff(PlayerEventParam* param)
       p_player->state = ReadyState;
     }
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
    if (p_player->subplayer_state == PlayState)
     {
       app_stop_subplayer();
       p_player->subplayer_state = ReadyState;
     }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
    while (up_pm_get_freqlock_count(&g_player_lock) > 0)
     {
       player_freq_release();
@@ -1814,9 +1857,7 @@ static int player_loop(int argc,  const char* argv[])
         	{
               if (cmd.event == PowerOffEvent)
                 {
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
                   sub_task_suspend = true;
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
                   break;
                 }
         	}
@@ -1863,11 +1904,10 @@ static int player_loop(int argc,  const char* argv[])
   return 0;
 }
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 static int sub_loop(int argc, char* argv[])
 {
   char sub_full_path[128];
-  snprintf(sub_full_path, sizeof(sub_full_path), "%s/Sfxsound.mp3", CONFIG_TEST_AUDIO_PLAYER_FILE_MOUNTPT);
+  snprintf(sub_full_path, sizeof(sub_full_path), "%s/subsound.mp3", CONFIG_TEST_AUDIO_PLAYER_FILE_MOUNTPT);
 
   int fd = play_file_open(sub_full_path, &m_sub_file_size);
 
@@ -1952,7 +1992,6 @@ static int sub_loop(int argc, char* argv[])
 
   return 0;
 }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
 static void init_libraries(void)
 {
@@ -1980,13 +2019,8 @@ static void init_libraries(void)
   MemMgrLite::Manager::initFirst(mml_data_area, MEMMGR_DATA_AREA_SIZE);
   MemMgrLite::Manager::initPerCpu(mml_data_area, NUM_MEM_POOLS);
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   /* Create static memory pool of Layout 0 */
   const MemMgrLite::NumLayout layout_no = MEM_LAYOUT_PLAYER;
-#else
-  /* Create static memory pool of Layout 1 */
-  const MemMgrLite::NumLayout layout_no = MEM_LAYOUT_PLAYER_MAIN_ONLY;
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
   void* work_va = MemMgrLite::translatePoolAddrToVa(MEMMGR_WORK_AREA_ADDR);
   D_ASSERT(layout_no < NUM_MEM_LAYOUTS);
   MemMgrLite::Manager::createStaticPools(layout_no, work_va, MEMMGR_MAX_WORK_SIZE, MemMgrLite::MemoryPoolLayouts[layout_no]);
@@ -2053,15 +2087,15 @@ static int audioPlayer_createTask(void)
   player_create_param.pool_id.es     = DEC_ES_MAIN_BUF_POOL;
   player_create_param.pool_id.pcm    = REND_PCM_BUF_POOL;
   player_create_param.pool_id.dsp    = DEC_APU_CMD_POOL;
+  player_create_param.pool_id.src_work = SRC_WORK_BUF_POOL;
 
-  create_rst = AS_CreatePlayer(AS_PLAYER_ID_0, &player_create_param);
+  create_rst = AS_CreatePlayerMulti(AS_PLAYER_ID_0, &player_create_param, NULL);
   if (!create_rst)
     {
       printf("AS_CreatePlayer failed. system memory insufficient!\n");
       return 1;
     }
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   AsCreatePlayerParam_t sub_player_create_param;
   sub_player_create_param.msgq_id.player = MSGQ_AUD_SUB_PLY;
   sub_player_create_param.msgq_id.mng    = MSGQ_AUD_MGR;
@@ -2070,14 +2104,14 @@ static int audioPlayer_createTask(void)
   sub_player_create_param.pool_id.es     = DEC_ES_SUB_BUF_POOL;
   sub_player_create_param.pool_id.pcm    = REND_PCM_SUB_BUF_POOL;
   sub_player_create_param.pool_id.dsp    = DEC_APU_CMD_POOL;
+  sub_player_create_param.pool_id.src_work = SRC_WORK_SUB_BUF_POOL;
 
-  create_rst = AS_CreatePlayer(AS_PLAYER_ID_1, &sub_player_create_param);
+  create_rst = AS_CreatePlayerMulti(AS_PLAYER_ID_1, &sub_player_create_param, NULL);
   if (!create_rst)
     {
       printf("AS_CreatePlayer failed. system memory insufficient!\n");
       return 1;
     }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
   AsCreateOutputMixParam_t output_mix_create_param;
   output_mix_create_param.msgq_id.mixer = MSGQ_AUD_OUTPUT_MIX;
@@ -2088,7 +2122,7 @@ static int audioPlayer_createTask(void)
   output_mix_create_param.pool_id.render_path0_filter_dsp = PF0_APU_CMD_POOL;
   output_mix_create_param.pool_id.render_path1_filter_dsp = PF1_APU_CMD_POOL;
 
-  create_rst = AS_CreateOutputMixer(&output_mix_create_param);
+  create_rst = AS_CreateOutputMixer(&output_mix_create_param, NULL);
   if (!create_rst)
     {
       printf("AS_CreateOutputMixer failed. system memory insufficient!\n");
@@ -2099,13 +2133,8 @@ static int audioPlayer_createTask(void)
   renderer_create_param.msgq_id.dev0_req  = MSGQ_AUD_RND_PLY;
   renderer_create_param.msgq_id.dev0_sync = MSGQ_AUD_RND_PLY_SYNC;
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   renderer_create_param.msgq_id.dev1_req  = MSGQ_AUD_RND_SUB;
   renderer_create_param.msgq_id.dev1_sync = MSGQ_AUD_RND_SUB_SYNC;
-#else
-  renderer_create_param.msgq_id.dev1_req  = 0xFF;
-  renderer_create_param.msgq_id.dev1_sync = 0xFF;
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
   create_rst = AS_CreateRenderer(&renderer_create_param);
   if (!create_rst)
@@ -2121,14 +2150,12 @@ static int audioPlayer_createTask(void)
       return 1;
     }
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   s_sub_daemon_pid = task_create("SUB_DMON",  AUDIO_TASK_PLAYER_DAEMON_PRIORITY,  AUDIO_TASK_PLAYER_DAEMON_STACK_SIZE, (main_t)sub_loop, NULL);
   if (s_sub_daemon_pid < 0)
     {
       printf("task_create(SUB_DMON) failed. system memory insufficient!\n");
       return 1;
     }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
   return 0;
 }
@@ -2140,9 +2167,7 @@ static int audioPlayer_deleteTask(void)
   /* deactivate Audio Utilities */
 
   AS_DeletePlayer(AS_PLAYER_ID_0);
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   AS_DeletePlayer(AS_PLAYER_ID_1);
-#endif
   AS_DeleteOutputMix();
   AS_DeleteRenderer();
   AS_DeleteAudioManager();
@@ -2154,7 +2179,6 @@ static int audioPlayer_deleteTask(void)
   return 0;
 }
 
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
 static int audioPlayer_subplay(char* parg, mqd_t mqd, mqd_t mqd_sub)
 {
   PlayerEventCmd cmd;
@@ -2178,14 +2202,12 @@ static int audioPlayer_substop(char* parg, mqd_t mqd, mqd_t mqd_sub)
 
   return 0;
 }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
 /****************************************************************************
  * application_main
  ****************************************************************************/
 #ifdef CONFIG_BUILD_KERNEL
-//int main(int argc, FAR char *argv[])
-extern "C" int player_main(int argc, char *argv[])
+extern "C" int main(int argc, FAR char *argv[])
 #else
 extern "C" int player_main(int argc, char *argv[])
 #endif
@@ -2207,14 +2229,12 @@ extern "C" int player_main(int argc, char *argv[])
       printf("mq_open() failure.\n");
       return 1;
     }
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   s_mq_cui_cmd_sub = mq_open("player_cui_cmd_sub_que", O_RDWR | O_CREAT | O_NONBLOCK, 0666, &que_attr);
   if (s_mq_cui_cmd_sub == 0)
     {
       printf("mq_open() failure.\n");
       return 1;
     }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
   if (audioPlayer_createTask())
     {
@@ -2274,18 +2294,14 @@ extern "C" int player_main(int argc, char *argv[])
     {
       printf("PLAYER_DMON abnormal termination.\n");
     }
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   waitpid(s_sub_daemon_pid, &status, 0);
   if (!WIFEXITED(status))
     {
       printf("SUB_DMON abnormal termination.\n");
     }
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
 
   mq_close(s_mq_cui_cmd);
-#ifdef CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER
   mq_close(s_mq_cui_cmd_sub);
-#endif /* CONFIG_TEST_AUDIO_PLAYER_USE_SUBPLAYER */
   mq_unlink("player_cui_cmd_que");
 
   audioPlayer_deleteTask();

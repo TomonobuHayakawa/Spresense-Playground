@@ -3,38 +3,52 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
-config TEST_AUDIO_PLAYER
-    bool "Audio player test"
-    default n
+config EXAMPLES_AUDIO_PLAYER
+	bool "Audio player example"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio player example
 
-if TEST_AUDIO_PLAYER
+if EXAMPLES_AUDIO_PLAYER
 
-config TEST_AUDIO_PLAYER_APP_NAME
-	string "Application name"
-	default "player"
-	
-config TEST_AUDIO_PLAYER_PROGNAME
+choice
+	prompt "Output device selection"
+	default EXAMPLES_AUDIO_PLAYER_OUTPUT_DEV_SPHP
+	---help---
+		Set the device type of output to use
+
+config EXAMPLES_AUDIO_PLAYER_OUTPUT_DEV_SPHP
+	bool "Speaker/Headphone output"
+
+config EXAMPLES_AUDIO_PLAYER_OUTPUT_DEV_I2S
+	bool "I2S output"
+endchoice
+
+choice
+	prompt "player mode selection"
+	default EXAMPLES_AUDIO_PLAYER_MODE_NORMAL
+	---help---
+		Set the operation mode of player capability.
+		To play include Hi-Res file, select Hi-Res mode.
+		If it is not Hi-Res file, select Normal mode.
+
+config EXAMPLES_AUDIO_PLAYER_MODE_NORMAL
+	bool "Normal mode"
+
+config EXAMPLES_AUDIO_PLAYER_MODE_HIRES
+	bool "Hi-Res mode"
+endchoice
+
+config EXAMPLES_AUDIO_PLAYER_PROGNAME
 	string "Program name"
 	default "audio_player"
 
-config TEST_AUDIO_PLAYER_PRIORITY
+config EXAMPLES_AUDIO_PLAYER_PRIORITY
 	int "Audio player task priority"
-	default 100
+	default 150
 
-config TEST_AUDIO_PLAYER_STACKSIZE
+config EXAMPLES_AUDIO_PLAYER_STACKSIZE
 	int "Audio player stack size"
 	default 2048
-
-config TEST_AUDIO_PLAYER_FILE_MOUNTPT
-	string "play file mount path"
-	default "/mnt/vfat/AUDIO"
-	---help---
-		The path to the play file mount point. Default: /mnt/vfat/AUDIO
-
-config TEST_AUDIO_PLAYER_USE_SUBPLAYER
-    bool "Use subplayer" 
-    default y
-    ---help---
-        Use subplayer or not
-
 endif
