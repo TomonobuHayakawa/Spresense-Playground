@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player/include/msgq_id.h
+ * msgq_id.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
