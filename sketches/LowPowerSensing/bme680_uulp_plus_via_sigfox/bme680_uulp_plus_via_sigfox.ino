@@ -26,15 +26,16 @@ bool result() {
    c = Serial2.read();
    if(c==0xFF){
     printf("Error!");
+    ledOn(LED3);
     return false;
    }else{
-     printf("%c", c);
+//     printf("%c", c);
    }
   }while(c!='\r');    
 
   // for LF
   c = Serial2.read();
-  printf("%c", c);
+//  printf("%c", c);
 
   return true;
 }
@@ -82,22 +83,25 @@ void setup(void)
 
   loadState();
 
-  bsec_virtual_sensor_t sensorList[7] = {
+  bsec_virtual_sensor_t sensorList[10] = {
     BSEC_OUTPUT_RAW_TEMPERATURE,
     BSEC_OUTPUT_RAW_PRESSURE,
     BSEC_OUTPUT_RAW_HUMIDITY,
     BSEC_OUTPUT_RAW_GAS,
     BSEC_OUTPUT_IAQ,
+    BSEC_OUTPUT_STATIC_IAQ,
+    BSEC_OUTPUT_CO2_EQUIVALENT,
+    BSEC_OUTPUT_BREATH_VOC_EQUIVALENT,
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
   };
 
-  iaqSensor.updateSubscription(sensorList, 7, BSEC_SAMPLE_RATE_ULP);
+  iaqSensor.updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_ULP);
   checkIaqSensorStatus();
 
   // Print the header
 //  output = "Timestamp [ms], raw temperature [°C], pressure [hPa], raw relative humidity [%], gas [Ohm], IAQ, IAQ accuracy, temperature [°C], relative humidity [%]";
-  output = "Timestamp [ms], pressure [hPa], IAQ, IAQ accuracy, temperature [°C], relative humidity [%]";
+  output = "Timestamp [ms], temperature [°C], relative humidity [%], pressure [hPa], staticIAQ, CO2, VOC";
   Serial.println(output);
 }
 
@@ -112,7 +116,7 @@ void send_sigfox(int16_t i0,int16_t i1,int16_t i2,int16_t i3,int16_t i4,int16_t 
   Serial2.write("AT$SF=");
   sprintf(val,"%04x%04x%04x%04x%04x%04x", i0,i1,i2,i3,i4,i5);
   output2 = String(val);
-  Serial.println(output2);
+//  Serial.println(output2);
   Serial2.println(output2);
 
   sleep(10);
@@ -138,7 +142,7 @@ void send_sigfox(float f0,float f1,float f2)
   output2 += String(data.i, HEX);
   data.f = f2;
   output2 += String(data.i, HEX);
-  Serial.println(output2);
+//  Serial.println(output2);
   Serial2.println(output2);
 
 //  Serial2.write("\r");
@@ -156,20 +160,24 @@ void loop(void)
   if (iaqSensor.run()) { // If new data is available
 
     // Get voltage
-    int vol = LowPower.getVoltage();
-    float volf = (float)vol / 1000.0f;
+//    int vol = LowPower.getVoltage();
+//    float volf = (float)vol / 1000.0f;
+    uint16_t vol = analogRead(A3);
     Serial.print("voltage[V]= ");
-    Serial.println(volf);
+    Serial.println(vol);
 
     output = String(time_trigger);
 //    output += ", " + String(iaqSensor.rawTemperature);
-    output += ", " + String(iaqSensor.pressure);
 //    output += ", " + String(iaqSensor.rawHumidity);
-//    output += ", " + String(iaqSensor.gasResistance);
-    output += ", " + String(iaqSensor.iaqEstimate);
-    output += ", " + String(iaqSensor.iaqAccuracy);
     output += ", " + String(iaqSensor.temperature);
     output += ", " + String(iaqSensor.humidity);
+    output += ", " + String(iaqSensor.pressure);
+//    output += ", " + String(iaqSensor.gasResistance);
+//    output += ", " + String(iaqSensor.iaqEstimate);
+    output += ", " + String(iaqSensor.staticIaq);
+//    output += ", " + String(iaqSensor.iaqAccuracy);
+    output += ", " + String(iaqSensor.co2Equivalent);
+    output += ", " + String(iaqSensor.breathVocEquivalent);
     Serial.println(output);
 
 /*    send_sigfox(iaqSensor.pressure);
@@ -181,10 +189,11 @@ void loop(void)
 
     send_sigfox((int16_t)(iaqSensor.temperature*100),
                 (int16_t)(iaqSensor.humidity*100),
-                (int16_t)(iaqSensor.pressure/100),
-                (int16_t)(iaqSensor.iaqEstimate),
-                (int16_t)(iaqSensor.iaqAccuracy),
-                mvolt);
+                (int16_t)(iaqSensor.pressure-100000),
+                (int16_t)(iaqSensor.staticIaq),
+                (int16_t)(iaqSensor.co2Equivalent),
+//                (int16_t)(iaqSensor.breathVocEquivalent));
+                vol);
                 
     updateState();
   } else {
@@ -237,7 +246,7 @@ void loadState(void)
 
     for (uint8_t i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++) {
       bsecState[i] = EEPROM.read(i + 1);
-      Serial.println(bsecState[i], HEX);
+//      Serial.println(bsecState[i], HEX);
     }
 
     iaqSensor.setState(bsecState);
