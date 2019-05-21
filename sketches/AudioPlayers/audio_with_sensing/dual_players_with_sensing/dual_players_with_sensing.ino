@@ -17,7 +17,7 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <SD.h>
+#include <SDHCI.h>
 #include <Audio.h>
 
 #include <Wire.h>
@@ -26,7 +26,7 @@
 KX122 kx122(KX122_DEVICE_ADDRESS_1F);
 
 AudioClass *theAudio;
-
+SDClass theSD;
 File mainFile, subFile;
 
 #define MAIN_FILE "sound0.mp3"
@@ -42,8 +42,8 @@ static void start_players()
 {
   /* Open play files */
 
-  mainFile = SD.open(MAIN_FILE);
-  subFile =  SD.open(SUB_FILE);
+  mainFile = theSD.open(MAIN_FILE);
+  subFile =  theSD.open(SUB_FILE);
 
   printf("Open! %d\n", mainFile);
   printf("Open! %d\n", subFile);
@@ -83,7 +83,7 @@ static void start_players()
 void setup()
 {
 
-  SD.begin();
+  theSD.begin();
 
   /* start Sensing. */
 
@@ -172,4 +172,3 @@ void loop()
 
   theAudio->setVolume(-80, main_db, sub_db);
 }
-

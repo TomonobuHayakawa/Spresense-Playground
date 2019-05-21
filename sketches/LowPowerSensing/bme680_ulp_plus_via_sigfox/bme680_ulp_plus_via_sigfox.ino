@@ -175,7 +175,7 @@ void loop(void)
                 (int16_t)(iaqSensor.pressure/100),
                 (int16_t)(iaqSensor.iaqEstimate),
                 (int16_t)(iaqSensor.iaqAccuracy),
-                mvolt);
+                vol);
                 
     updateState();
   } else {

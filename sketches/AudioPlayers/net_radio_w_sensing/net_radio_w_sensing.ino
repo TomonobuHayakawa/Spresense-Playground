@@ -94,7 +94,7 @@ void setup()
   err_t err = theAudio->initPlayer(AudioClass::Player0, AS_CODECTYPE_MP3, "/mnt/sd0/BIN", AS_SAMPLINGRATE_AUTO, AS_CHANNEL_STEREO);
   puts("initialization Player Library");
 
-  theAudio->setVolume(-160);
+  theAudio->setVolume(-200);
   
 	/* WiFi Module Initialize */
 	App_InitModule();

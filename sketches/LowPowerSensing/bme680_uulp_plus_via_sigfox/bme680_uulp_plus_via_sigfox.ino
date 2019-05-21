@@ -2,6 +2,7 @@
 #include "bsec.h"
 #include "bsec_serialized_configurations_iaq.h"
 #include <LowPower.h>
+#include <Flash.h>
 
 #define STATE_SAVE_PERIOD  UINT32_C(360 * 60 * 1000) // 360 minutes - 4 times a day
 
@@ -101,7 +102,7 @@ void setup(void)
 
   // Print the header
 //  output = "Timestamp [ms], raw temperature [°C], pressure [hPa], raw relative humidity [%], gas [Ohm], IAQ, IAQ accuracy, temperature [°C], relative humidity [%]";
-  output = "Timestamp [ms], temperature [°C], relative humidity [%], pressure [hPa], staticIAQ, CO2, VOC";
+  output = "Timestamp [ms], temperature [°C], humidity [%], pressure [hPa], staticIAQ, CO2, VOC,raw temperature [°C], raw relative humidity [%], raw gas [Ohm],";
   Serial.println(output);
 }
 
@@ -178,6 +179,9 @@ void loop(void)
 //    output += ", " + String(iaqSensor.iaqAccuracy);
     output += ", " + String(iaqSensor.co2Equivalent);
     output += ", " + String(iaqSensor.breathVocEquivalent);
+    output += ", " + String(iaqSensor.rawTemperature);
+    output += ", " + String(iaqSensor.rawHumidity);
+    output += ", " + String(iaqSensor.gasResistance);
     Serial.println(output);
 
 /*    send_sigfox(iaqSensor.pressure);
@@ -199,6 +203,9 @@ void loop(void)
   } else {
     checkIaqSensorStatus();
   }
+  
+//  LowPower.deepSleep(5*60-5); // deep sleep in (5min - 5sec) 
+
 }
 
 // Helper function definitions
