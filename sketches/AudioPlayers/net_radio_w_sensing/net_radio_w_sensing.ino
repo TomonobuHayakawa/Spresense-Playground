@@ -219,6 +219,7 @@ while(1){
             digitalWrite( LED2, LOW );  // turn off LED
             digitalWrite( LED1, HIGH ); // turn on LED
             state = E_RadioStart;
+            AtCmd_NCLOSE(server_cid);
             WiFi_InitESCBuffer();
             sleep(10000);
             break;
