@@ -18,7 +18,7 @@
  */
 
 #include <Audio.h>
-#include <SD.h>
+#include <SDHCI.h>
 
 /*-----------------------------------------------------------------*/
 /*
@@ -55,8 +55,10 @@
 /*
  * Audio parameters
  */
+SDClass SD;  /**< SDClass object */ 
+
 AudioClass *theAudio;
-File myFile;
+//File myFile;
 
 const int32_t recoding_frames = 2000;
 #if(SAMPLING_RATE == 48000)

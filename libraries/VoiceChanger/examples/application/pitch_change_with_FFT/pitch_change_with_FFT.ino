@@ -17,13 +17,13 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,  MA 02110-1301  USA
  */
 
-#include <SD.h>
+#include <SDHCI.h>
 #include <MediaRecorder.h>
 #include <MediaPlayer.h>
 #include <OutputMixer.h>
 #include <MemoryUtil.h>
 
-//SDClass theSD;
+SDClass SD;
 
 /*-----------------------------------------------------------------*/
 /*
