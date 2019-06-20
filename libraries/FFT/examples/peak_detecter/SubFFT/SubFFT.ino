@@ -41,6 +41,10 @@ struct Capture {
   int  chnum;
 };
 
+struct Result {
+  float peak[g_channel];
+  int  chnum;
+};
 
 void setup()
 {
@@ -60,26 +64,38 @@ void setup()
 void loop()
 {
   int      ret;
-  int8_t   msgid;
+  int8_t   sndid = 10; /* user-defined msgid */
+  int8_t   rcvid;
   Capture *capture;
-  
-  float pDst[FFTLEN];
+  Result   result;
+     
+  static float pDst[FFTLEN];
 
+ 
   /* Receive PCM captured buffer from MainCore */
-  ret = MP.Recv(&msgid, &capture);
+  ret = MP.Recv(&rcvid, &capture);
   if (ret >= 0) {
       FFT.put((q15_t*)capture->buff,capture->sample);
   }
 
+  float peak[4];
   while(FFT.empty(0) != 1){
-    printf("peak ");
+//    printf("peak ");
+      result.chnum = g_channel;
     for (int i = 0; i < g_channel; i++) {
       int cnt = FFT.get(pDst,i);
-      float peak = get_peak_frequency(pDst, FFTLEN);
-      printf("%8.3f, ", peak);
+      peak[i] = get_peak_frequency(pDst, FFTLEN);
+      result.peak[i] = peak[i];
+//      printf("%8.3f, ", peak[i]);
     }
-    printf("\n");
+//    printf("\n");
+
+    ret = MP.Send(sndid, &result,0);
+    if (ret < 0) {
+      errorLoop(1);
+    }
   }
+
 }
 
 float get_peak_frequency(float *pData, int fftLen)

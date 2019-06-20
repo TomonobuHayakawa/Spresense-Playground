@@ -77,7 +77,7 @@ public:
 	
 private:
 
-  int m_chnum;
+  int m_channel;
   int m_overlap;
   arm_rfft_fast_instance_f32 S;
 

@@ -27,7 +27,7 @@ bool FFTClass::begin(windowType_t type, int channel, int overlap)
   if(overlap > (FFTLEN/2)) return false;
 
   m_overlap = overlap;
-  m_chnum = channel;
+  m_channel = channel;
   
   clear();
   create_coef(type);
@@ -83,15 +83,15 @@ void FFTClass::create_coef(windowType_t type)
 bool FFTClass::put(q15_t* in, int sample)
 {
   /* Ringbuf size check */
-  if(m_chnum > MAX_CHANNEL_NUM) return false;
+  if(m_channel > MAX_CHANNEL_NUM) return false;
   if(sample > ringbuf[0].remain()) return false;
 
-  if (m_chnum == 1) {
+  if (m_channel == 1) {
   	/* the faster optimization */
   	ringbuf[0].put((q15_t*)in, sample);
   } else {
-  	for (int i = 0; i < m_chnum; i++) {
-  	  ringbuf[i].put(in, sample, m_chnum, i);
+  	for (int i = 0; i < m_channel; i++) {
+  	  ringbuf[i].put(in, sample, m_channel, i);
     }
   }
   return  true;
@@ -106,7 +106,7 @@ int FFTClass::get(float* out, int channel)
 {
   float tmpFft[FFTLEN];  
 
-  if(channel >= m_chnum) return false;
+  if(channel >= m_channel) return false;
   if (ringbuf[channel].stored() < FFTLEN) return 0;
 
   for(int i=0;i<m_overlap;i++){
