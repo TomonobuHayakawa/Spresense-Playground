@@ -84,6 +84,20 @@ public:
     return sample;
   };
 
+  int get(q15_t *buf, int sample) {
+    if ((_rptr + sample) < _bottom) {
+      arm_copy_q15(_rptr, buf,sample);
+      _rptr += sample;
+    } else {
+      int part = _bottom - _rptr;
+      arm_copy_q15(_rptr, buf,part);
+      arm_copy_q15(_top,&buf[part],sample-part);
+      _rptr = _top + sample - part;
+    }
+    //printf("[%4d +%4d] (w:0x%08x +r:0x%08x)\n", stored(), remain(), (uint32_t)_wptr, (uint32_t)_rptr);
+    return sample;
+  };
+
   int remain() {
     return (_bottom - _top) - stored();
   };

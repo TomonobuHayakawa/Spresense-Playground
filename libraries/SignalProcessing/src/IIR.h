@@ -1,5 +1,5 @@
 /*
- *  FFT.cpp - FFT Library
+*  IIR.cpp - IIR(biquad cascade) Library
  *  Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _FFT_H_
-#define _FFT_H_
+#ifndef _IIR_H_
+#define _IIR_H_
 
 /* Use CMSIS library */
 #define ARM_MATH_CM4
@@ -30,69 +30,59 @@
 /*------------------------------------------------------------------*/
 /* Configurations                                                   */
 /*------------------------------------------------------------------*/
-/* Select FFT length */
+/* Select Data Bit length */
 
-//#define FFTLEN 32
-//#define FFTLEN 64
-//#define FFTLEN 128
-//#define FFTLEN 256
-//#define FFTLEN 512
-#define FFTLEN 1024
-//#define FFTLEN 2048
-//#define FFTLEN 4096
+#define BITLEN 16
+//#define BITLEN 32
 
-/* Number of channels*/
+/* Max sample of frame */
+#define FRAMSIZE 1024
+
+/* Number of channels */
 //#define MAX_CHANNEL_NUM 1
-//#define MAX_CHANNEL_NUM 2
-#define MAX_CHANNEL_NUM 4
+#define MAX_CHANNEL_NUM 2
+//#define MAX_CHANNEL_NUM 4
 
-#define INPUT_BUFFER (FFTLEN*sizeof(q15_t)*2)
+#define INPUT_BUFFER (MAX_CHANNEL_NUM*sizeof(q15_t)*FRAMSIZE*3)
 
 /*------------------------------------------------------------------*/
 /* Type Definition                                                  */
 /*------------------------------------------------------------------*/
-/* WINDOW TYPE */
-typedef enum e_windowType {
-	WindoHamming,
-	WindoHanning,
-	WindowRectangle
-} windowType_t;
+/* FILTER TYPE */
+typedef enum e_filterType {
+	LPF,
+	HPF,
+//	BPF,
+//	BEF
+} filterType_t;
+
 
 /*------------------------------------------------------------------*/
 /* Input buffer                                                      */
 /*------------------------------------------------------------------*/
-class FFTClass
+class IIRClass
 {
 public:
-  void begin(){
-      begin(WindoHamming, MAX_CHANNEL_NUM, (FFTLEN/2));
-  }
-
-  bool begin(windowType_t type, int channel, int overlap);
+  bool begin(filterType_t type, int channel, int cutoff, float q);
   bool put(q15_t* pSrc, int size);
-  int  get(float* pDst, int channel);
   int  get(q15_t* pDst, int channel);
-  void clear();
   void end(){}
   bool empty(int channel);
-	
+
 private:
 
   int m_channel;
-  int m_overlap;
-  arm_rfft_fast_instance_f32 S;
+  arm_biquad_casd_df1_inst_f32 S;
+
+  float32_t coef[5];
+  float32_t buffer[4];
 
   /* Temporary buffer */
-  float tmpInBuf[MAX_CHANNEL_NUM][FFTLEN];
-  float coef[FFTLEN];
-  float tmpOutBuf[FFTLEN];
+  float tmpInBuf[FRAMSIZE];
+  float tmpOutBuf[FRAMSIZE];
 
-  void create_coef(windowType_t);
-  void fft_init();
-  void fft(float *pSrc, float *pDst, int fftLen);
+  void create_coef(filterType_t, int cutoff, float q);
 
 };
-
-extern FFTClass FFT;
 
 #endif /*_FFT_H_*/

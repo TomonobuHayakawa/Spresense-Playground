@@ -39,7 +39,7 @@ bool FFTClass::begin(windowType_t type, int channel, int overlap)
 void FFTClass::clear()
 {
   for (int i = 0; i < MAX_CHANNEL_NUM; i++) {
-    memset(pSrc[i], 0, FFTLEN);
+    memset(tmpInBuf[i], 0, FFTLEN);
   }
 }
 
@@ -80,7 +80,7 @@ void FFTClass::create_coef(windowType_t type)
   }
 }
 
-bool FFTClass::put(q15_t* in, int sample)
+bool FFTClass::put(q15_t* pSrc, int sample)
 {
   /* Ringbuf size check */
   if(m_channel > MAX_CHANNEL_NUM) return false;
@@ -88,10 +88,10 @@ bool FFTClass::put(q15_t* in, int sample)
 
   if (m_channel == 1) {
   	/* the faster optimization */
-  	ringbuf[0].put((q15_t*)in, sample);
+  	ringbuf[0].put((q15_t*)pSrc, sample);
   } else {
   	for (int i = 0; i < m_channel; i++) {
-  	  ringbuf[i].put(in, sample, m_channel, i);
+  	  ringbuf[i].put(pSrc, sample, m_channel, i);
     }
   }
   return  true;
@@ -104,20 +104,20 @@ bool FFTClass::empty(int channel)
 
 int FFTClass::get(float* out, int channel)
 {
-  float tmpFft[FFTLEN];  
+  static float tmpFft[FFTLEN];  
 
   if(channel >= m_channel) return false;
   if (ringbuf[channel].stored() < FFTLEN) return 0;
 
   for(int i=0;i<m_overlap;i++){
-    pSrc[channel][i]=pSrc[channel][FFTLEN-m_overlap+i];
+    tmpInBuf[channel][i]=tmpInBuf[channel][FFTLEN-m_overlap+i];
   }
 
   /* Read from the ring buffer */
-  ringbuf[channel].get(&pSrc[channel][m_overlap], FFTLEN-m_overlap);
+  ringbuf[channel].get(&tmpInBuf[channel][m_overlap], FFTLEN-m_overlap);
 
   for(int i=0;i<FFTLEN;i++){
-    tmpFft[i] = pSrc[channel][i]*coef[i];
+    tmpFft[i] = tmpInBuf[channel][i]*coef[i];
   }
 
   /* Calculate FFT */
@@ -126,10 +126,10 @@ int FFTClass::get(float* out, int channel)
   return (FFTLEN-m_overlap);
 }
 
-void FFTClass::fft(float *pSrc, float *pDst, int fftLen)
+void FFTClass::fft(float *tmpInBuf, float *pDst, int fftLen)
 {
   /* calculation */
-  arm_rfft_fast_f32(&S, pSrc, tmpOutBuf, 0);
+  arm_rfft_fast_f32(&S, tmpInBuf, tmpOutBuf, 0);
 
   arm_cmplx_mag_f32(&tmpOutBuf[2], &pDst[1], fftLen / 2 - 1);
   pDst[0] = tmpOutBuf[0];
