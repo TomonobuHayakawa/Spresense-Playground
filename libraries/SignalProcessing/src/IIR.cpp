@@ -27,34 +27,67 @@ bool IIRClass::begin(filterType_t type, int channel, int cutoff, float q)
 
   m_channel = channel;
 
-  create_coef(type, cutoff, q);
+  if(create_coef(type, cutoff, q) == false){
+    return false;
+  }
 
-  arm_biquad_cascade_df1_init_f32(&S,1,coef,buffer);
+  for (int i = 0; i < channel; i++) {
+    arm_biquad_cascade_df2T_init_f32(&S[i],1,coef,buffer);
+  }
 
   return true;
 }
 
-void IIRClass::create_coef(filterType_t type, int cutoff, float q)
+bool IIRClass::create_coef(filterType_t type, int cutoff, float q)
 {
-  float w = 2.0f * PI * cutoff/48000;
+  float w,k0,k1,a0,a1,a2,b0,b1,b2;
+  
+  w = 2.0f * PI * cutoff / 48000;
 
-  float a0 =  1.0f + sin(w) / (2.0f * sqrt(2));
-  float a1 = -2.0f * cos(w);
-  float a2 =  1.0f - sin(w) / (2.0f * sqrt(2));
-  float b0 = (1.0f - cos(w)) / 2.0f;
-  float b1;
-  float b2 = (1.0f - cos(w)) / 2.0f;
+  a1 = -2.0f * cos(w);
 
   switch(type){
-  case LPF:
-    b1 =  1.0f - cos(w);
+  case (TYPE_LPF):
+  case (TYPE_HPF):
+    k0 = sin(w) / (2.0f * q);
+    k1 = 1.0f - cos(w);
+
+  	a0 =  1.0f + k0;
+    a2 =  1.0f - k0;
+    b0 =  k1 / 2.0f;
+    b2 = (k0) / 2.0f;
+
     break;
-  case HPF:
-  	b1 =  -(1.0f - cos(w));
+  case (TYPE_BPF):
+  case (TYPE_BEF):
+    k0 = sin(w) * sinh(log(2.0f) / 2.0 * q * w / sin(w));
+    a0 =  1.0f + k0;
+    a2 =  1.0f - k0;
     break;
   default:
-    exit(1);
+    return false;
   }    
+
+  switch(type){
+  case TYPE_LPF:
+    b1 =  k1;
+    break;
+  case TYPE_HPF:
+    b1 =  -k1;
+    break;
+  case TYPE_BPF:
+    b0 =  k0;
+    b1 =  0.0f;
+    b2 = -k0;
+    break;
+  case TYPE_BEF:
+    b0 =  1.0f;
+    b1 = -2.0f * cos(w);
+    b2 =  1.0f;
+    break;
+  default:
+    return false;
+  }
 
   coef[0] = b0/a0;
   coef[1] = b1/a0;
@@ -91,12 +124,12 @@ int IIRClass::get(q15_t* pDst, int channel)
 {
 
   if(channel >= m_channel) return false;
-  if (ringbuf[channel].stored() < 1024) return 0;
+  if (ringbuf[channel].stored() < FRAMSIZE) return 0;
 
   /* Read from the ring buffer */
   ringbuf[channel].get(tmpInBuf, FRAMSIZE);
 
-  arm_biquad_cascade_df1_f32(&S, tmpInBuf, tmpOutBuf, FRAMSIZE);
+  arm_biquad_cascade_df2T_f32(&S[channel], tmpInBuf, tmpOutBuf, FRAMSIZE);
   arm_float_to_q15(tmpOutBuf, pDst, FRAMSIZE);
 
   return FRAMSIZE;

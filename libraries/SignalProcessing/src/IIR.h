@@ -36,11 +36,11 @@
 //#define BITLEN 32
 
 /* Max sample of frame */
-#define FRAMSIZE 1024
+#define FRAMSIZE 768
 
 /* Number of channels */
-//#define MAX_CHANNEL_NUM 1
-#define MAX_CHANNEL_NUM 2
+#define MAX_CHANNEL_NUM 1
+//#define MAX_CHANNEL_NUM 2
 //#define MAX_CHANNEL_NUM 4
 
 #define INPUT_BUFFER (MAX_CHANNEL_NUM*sizeof(q15_t)*FRAMSIZE*3)
@@ -50,10 +50,10 @@
 /*------------------------------------------------------------------*/
 /* FILTER TYPE */
 typedef enum e_filterType {
-	LPF,
-	HPF,
-//	BPF,
-//	BEF
+	TYPE_LPF,
+	TYPE_HPF,
+	TYPE_BPF,
+	TYPE_BEF
 } filterType_t;
 
 
@@ -72,7 +72,8 @@ public:
 private:
 
   int m_channel;
-  arm_biquad_casd_df1_inst_f32 S;
+
+  arm_biquad_cascade_df2T_instance_f32 S[MAX_CHANNEL_NUM];
 
   float32_t coef[5];
   float32_t buffer[4];
@@ -81,7 +82,7 @@ private:
   float tmpInBuf[FRAMSIZE];
   float tmpOutBuf[FRAMSIZE];
 
-  void create_coef(filterType_t, int cutoff, float q);
+  bool create_coef(filterType_t, int cutoff, float q);
 
 };
 
