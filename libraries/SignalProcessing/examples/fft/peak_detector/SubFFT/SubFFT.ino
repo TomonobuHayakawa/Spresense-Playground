@@ -69,7 +69,7 @@ void loop()
   Capture *capture;
   Result   result;
      
-  static float pDst[FFTLEN];
+  static float pDst[FFTLEN/2];
 
  
   /* Receive PCM captured buffer from MainCore */

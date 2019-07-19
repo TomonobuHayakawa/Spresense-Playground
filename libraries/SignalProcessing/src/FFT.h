@@ -70,8 +70,12 @@ public:
 
   bool begin(windowType_t type, int channel, int overlap);
   bool put(q15_t* pSrc, int size);
-  int  get(float* pDst, int channel);
-  int  get(q15_t* pDst, int channel);
+
+  int  get(float* out, int channel, bool raw);
+  int  get(float* out, int channel){
+    return get(out, channel, false);
+  }
+
   void clear();
   void end(){}
   bool empty(int channel);
@@ -90,6 +94,7 @@ private:
   void create_coef(windowType_t);
   void fft_init();
   void fft(float *pSrc, float *pDst, int fftLen);
+  void fft_amp(float *pSrc, float *pDst, int fftLen);
 
 };
 
