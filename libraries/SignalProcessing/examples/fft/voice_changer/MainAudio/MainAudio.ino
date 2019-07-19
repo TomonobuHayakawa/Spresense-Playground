@@ -43,6 +43,7 @@ const int subcore = 1;
 struct Request {
   void *buffer;
   int  sample;
+  int  pitch_shift;
 };
 
 struct Result {
@@ -200,7 +201,7 @@ void setup()
   theRecorder->init(AS_CODECTYPE_LPCM, channel, AS_SAMPLINGRATE_48000, AS_BITLENGTH_16, 0);
   theRecorder->setMicGain(180);
   puts("recorder init");
-  thePlayer->init(MediaPlayer::Player0, AS_CODECTYPE_WAV, AS_SAMPLINGRATE_48000, channel);
+  thePlayer->init(MediaPlayer::Player0, AS_CODECTYPE_WAV,"/mnt/spif/BIN", AS_SAMPLINGRATE_48000, channel);
   puts("player init");
 
   /* Start Recorder */
