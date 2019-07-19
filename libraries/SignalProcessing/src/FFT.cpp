@@ -102,7 +102,7 @@ bool FFTClass::empty(int channel)
    return (ringbuf[channel].stored() < FFTLEN);
 }
 
-int FFTClass::get(float* out, int channel)
+int FFTClass::get(float* out, int channel, bool raw)
 {
   static float tmpFft[FFTLEN];  
 
@@ -120,13 +120,23 @@ int FFTClass::get(float* out, int channel)
     tmpFft[i] = tmpInBuf[channel][i]*coef[i];
   }
 
-  /* Calculate FFT */
-  fft(tmpFft, out, FFTLEN);
-
+  if(raw){
+    /* Calculate only FFT */
+    fft(tmpFft, out, FFTLEN);
+  }else{
+    /* Calculate FFT for convert to amplitude */
+    fft_amp(tmpFft, out, FFTLEN);
+  }
   return (FFTLEN-m_overlap);
 }
 
 void FFTClass::fft(float *tmpInBuf, float *pDst, int fftLen)
+{
+  /* calculation */
+  arm_rfft_fast_f32(&S, tmpInBuf, pDst, 0);
+}
+
+void FFTClass::fft_amp(float *tmpInBuf, float *pDst, int fftLen)
 {
   /* calculation */
   arm_rfft_fast_f32(&S, tmpInBuf, tmpOutBuf, 0);
@@ -135,7 +145,6 @@ void FFTClass::fft(float *tmpInBuf, float *pDst, int fftLen)
   pDst[0] = tmpOutBuf[0];
   pDst[fftLen / 2] = tmpOutBuf[1];
 }
-
 
 /* Pre-instantiated Object for this class */
 FFTClass FFT;

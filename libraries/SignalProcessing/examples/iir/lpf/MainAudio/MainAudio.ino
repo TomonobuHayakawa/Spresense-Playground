@@ -224,8 +224,8 @@ void loop()
   int      read_size;
   int      ret;
 
-  Request  request;
-  Result*  result;
+  static Request  request;
+  static Result*  result;
 
   switch (state) {
     case StateReady:

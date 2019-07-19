@@ -95,7 +95,7 @@ void loop()
 
   result[pos].clear();
   
-  static float pDst[FFTLEN];
+  static float pDst[FFTLEN/2];
  
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &capture);
