@@ -102,7 +102,7 @@ bool FFTClass::empty(int channel)
    return (ringbuf_fft[channel].stored() < FFTLEN);
 }
 
-int FFTClass::get(float* out, int channel, bool raw)
+int FFTClass::get_raw(float* out, int channel, int raw)
 {
   static float tmpFft[FFTLEN];  
 

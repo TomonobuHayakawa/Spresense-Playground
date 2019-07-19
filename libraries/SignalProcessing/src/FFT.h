@@ -71,9 +71,9 @@ public:
   bool begin(windowType_t type, int channel, int overlap);
   bool put(q15_t* pSrc, int size);
 
-  int  get(float* out, int channel, bool raw);
+  int  get_raw(float* out, int channel, int raw);
   int  get(float* out, int channel){
-    return get(out, channel, false);
+    return get_raw(out, channel, false);
   }
 
   void clear();

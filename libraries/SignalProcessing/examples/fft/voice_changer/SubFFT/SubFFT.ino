@@ -28,6 +28,8 @@
 
 arm_rfft_fast_instance_f32 iS;
 
+RingBuff ringbuf0(1024*2*6);
+
 /* Select FFT Offset */
 const int g_channel = 1;
 
@@ -57,15 +59,17 @@ void setup()
     errorLoop(2);
   }
   /* receive with non-blocking */
-  MP.RecvTimeout(MP_RECV_POLLING);
+//  MP.RecvTimeout(MP_RECV_POLLING);
+  MP.RecvTimeout(100000);
 
-  FFT.begin();
+  FFT.begin(WindowRectangle,1,0);
 
   arm_rfft_1024_fast_init_f32(&iS);
 
 }
 
 #define RESULT_SIZE 4
+#define MAX_SHIFT 20
 void loop()
 {
   int      ret;
@@ -73,28 +77,42 @@ void loop()
   int8_t   rcvid;
   Request *request;
   Result   result[RESULT_SIZE];
-     
-  static float pDst[FFTLEN+10];
+
+  static float pDst[(FFTLEN+(MAX_SHIFT*2))*2];
   static float pTmp[FFTLEN];
   static q15_t pOut[RESULT_SIZE][FFTLEN];
   static int pos=0;
+  static int pitch_shift=20;
 
- 
+
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &request);
   if (ret >= 0) {
       FFT.put((q15_t*)request->buffer,request->sample);
+      ringbuf0.put((q15_t*)request->buffer,request->sample);
   }
-
-  int cnt = 0;
   while(FFT.empty(0) != 1){
 //      result.chnum = g_channel;
     for (int i = 0; i < g_channel; i++) {
-      int cnt = FFT.get(&pDst[5],i);
 
-      memset(pDst,0,5);
-      arm_rfft_fast_f32(&iS, pDst, pTmp, 1);
+      int cnt = FFT.get_raw(&pDst[(MAX_SHIFT+pitch_shift)*2],i,true);
+
+      memset(pDst,0,MAX_SHIFT*2*2);
+      memset((pDst+(FFTLEN-MAX_SHIFT)*2),0,MAX_SHIFT*2*2);
+
+      if(pitch_shift>0){
+        FFT.get_raw(&pDst[(pitch_shift)*2],i,true);
+        memset(pDst,0,pitch_shift*2);
+        arm_rfft_fast_f32(&iS, &pDst[0], pTmp, 1);
+      }else{
+        FFT.get_raw(&pDst[(MAX_SHIFT-pitch_shift)*2],i,true);
+        memset((pDst+(FFTLEN-MAX_SHIFT)),0,MAX_SHIFT*2);
+        arm_rfft_fast_f32(&iS, &pDst[MAX_SHIFT*2], pTmp, 1);        
+      }
       arm_float_to_q15(pTmp,&pOut[pos][0],FFTLEN);
+      
+//      for(int i=0; i<FFTLEN/2;i++){ pOut[pos][i] <<= 3;}
+//ringbuf0.get((q15_t*)pOut[pos],FFTLEN);
 
       result[pos].buffer = MP.Virt2Phys(&pOut[pos][0]);
       result[pos].sample = FFTLEN;

@@ -151,7 +151,7 @@ void setup()
     printf("MP.begin error = %d\n", ret);
   }
   /* receive with non-blocking */
-//  MP.RecvTimeout(20);
+  MP.RecvTimeout(20);
 
   /* Initialize memory pools and message libs */
   Serial.println("Init memory Library");
@@ -224,8 +224,8 @@ void loop()
   int      read_size;
   int      ret;
 
-  Request  request;
-  Result*  result;
+  static Request  request;
+  static Result*  result;
 
   switch (state) {
     case StateReady:
@@ -257,18 +257,18 @@ void loop()
         /* Receive PCM captured buffer from MainCore */
         int ret = MP.Recv(&rcvid, &result, subcore);      
         if (ret >= 0) {
-          if (result->sample != 768) { break;}
+          if (result->sample != 1024) { break;}
           thePlayer->writeFrames(MediaPlayer::Player0, result->buffer, result->sample*2);
           pre_cnt++;
         } else {
-          printf("error! %d", ret);
-          exit(1);
+          printf("error! %d\n", ret);
+          break;
         }
       } else {
         break;
       }
       
-      if (pre_cnt > 10) {
+      if (pre_cnt > 5) {
         puts("player start");
         thePlayer->start(MediaPlayer::Player0, mediaplayer_decode_callback);
         pre_cnt = 0;
@@ -281,7 +281,7 @@ void loop()
   	{
       err_t err = theRecorder->readFrames(s_buffer, s_buffer_size, &read_size);
 
-      if (err != 0) {printf("Error! %x ,%x , %d\n",err,request.buffer,read_size);}
+//      if (err != 0) { printf("Error! %x ,%x , %d\n",err,request.buffer,read_size); }
       if (read_size > 0)
       {
         request.buffer  = s_buffer;
@@ -291,11 +291,11 @@ void loop()
         /* Receive PCM captured buffer from MainCore */
         ret = MP.Recv(&rcvid, &result, subcore);
         if (ret >= 0) {
-          if (result->sample != 768) {break;}
+          if (result->sample != 1024) {break;}
           thePlayer->writeFrames(MediaPlayer::Player0,result->buffer, result->sample*2);
         } else {
-          printf("error! %d", ret);
-          exit(1);
+//        printf("error! %d\n", ret);
+          break;
         }
       } else {
         break;
