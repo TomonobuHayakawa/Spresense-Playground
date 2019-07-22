@@ -19,23 +19,15 @@ Spresense-Playground
  ├ sketchies : Arduinoスケッチを置く場所。
 ```
 
+---
 ## Arduino ライブラリリスト
-
-### ファイルシステム関連
-* eMMC 
-* Flash 
-* SDHCI
-* File 
-
-+
-※これらは、近日中に公式リリースされるため削除予定。
 
 
 ### 信号処理関連
-* FFT
-* VoiceChanger
+* BSEC（BME680）
+* SignalProcessing(FFT/IIR)
+* VoiceChanger（SignalProcessingに移行後、廃棄）
 
----
 ### 音声処理関連
 * MIDI
 
@@ -48,7 +40,10 @@ Spresense-Playground
     - diy_player_wo_sensing
     - NetRadio_w_sensing
 
+- USB_UART
 - I2cScanner
 - LowPowerSensing
     - bme680_ulp_plus_via_sigfox
     - bme680_uulp_plus_via_sigfox
+- wf931
+
