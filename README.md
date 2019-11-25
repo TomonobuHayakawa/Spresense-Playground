@@ -12,22 +12,28 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 11/25 
 ・高速レンダリングのサンプル追加。
 
+```
 Spresense-Playground
  |
  ├ sketchies : Arduinoスケッチを置く場所。
      |
      ├ AudioRendering
+```
 
 ・楽器プロジェクトのサンプル追加。
 
+```
 Spresense-Playground
  |
  ├ sketchies : Arduinoスケッチを置く場所。
      |
      ├ Instruments
+```
 
 
 ・不要になった以下のライブラリ・サンプルを削除。
+
+```
 Spresense-Playground
  |
  ├ libraries : Arduinoライブラリを置く場所。
@@ -37,6 +43,7 @@ Spresense-Playground
  ├ sketchies : Arduinoスケッチを置く場所。
      |
      ├ wf931 (本家立ち上げにつき)
+```
 
 
 wf931は、以下。
