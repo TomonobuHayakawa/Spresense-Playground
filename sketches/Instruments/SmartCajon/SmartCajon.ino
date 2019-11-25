@@ -56,26 +56,33 @@ static bool getFrame(AsPcmDataParam *pcm)
   return true;
 }
 
-static bool start()
+static bool start(uint8_t no)
 {
-  printf("start() start\n");
-  
+  printf("start(%d) start\n", no);
+
   /* Open file placed on SD card */
 
-  char fullpath[64] = { 0 };
-//  snprintf(fullpath, sizeof(fullpath), "AUDIO/%s", "sound_48000_16_1.raw");
-//  snprintf(fullpath, sizeof(fullpath), "AUDIO/%s", "drum2_snare.raw");
-  snprintf(fullpath, sizeof(fullpath), "AUDIO/%s", "drum2_cymbal.raw");
-//  snprintf(fullpath, sizeof(fullpath), "AUDIO/%s", "kiichi_akeome.raw");
+  const char *raw_files[] =
+  {
+    "drum2_cymbal.raw",
+    "drum2_snare.raw",
+    "kiichi_akeome.raw",
+  };
 
+  char fullpath[64] = { 0 };
+
+  assert(no < sizeof(raw_files) / sizeof(char *));
+
+  snprintf(fullpath, sizeof(fullpath), "AUDIO/%s", raw_files[no]);
 
   myFile = theSD.open(fullpath);
 
-  if (!myFile) {
-    printf("File open error\n");
-    return false;
-  }
-  
+  if (!myFile)
+    {
+      printf("File open error\n");
+      return false;
+    }
+
   printf("start() complete\n");
 
   return true;
@@ -125,7 +132,6 @@ static void outputmixer_done_callback(MsgQueId requester_dtq,
 static void outmixer_send_callback(int32_t identifier, bool is_end)
 {
   //printf("send done %d %d\n", identifier, is_end);
-  //next.type = (!is_end) ? AsNextNormalRequest : AsNextStopResRequest;
 
   //AsPcmDataParam pcm_param;
   //fillFrame(&pcm_param);
@@ -133,7 +139,6 @@ static void outmixer_send_callback(int32_t identifier, bool is_end)
   //theMixer->sendData(OutputMixer0,
   //                   outmixer_send_callback,
   //                   pcm_param);
-
   return;
 }
 
@@ -205,14 +210,33 @@ void setup()
   digitalWrite(LED0, HIGH);
 }
 
-void loop()
-{
-  static enum State {
-    Stopped,
+static enum State {
     Ready,
     Active
-  } s_state = Stopped;
+} s_state = Ready;
+
+uint8_t start_event(uint8_t playno, uint8_t eventno)
+{
+  if (s_state == Ready) {
+    start(eventno);
+    s_state = Active;
+  } else {
+    if(playno == eventno){
+      printf("Restart\n");
+      myFile.seek(0);
+    }else{
+      myFile.close();
+      start(eventno);
+    }
+  }
+  return eventno;
+}
+
+void loop()
+{
+
   err_t err = OUTPUTMIXER_ECODE_OK;
+  uint8_t playno = 0xff;
 
   /* Fatal error */
   if (ErrEnd) {
@@ -226,76 +250,19 @@ void loop()
 
   ///ここを差し替える
 
-int gauge  =0;
-int i;
-
-
-/*
-  for(i=0;i<10;i++){
-    if(!digitalRead(PIN_D12)){
-     gauge++;
-     delay(5);
-    }
-  }
-*/
-
-gauge = analogRead(A2);
+  int gauge = analogRead(A2);
 
   if( gauge> 1000){
-        if (s_state == Stopped) {
-          s_state = Ready;
-          printf("gauge= %d\n" ,gauge); 
-          digitalWrite(LED1, HIGH);
-
-
-        }
-        else if (s_state == Active) {
-          printf("Restart\n");
-          myFile.seek(0);
-        }else{
-        }
-  } 
-  
-        
-  /*
-
-  if (Serial.available() > 0) {
-    switch (Serial.read()) {
-      case 'p': // play
-        if (s_state == Stopped) {
-          s_state = Ready;
-        }
-        else if (s_state == Active) {
-          printf("Restart\n");
-          myFile.seek(0);
-        }
-        break;
-      case 's': // stop
-        if (s_state == Active) {
-          stop();
-        }
-        s_state = Stopped;
-        break;
-      default:
-        break;
-    }
+    printf("gauge= %d\n" ,gauge); 
+    digitalWrite(LED1, HIGH);
+    playno = start_event(playno,0);
   }
-
-*/
+  
   /* Processing in accordance with the state */
 
   switch (s_state) {
-    case Stopped:
-              digitalWrite(LED1, LOW);
-      break;
-
     case Ready:
-      if (start()) {
-        s_state = Active;
-      }
-      else {
-        goto stop_player;
-      }
+      digitalWrite(LED1, LOW);
       break;
 
     case Active:
@@ -321,7 +288,7 @@ gauge = analogRead(A2);
         /* If file end, close file and move to Stopped state */
         if (pcm_param.is_end) {
           myFile.close();
-          s_state = Stopped;
+          s_state = Ready;
           break;        
         }
       }
@@ -329,10 +296,6 @@ gauge = analogRead(A2);
 
     default:
       break;
-
-
-      
-
   }
 
   /* This sleep is adjusted by the time to read the audio stream file.
@@ -348,8 +311,4 @@ stop_player:
   printf("Exit player\n");
   myFile.close();
   exit(1);
-
-
-
-  
 }
