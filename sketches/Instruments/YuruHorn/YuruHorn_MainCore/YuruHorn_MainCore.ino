@@ -40,8 +40,8 @@ void setup()
 
   Serial.println("Init Audio Recorder");
   /* Select input device as AMIC */
-  //theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC, 210);
-  theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC);
+  theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC, 180);
+//  theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC);
 
   /* Set PCM capture */
   uint8_t channel;
@@ -70,7 +70,24 @@ void setup()
 
 /* ----- hayakawa 11-24 ----- */ 
   cxd56_audio_set_spout(true);
-  cxd56_audio_en_output();    
+  cxd56_audio_en_output();
+
+  cxd56_audio_signal_t sig_id;
+  cxd56_audio_sel_t    sel_info;
+
+  sig_id = CXD56_AUDIO_SIG_MIC1;
+
+  sel_info.au_dat_sel1 = true;
+  sel_info.au_dat_sel2 = false;
+  sel_info.cod_insel2  = true;
+  sel_info.cod_insel3  = false;
+  sel_info.src1in_sel  = false;
+  sel_info.src2in_sel  = false;
+
+  cxd56_audio_set_datapath(sig_id, sel_info);
+  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN1, 0);  
+  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_OUT, -20/*db*/);
+
   board_external_amp_mute_control(false);
 
 /* ----- gokan 11-14 ----- */ 
@@ -92,13 +109,17 @@ void beep_control(int fq)
   beep_pw[1] = beep_pw[2];
   beep_pw[0] = beep_pw[1];
 
-  if(power_ave<30){
-    vol = -120;
-  }else if(power_ave<100){
-    vol = -60;    
-  }else if(power_ave<300){
-    vol = -40; 
+  if(power_ave<50){
+    vol = -90;
+  }else if(power_ave<200){
+    vol = -60;
   }else if(power_ave<500){
+    vol = -52;
+  }else if(power_ave<800){
+    vol = -46;
+  }else if(power_ave<1200){
+    vol = -40;
+  }else if(power_ave<2000){
     vol = -32;      
   }else{
     vol = -24;
