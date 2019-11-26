@@ -14,9 +14,9 @@ extern "C" {
 AudioClass *theAudio;
 
 /* Select mic channel number */
-//const int mic_channel_num = 1;
+const int mic_channel_num = 1;
 //const int mic_channel_num = 2;
-const int mic_channel_num = 4;
+//const int mic_channel_num = 4;
 
 const int subcore = 1;
 
@@ -78,6 +78,43 @@ void setup()
   theAudio->startRecorder();
 }
 
+void beep_control(int fq)
+{
+  static int beep_fq[3] = {0,0,0};
+  static int beep_pw[3] = {0,0,0};
+  int vol;
+  beep_pw[2] = 0xffff & fq;
+  beep_fq[2] = MIN((fq >> 16), 650);
+  int beep_ave = (beep_fq[2] + beep_fq[1] + beep_fq[0])/3;
+  int power_ave = (beep_pw[2] + beep_pw[1] + beep_pw[0])/3;
+  beep_fq[1] = beep_fq[2];
+  beep_fq[0] = beep_fq[1];
+  beep_pw[1] = beep_pw[2];
+  beep_pw[0] = beep_pw[1];
+
+  if(power_ave<30){
+    vol = -120;
+  }else if(power_ave<100){
+    vol = -60;    
+  }else if(power_ave<300){
+    vol = -40; 
+  }else if(power_ave<500){
+    vol = -32;      
+  }else{
+    vol = -24;
+  }
+
+/*  printf("power_ave =%d\n",power_ave);
+  printf("ave =%d\n",beep_ave);
+  printf("vol =%d\n",vol);*/
+
+  if ( beep_ave > 100 && beep_ave < 650 ) {
+     theAudio->setBeep(1,vol, beep_ave);
+  }else{
+     theAudio->setBeep(0, 0, 0);
+  }
+}
+
 void loop()
 {
   int8_t   sndid = 100; /* user-defined msgid */
@@ -110,18 +147,13 @@ void loop()
 /* ----- gokan 11-14 ----- */
     int       ret_fq;
     int8_t    id_fq;
-    int       *peak_fq;
+    int       peak_fq;
     ret_fq = MP.Recv( &id_fq, &peak_fq, subcore );
     if ( ret_fq > 0 ) {
-      int peakFsi = (int) peak_fq;
-
-      MP.Send(50, peakFsi, 2);
-
-/* ----- hayakawa 11-24 ----- */ 
-      int beep_fq = peak_fq;
-      theAudio->setBeep(1,-40, beep_fq);
-
+      if((peak_fq >> 16) > 100 && (peak_fq >> 16) < 650 ) {
+        int peakFsi = (int) (peak_fq >> 16);
+        MP.Send(50, peakFsi, 2);
+      }
+      beep_control(peak_fq);
     }
-/* ----- gokan 11-14 ----- */ 
-
 }

@@ -1,22 +1,3 @@
-/*
- *  SubFFT.ino - MP Example for Audio FFT 
- *  Copyright 2019 Sony Semiconductor Solutions Corporation
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
 #ifndef SUBCORE
 #error "Core selection is wrong!!"
 #endif
@@ -40,10 +21,10 @@
 #define FFTLEN 2048
 //#define FFTLEN 4096
 
-const int g_channel = 4;
+const int g_channel = 1;
 
 /* Ring buffer */
-#define INPUT_BUFFER (1024 * 4)
+#define INPUT_BUFFER (FFTLEN * 4)
 RingBuff ringbuf[g_channel](INPUT_BUFFER);
 
 /* Allocate the larger heap size than default */
@@ -103,6 +84,7 @@ void fft_processing(int chnum)
 {
   int i;
   float peakFs[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  float peakPow[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
   for (i = 0; i < chnum; i++) {
     /* Read from the ring buffer */
@@ -112,17 +94,17 @@ void fft_processing(int chnum)
     fft(pSrc, pDst, FFTLEN);
 
     /* Peak */
-    peakFs[i] = get_peak_frequency(pDst, FFTLEN);
+    peakFs[i] = get_peak_frequency(pDst, FFTLEN, &peakPow[i]);
   }
 
 /* ----- gokan 11-14 ----- */ 
 //  printf("24000 %8.3f %8.3f %8.3f %8.3f\n", peakFs[0], peakFs[1], peakFs[2], peakFs[3]);
 
-    if ( peakFs[0] > 100 && peakFs[0] < 650 ) {
+//    if ( peakFs[0] > 100 && peakFs[0] < 650 ) {
         printf( "sub %8.3f -> ", peakFs[0] );
-        uint32_t peak_fq = peakFs[0] * 100;
+        uint32_t peak_fq = (int)peakFs[0] << 16 | (0xffff & (int) (peakPow[0] *100));
         MP.Send( 127, peak_fq );
-      }
+//      }
 /* ----- gokan 11-14 ----- */ 
 
 }
@@ -157,7 +139,7 @@ void fft(float *pSrc, float *pDst, int fftLen)
   pDst[fftLen / 2] = tmpBuf[1];
 }
 
-float get_peak_frequency(float *pData, int fftLen)
+float get_peak_frequency(float *pData, int fftLen, float *power)
 {
   float g_fs = 48000.0f;
   uint32_t index;
@@ -166,6 +148,7 @@ float get_peak_frequency(float *pData, int fftLen)
   float peakFs;
 
   arm_max_f32(pData, fftLen / 2, &maxValue, &index);
+  *power = maxValue;
 
   delta = 0.5 * (pData[index - 1] - pData[index + 1])
     / (pData[index - 1] + pData[index + 1] - (2.0f * pData[index]));
