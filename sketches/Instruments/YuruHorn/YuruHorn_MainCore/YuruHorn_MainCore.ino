@@ -1,6 +1,21 @@
-#ifdef SUBCORE
-#error "Core selection is wrong!!"
-#endif
+/*
+ *  MainAudio.ino - MP Example for Audio FFT 
+ *  Copyright 2019 Sony Semiconductor Solutions Corporation
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include <MP.h>
 #include <Audio.h>
@@ -26,6 +41,17 @@ struct Capture {
   int  chnum;
 };
 
+/*struct Result {
+  float peak[mic_channel_num];
+  int  chnum;
+};*/
+
+struct Result {
+  uint16_t peak[mic_channel_num];
+  uint16_t power[mic_channel_num];
+  int  chnum;
+};
+
 
 void setup()
 {
@@ -40,8 +66,8 @@ void setup()
 
   Serial.println("Init Audio Recorder");
   /* Select input device as AMIC */
-  theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC, 180);
-//  theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC);
+  //theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC, 210);
+  theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC);
 
   /* Set PCM capture */
   uint8_t channel;
@@ -62,7 +88,6 @@ void setup()
   if (ret < 0) {
     puts("MP.begin error = 2\n");
   }
-
 
 /* ----- gokan 11-14 ----- */ 
   /* receive with non-blocking */
@@ -95,13 +120,13 @@ void setup()
   theAudio->startRecorder();
 }
 
-void beep_control(int fq)
+void beep_control(uint16_t pw,uint16_t fq)
 {
   static int beep_fq[3] = {0,0,0};
   static int beep_pw[3] = {0,0,0};
   int vol;
-  beep_pw[2] = 0xffff & fq;
-  beep_fq[2] = MIN((fq >> 16), 650);
+  beep_pw[2] = pw;
+  beep_fq[2] = MIN(fq, 650);
   int beep_ave = (beep_fq[2] + beep_fq[1] + beep_fq[0])/3;
   int power_ave = (beep_pw[2] + beep_pw[1] + beep_pw[0])/3;
   beep_fq[1] = beep_fq[2];
@@ -139,8 +164,10 @@ void beep_control(int fq)
 void loop()
 {
   int8_t   sndid = 100; /* user-defined msgid */
+  int8_t   rcvid = 0;
   Capture  capture;
-
+  Result*  result;
+  
   static const int32_t buffer_sample = 768 * mic_channel_num;
   static const int32_t buffer_size = buffer_sample * sizeof(int16_t);
   static char  buffer[buffer_size];
@@ -155,26 +182,24 @@ void loop()
     theAudio->stopRecorder();
     exit(1);
   }
-
   if ((read_size != 0) && (read_size == buffer_size)) {
     capture.buff   = buffer;
     capture.sample = buffer_sample / mic_channel_num;
     capture.chnum  = mic_channel_num;
     MP.Send(sndid, &capture, subcore);
   } else {
-    usleep(1);
+    /* Receive PCM captured buffer from MainCore */
+    int ret = MP.Recv(&rcvid, &result, subcore);
+    if (ret >= 0) {
+      for(int i=0;i<mic_channel_num;i++){
+        if(result->peak[i] > 100 && result->peak[i] < 650 ) {
+          MP.Send(50, result->peak[i], 2);
+        }
+        beep_control(result->power[i],result->peak[i]);
+        printf("main %d, %d, ", result->power[i], result->peak[i]);
+      }
+      printf("\n");
+    }
   }
 
-/* ----- gokan 11-14 ----- */
-    int       ret_fq;
-    int8_t    id_fq;
-    int       peak_fq;
-    ret_fq = MP.Recv( &id_fq, &peak_fq, subcore );
-    if ( ret_fq > 0 ) {
-      if((peak_fq >> 16) > 100 && (peak_fq >> 16) < 650 ) {
-        int peakFsi = (int) (peak_fq >> 16);
-        MP.Send(50, peakFsi, 2);
-      }
-      beep_control(peak_fq);
-    }
 }
