@@ -228,7 +228,7 @@ void loop()
         int tone_fq = (int) range[i + octave_shift].just;
         tone(PIN, tone_fq, 150);
 
-        printf( " %s , %d\n", range[i].note_name, tone_fq );
+//        printf( " %s , %d\n", range[i].note_name, tone_fq );
 
         lcdcu_set( 0, 1 );
         i2cprint(String(range[i].note_name));
