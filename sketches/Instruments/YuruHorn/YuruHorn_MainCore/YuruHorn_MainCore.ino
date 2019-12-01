@@ -90,6 +90,7 @@ static bool mediarecorder_done_callback(AsRecorderEvent event, uint32_t result, 
   return true;
 }
 
+
 void setup()
 {
   int ret;
@@ -219,6 +220,47 @@ void beep_control(uint16_t pw,uint16_t fq)
      app_beep(1,vol, beep_ave);
   }else{
      app_beep(0, 0, 0);
+  }
+}
+
+void beep_control(uint16_t pw,uint16_t fq)
+{
+  static int beep_fq[3] = {0,0,0};
+  static int beep_pw[3] = {0,0,0};
+  int vol;
+  beep_pw[2] = pw;
+  beep_fq[2] = MIN(fq, 650);
+  int beep_ave = (beep_fq[2] + beep_fq[1] + beep_fq[0])/3;
+  int power_ave = (beep_pw[2] + beep_pw[1] + beep_pw[0])/3;
+  beep_fq[1] = beep_fq[2];
+  beep_fq[0] = beep_fq[1];
+  beep_pw[1] = beep_pw[2];
+  beep_pw[0] = beep_pw[1];
+
+  if(power_ave<50){
+    vol = -90;
+  }else if(power_ave<200){
+    vol = -60;
+  }else if(power_ave<500){
+    vol = -52;
+  }else if(power_ave<800){
+    vol = -46;
+  }else if(power_ave<1200){
+    vol = -40;
+  }else if(power_ave<2000){
+    vol = -32;      
+  }else{
+    vol = -24;
+  }
+
+/*  printf("power_ave =%d\n",power_ave);
+  printf("ave =%d\n",beep_ave);
+  printf("vol =%d\n",vol);*/
+
+  if ( beep_ave > 100 && beep_ave < 650 ) {
+     theAudio->setBeep(1,vol, beep_ave);
+  }else{
+     theAudio->setBeep(0, 0, 0);
   }
 }
 
