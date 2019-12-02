@@ -43,7 +43,6 @@ int gauge_a3_p2=0;
 int detect_peak_a2;
 int detect_peak_a3;
 
-
 static bool getFrame(AsPcmDataParam *pcm)
 {
   const uint32_t readsize = 480 * 2 * 2;
@@ -326,7 +325,6 @@ void loop()
     digitalWrite(LED2, HIGH);
     playno = start_event(playno,5);
   }
-
   /* Processing in accordance with the state */
 
   switch (s_state) {

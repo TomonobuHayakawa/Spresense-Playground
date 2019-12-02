@@ -67,11 +67,10 @@ void loop()
   int8_t   sndid = 10; /* user-defined msgid */
   int8_t   rcvid;
   Capture *capture;
-  Result   result;
-     
+  staic Result   result;
+
   static float pDst[FFTLEN/2];
 
- 
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &capture);
   if (ret >= 0) {
