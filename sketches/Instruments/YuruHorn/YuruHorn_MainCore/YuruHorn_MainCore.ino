@@ -6,6 +6,8 @@
 #include <MediaRecorder.h>
 #include <MemoryUtil.h>
 
+//#define ENABLE_THROUGH
+
 #include <arch/chip/cxd56_audio.h>  /* For set_datapath */
 
 extern "C" {
@@ -151,6 +153,7 @@ void setup()
   cxd56_audio_set_spout(true);
   cxd56_audio_en_output();
 
+#ifdef ENABLE_THROUGH
   cxd56_audio_signal_t sig_id;
   cxd56_audio_sel_t    sel_info;
 
@@ -166,6 +169,8 @@ void setup()
   cxd56_audio_set_datapath(sig_id, sel_info);
   cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN1, 0);  
   cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_OUT, -20/*db*/);
+
+#endif /* ENABLE_THROUGH */
 
   board_external_amp_mute_control(false);
 
@@ -183,17 +188,9 @@ void setup()
 
 void beep_control(uint16_t pw,uint16_t fq)
 {
-  static int beep_fq[3] = {0,0,0};
-  static int beep_pw[3] = {0,0,0};
   int vol;
-  beep_pw[2] = pw;
-  beep_fq[2] = MIN(fq, 650);
-  int beep_ave = (beep_fq[2] + beep_fq[1] + beep_fq[0])/3;
-  int power_ave = (beep_pw[2] + beep_pw[1] + beep_pw[0])/3;
-  beep_fq[1] = beep_fq[2];
-  beep_fq[0] = beep_fq[1];
-  beep_pw[1] = beep_pw[2];
-  beep_pw[0] = beep_pw[1];
+  int beep_ave = MIN(fq, 650);
+  int power_ave = pw;
 
   if(power_ave<50){
     vol = -90;
@@ -215,7 +212,7 @@ void beep_control(uint16_t pw,uint16_t fq)
   printf("ave =%d\n",beep_ave);
   printf("vol =%d\n",vol);*/
 
-  if ( beep_ave > 100 && beep_ave < 650 ) {
+  if ( beep_ave > 100 && beep_ave < 3000 ) {
      app_beep(1,vol, beep_ave);
   }else{
      app_beep(0, 0, 0);
@@ -257,9 +254,9 @@ void loop()
           MP.Send(50, result->peak[i], 2);
         }
         beep_control(result->power[i],result->peak[i]);
-        printf("main %d, %d, ", result->power[i], result->peak[i]);
+//        printf("main %d, %d, ", result->power[i], result->peak[i]);
       }
-      printf("\n");
+//      printf("\n");
     }
   }
 
