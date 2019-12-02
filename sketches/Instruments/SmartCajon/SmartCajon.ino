@@ -33,6 +33,17 @@ File myFile;
 
 bool ErrEnd = false;
 
+//sensor input
+int gauge_a2=0;
+int gauge_a3=0;
+int gauge_a2_p1=0;
+int gauge_a3_p1=0;
+int gauge_a2_p2=0;
+int gauge_a3_p2=0;
+int detect_peak_a2;
+int detect_peak_a3;
+
+
 static bool getFrame(AsPcmDataParam *pcm)
 {
   const uint32_t readsize = 480 * 2 * 2;
@@ -62,9 +73,12 @@ static bool start(uint8_t no)
 
   const char *raw_files[] =
   {
-    "drum2_cymbal.raw",
-    "drum2_snare.raw",
-    "kiichi_akeome.raw",
+    "drum2_cymbal.raw",    //0
+    "drum2_snare.raw",     //1
+    "drum2_ride.raw",      //2
+    "drum2_kick.raw",      //3
+    "kiichi_akeome.raw",   //4 
+    "clap_01.raw",         //5
   };
 
   char fullpath[64] = { 0 };
@@ -228,7 +242,7 @@ void setup()
   cxd56_audio_set_datapath(sig_id, sel_info);
   
   /* Set main volume */
-  theMixer->setVolume(0, 0, 0);
+  theMixer->setVolume(0, 0, -60); // master pcm_source mic
 
   /* Unmute */
   board_external_amp_mute_control(false);
@@ -277,19 +291,48 @@ void loop()
 
   ///ここを差し替える
 
-  int gauge = analogRead(A2);
-
-  if( gauge> 1000){
-    printf("gauge= %d\n" ,gauge); 
-    digitalWrite(LED1, HIGH);
-    playno = start_event(playno,0);
-  }
+  //read analog input
+  //preserve previous data for peak detection
+  gauge_a2_p2 = gauge_a2_p1;
+  gauge_a2_p1 = gauge_a2;
+  gauge_a2 = analogRead(A2);
   
+  gauge_a3_p2 = gauge_a3_p1;
+  gauge_a3_p1 = gauge_a3;
+  gauge_a3 = analogRead(A3);  
+
+ 
+  //detect peak with previous sample
+
+//   detect_peak_a2 =(gauge_a2_p1 >gauge_a2_p2 && gauge_a2 >gauge_a2_p1 )?1:0;
+//   detect_peak_a3 =(gauge_a3_p1 >gauge_a3_p2 && gauge_a3 >gauge_a3_p1 )?1:0;
+   detect_peak_a2 =( gauge_a2 >gauge_a2_p1 )?1:0;
+   detect_peak_a3 =( gauge_a3 >gauge_a3_p1 )?1:0;
+
+
+
+  //threshold input and start event
+
+  if(detect_peak_a2==1 && gauge_a2> 1020){
+    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2); 
+    digitalWrite(LED1, HIGH);
+    playno = start_event(playno,0);   
+  }else if(detect_peak_a2==1 && gauge_a2 > 400){  
+    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2);  
+    digitalWrite(LED1, HIGH);
+    playno = start_event(playno,2);
+  }else if(detect_peak_a3==1 && gauge_a3 >1000){  
+    printf("gauge_a3= %d gauge_a3_p1= %d gauge_a3_p2= %d\n" ,gauge_a3,gauge_a3_p1,gauge_a3_p2);  
+    digitalWrite(LED2, HIGH);
+    playno = start_event(playno,5);
+  }
+
   /* Processing in accordance with the state */
 
   switch (s_state) {
     case Ready:
       digitalWrite(LED1, LOW);
+      digitalWrite(LED2, LOW);
       break;
 
     case Active:
