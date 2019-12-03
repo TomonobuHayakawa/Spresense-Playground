@@ -1,5 +1,5 @@
 /*
- *  player_playlist.ino - Sound player example application by playlist
+ *  SmartCajon.ino - Sound player example application by playlist
  *  Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
@@ -40,8 +40,15 @@ int gauge_a2_p1=0;
 int gauge_a3_p1=0;
 int gauge_a2_p2=0;
 int gauge_a3_p2=0;
+int gauge_a2_p3=0;
+
 int detect_peak_a2;
 int detect_peak_a3;
+
+//toggle switch
+#define OFF 0
+#define ON 1
+int toggle = OFF;
 
 
 static bool getFrame(AsPcmDataParam *pcm)
@@ -70,7 +77,7 @@ static bool start(uint8_t no)
   printf("start(%d) start\n", no);
 
   /* Open file placed on SD card */
-
+  /* 16bit RAW data  */
   const char *raw_files[] =
   {
     "drum2_cymbal.raw",    //0
@@ -169,6 +176,8 @@ void setup()
   printf("setup() start\n");
 
   /* pinsetup */
+
+  //tact switch for PDA01
   pinMode( PIN_D12, INPUT_PULLUP );
   pinMode( PIN_D07, INPUT_PULLUP );
   pinMode( PIN_D06, INPUT_PULLUP );
@@ -181,6 +190,8 @@ void setup()
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
   pinMode(LED3, OUTPUT);
+
+
   
   /* Display menu */
 
@@ -216,7 +227,8 @@ void setup()
   cxd56_audio_en_input();
   cxd56_audio_mic_gain_t  mic_gain;
 
-  mic_gain.gain[0] = 210;
+ // mic_gain.gain[0] = 210;
+  mic_gain.gain[0] = 50;
   mic_gain.gain[1] = 0;
   mic_gain.gain[2] = 0;
   mic_gain.gain[3] = 0;
@@ -242,7 +254,7 @@ void setup()
   cxd56_audio_set_datapath(sig_id, sel_info);
   
   /* Set main volume */
-  theMixer->setVolume(0, 0, -60); // master pcm_source mic
+  theMixer->setVolume(0, -60, -60); // master pcm_source mic
 
   /* Unmute */
   board_external_amp_mute_control(false);
@@ -291,8 +303,33 @@ void loop()
 
   ///ここを差し替える
 
+  //トグルスイッチ処理
+  //ボタンを押されたらトグルを有効にする
+  if (digitalRead(PIN_D12) == LOW || toggle == ON) {
+    toggle = ON;
+
+    //ボタンが押され続けている場合の処理
+    while (digitalRead(PIN_D12) == LOW) {
+    }
+
+    //トグル有効中の通常ループ
+    // led_flash();
+  }
+
+    //トグル動作中にボタンONでフラグを消す
+  if (digitalRead(PIN_D12) == LOW && toggle == ON) {
+    toggle = OFF;
+
+    //ボタンが押され続けている場合の処理
+    while (digitalRead(PIN_D12) == LOW)
+    {
+    }
+  }
+
+  //タッチセンサ処理
   //read analog input
-  //preserve previous data for peak detection
+  //preserve previous data for rising edge detection
+  gauge_a2_p3 = gauge_a2_p2;
   gauge_a2_p2 = gauge_a2_p1;
   gauge_a2_p1 = gauge_a2;
   gauge_a2 = analogRead(A2);
@@ -302,29 +339,31 @@ void loop()
   gauge_a3 = analogRead(A3);  
 
  
-  //detect peak with previous sample
+  //detect rising edge with previous sample
 
-//   detect_peak_a2 =(gauge_a2_p1 >gauge_a2_p2 && gauge_a2 >gauge_a2_p1 )?1:0;
-//   detect_peak_a3 =(gauge_a3_p1 >gauge_a3_p2 && gauge_a3 >gauge_a3_p1 )?1:0;
-   detect_peak_a2 =( gauge_a2 >gauge_a2_p1 )?1:0;
+   detect_peak_a2 =( gauge_a2_p2 >gauge_a2_p3 )?1:0;
    detect_peak_a3 =( gauge_a3 >gauge_a3_p1 )?1:0;
 
 
 
   //threshold input and start event
 
-  if(detect_peak_a2==1 && gauge_a2> 1020){
-    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2); 
+  if(detect_peak_a2==1 && gauge_a2> 1020 && gauge_a2_p1>1020  && gauge_a2_p2 > 1020){
+    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d　toggle= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle); 
     digitalWrite(LED1, HIGH);
     playno = start_event(playno,0);   
-  }else if(detect_peak_a2==1 && gauge_a2 > 400){  
-    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2);  
+  }else if(detect_peak_a2==1 && gauge_a2 > 300){  
+    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d toggle= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle);  
     digitalWrite(LED1, HIGH);
     playno = start_event(playno,2);
   }else if(detect_peak_a3==1 && gauge_a3 >1000){  
-    printf("gauge_a3= %d gauge_a3_p1= %d gauge_a3_p2= %d\n" ,gauge_a3,gauge_a3_p1,gauge_a3_p2);  
+    printf("gauge_a3= %d gauge_a3_p1= %d gauge_a3_p2= %d toggle= %d\n" ,gauge_a3,gauge_a3_p1,gauge_a3_p2,toggle);  
     digitalWrite(LED2, HIGH);
+    if(toggle==OFF){
     playno = start_event(playno,5);
+    }else{
+    playno = start_event(playno,3);
+    }
   }
 
   /* Processing in accordance with the state */
@@ -373,7 +412,7 @@ void loop()
      being processed at the same time by Application.
    */
 
-//  usleep(1 * 1000);
+  usleep(1 * 5000);
 //  usleep(1 * 100000);
   return;
 
