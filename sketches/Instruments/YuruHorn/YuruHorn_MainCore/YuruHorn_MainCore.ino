@@ -190,30 +190,33 @@ void setup()
 void beep_control(uint16_t pw,uint16_t fq)
 {
   int vol;
-  int beep_ave = MIN(fq, 650);
+  int beep_ave = MIN(fq, 700);
   int power_ave = pw;
 
   if(power_ave<50){
+     app_beep(0, 0, 0);
+     return;
+  }else if(power_ave<100){
     vol = -90;
-  }else if(power_ave<200){
+  }else if(power_ave<300){
     vol = -60;
   }else if(power_ave<500){
-    vol = -52;
+    vol = -54;
   }else if(power_ave<800){
-    vol = -46;
+    vol = -48;
   }else if(power_ave<1200){
-    vol = -40;
+    vol = -42;
   }else if(power_ave<2000){
-    vol = -32;      
+    vol = -36;      
   }else{
-    vol = -24;
+    vol = -28;
   }
 
 /*  printf("power_ave =%d\n",power_ave);
   printf("ave =%d\n",beep_ave);
   printf("vol =%d\n",vol);*/
 
-  if ( beep_ave > 100 && beep_ave < 3000 ) {
+  if ( beep_ave > 100 && beep_ave < 700 ) {
      app_beep(1,vol, beep_ave);
   }else{
      app_beep(0, 0, 0);
@@ -251,13 +254,13 @@ void loop()
     int ret = MP.Recv(&rcvid, &result, subcore);
     if (ret >= 0) {
       for(int i=0;i<mic_channel_num;i++){
-        if(result->peak[i] > 100 && result->peak[i] < 650 ) {
+        if(result->peak[i] > 100 && result->peak[i] < 700 ) {
           MP.Send(50, result->peak[i], 2);
         }
         beep_control(result->power[i],result->peak[i]);
-//        printf("main %d, %d, ", result->power[i], result->peak[i]);
+        printf("main %d, %d, ", result->power[i], result->peak[i]);
       }
-//      printf("\n");
+      printf("\n");
     }
   }
 
