@@ -45,12 +45,15 @@ int gauge_a2_p3=0;
 int detect_peak_a2;
 int detect_peak_a3;
 
+<<<<<<< HEAD
 //toggle switch
 #define OFF 0
 #define ON 1
 int toggle = OFF;
 
 
+=======
+>>>>>>> 2fb86e88a8ad674d8683479f0cdcc962f3ae5d16
 static bool getFrame(AsPcmDataParam *pcm)
 {
   const uint32_t readsize = 480 * 2 * 2;
@@ -365,7 +368,6 @@ void loop()
     playno = start_event(playno,3);
     }
   }
-
   /* Processing in accordance with the state */
 
   switch (s_state) {
