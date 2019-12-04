@@ -506,11 +506,15 @@ void loop()
 
   //トグルスイッチ処理
   //ボタンを押されたらトグルを有効にする
-  if (digitalRead(PIN_D12) == LOW || toggle == ON) {
+  if (digitalRead(PIN_D12) == LOW && toggle == OFF) {
     toggle = ON;
+    digitalWrite(LED1, HIGH);
 
     //ボタンが押され続けている場合の処理
     while (digitalRead(PIN_D12) == LOW) {
+    toggle = ON;
+    digitalWrite(LED1, HIGH);
+     
     }
 
     //トグル有効中の通常ループ
@@ -520,10 +524,13 @@ void loop()
     //トグル動作中にボタンONでフラグを消す
   if (digitalRead(PIN_D12) == LOW && toggle == ON) {
     toggle = OFF;
-
+    digitalWrite(LED1, LOW);
+    
     //ボタンが押され続けている場合の処理
     while (digitalRead(PIN_D12) == LOW)
     {
+    toggle = OFF;
+    digitalWrite(LED1, LOW);
     }
   }
 
@@ -551,15 +558,15 @@ void loop()
 
   if(detect_peak_a2==1 && gauge_a2> 1020 && gauge_a2_p1>1020  && gauge_a2_p2 > 1020){
     printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d　toggle= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle); 
-    digitalWrite(LED1, HIGH);
+//    digitalWrite(LED1, HIGH);
     playno = start_event(playno,0);   
   }else if(detect_peak_a2==1 && gauge_a2 > 300){  
     printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d toggle= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle);  
-    digitalWrite(LED1, HIGH);
+//    digitalWrite(LED1, HIGH);
     playno = start_event(playno,2);
   }else if(detect_peak_a3==1 && gauge_a3 >1000){  
     printf("gauge_a3= %d gauge_a3_p1= %d gauge_a3_p2= %d toggle= %d\n" ,gauge_a3,gauge_a3_p1,gauge_a3_p2,toggle);  
-    digitalWrite(LED2, HIGH);
+//    digitalWrite(LED2, HIGH);
     if(toggle==OFF){
     playno = start_event(playno,5);
     }else{
@@ -572,8 +579,8 @@ void loop()
     case Stopping:
       break;
     case Ready:
-      digitalWrite(LED1, LOW);
-      digitalWrite(LED2, LOW);
+//      digitalWrite(LED1, LOW);
+//      digitalWrite(LED2, LOW);
       break;
 
     case Active:
