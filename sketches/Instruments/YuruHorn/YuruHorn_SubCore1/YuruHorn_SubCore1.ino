@@ -1,25 +1,8 @@
-/*
- *  SubFFT.ino - MP Example for Audio FFT 
- *  Copyright 2019 Sony Semiconductor Solutions Corporation
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
 
 #include <MP.h>
 
 #include "FFT.h"
+#include "AutoTune.h"
 
 /* Use CMSIS library */
 #define ARM_MATH_CM4
@@ -66,6 +49,35 @@ void setup()
   MP.RecvTimeout(MP_RECV_POLLING);
 
   FFT.begin();
+  AutoTune.begin();
+
+  AutoTune.set();
+}
+
+/* Tentative!!*/
+float smoothing_peak(float cur)
+{
+  static float data[3] = {0,0,0};
+
+  data[0] = cur;
+  float ave = (data[2] + data[1] + data[0])/3;
+  data[2] = data[1];
+  data[1] = data[0];
+	printf("cur=%8.3f, %8.3f\n",cur,ave);
+  return ave;
+}
+
+/* Tentative!!*/
+float smoothing_pow(float cur)
+{
+  static float data[3] = {0,0,0};
+
+  data[0] = cur;
+  float ave = (data[2] + data[1] + data[0])/3;
+  data[2] = data[1];
+  data[1] = data[0];
+	printf("pow=%8.3f, %8.3f\n",cur,ave);
+  return ave;
 }
 
 void loop()
@@ -87,18 +99,16 @@ void loop()
   float peak[4];
   float power[4];
   while(FFT.empty(0) != 1){
-//    printf("peak ");
-      result.chnum = g_channel;
+    result.chnum = g_channel;
     for (int i = 0; i < g_channel; i++) {
       int cnt = FFT.get(pDst,i);
       peak[i] = get_peak_frequency(pDst, FFTLEN, &power[i]);
-      result.peak[i] = (uint16_t)(peak[i]);
-      result.power[i] = (uint16_t)(power[i]*100);
-//      printf("Sub %8.3f, %8.3f,", power[i],peak[i]);
-//      printf("Sub %d, %d,", result.power[i],result.peak[i]);
-    }
-//    printf("\n");
+      result.peak[i] = (uint16_t)(AutoTune.get(smoothing_peak(peak[i])));
+      result.power[i] = (uint16_t)(smoothing_pow(power[i])*100);
+//      printf("Sub %8.3f, %8.3f\n", power[i],peak[i]);
+//      printf("Sub %d, %d\n", result.power[i],result.peak[i]);
 
+    }
     ret = MP.Send(sndid, &result,0);
     if (ret < 0) {
       errorLoop(1);
