@@ -51,7 +51,7 @@ void setup()
   FFT.begin();
   AutoTune.begin();
 
-  AutoTune.set();
+  AutoTune.set(E_Major);
 }
 
 /* Tentative!!*/

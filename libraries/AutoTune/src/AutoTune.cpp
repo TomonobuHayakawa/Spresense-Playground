@@ -40,16 +40,15 @@ void AutoTuneClass::begin()
   }
 }
 
-
-void AutoTuneClass::set()
+void AutoTuneClass::set(CodeTypeClass new_code)
 {
   /* ----- Select Use Note ----- */
   int range_setter = 0;
   for (int i = 0; i < 113; i++) {
     int j = i + 13;
     int ok = 0;
-    for (int o = 0; o < get_ommit_size(); o++) {
-      int ommit_shift = (ommit_note[o] + key_value) % 12;
+    for (int o = 0; o < new_code.get_size(); o++) {
+      int ommit_shift = ( new_code.get_notes()[o] + key_value) % 12;
       if ( j % 12 == ommit_shift ) {
 //        printf("ommit %d , %s\n", ommit_shift, octave[ommit_shift].note_name);
         ok = -1;

@@ -1,13 +1,16 @@
 #ifndef _AUTO_TUNE_H_
 #define _AUTO_TUNE_H_
 
+#include "CodeTable.h"
+
 class AutoTuneClass
 {
 public:
-  void begin();
-  void set();
+  void  begin();
+  void  set(CodeTypeClass);
+  void  octave(int i){octave_shift += i;}
   float get(float);
-  void end(){}
+  void  end(){}
 
 private:
 
