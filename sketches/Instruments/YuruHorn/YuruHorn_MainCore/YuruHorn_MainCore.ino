@@ -1,24 +1,12 @@
-/*
- *  MainAudio.ino - MP Example for Audio FFT 
- *  Copyright 2019 Sony Semiconductor Solutions Corporation
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
+#ifdef SUBCORE	
+#error "Core selection is wrong!!"	
+#endif	
 
 #include <MP.h>
-#include <Audio.h>
+#include <MediaRecorder.h>
+#include <MemoryUtil.h>
+
+//#define ENABLE_THROUGH
 
 #include <arch/chip/cxd56_audio.h>  /* For set_datapath */
 
@@ -26,7 +14,7 @@ extern "C" {
   extern void board_external_amp_mute_control(bool);
 }
 
-AudioClass *theAudio;
+MediaRecorder *theRecorder;
 
 /* Select mic channel number */
 const int mic_channel_num = 1;
@@ -52,6 +40,58 @@ struct Result {
   int  chnum;
 };
 
+static bool app_beep(bool en = false, int16_t vol = 255, uint16_t freq = 0)
+{
+  if (!en)
+    {
+      /* Stop beep */
+
+      if (cxd56_audio_stop_beep() != CXD56_AUDIO_ECODE_OK)
+        {
+          return false;
+        }
+    }
+
+  if (0 != freq)
+    {
+      /* Set beep frequency parameter */
+
+      if (cxd56_audio_set_beep_freq(freq) != CXD56_AUDIO_ECODE_OK)
+        {
+          return false;
+        }
+    }
+
+  if (255 != vol)
+    {
+      /* Set beep volume parameter */
+
+      if (cxd56_audio_set_beep_vol(vol) != CXD56_AUDIO_ECODE_OK)
+        {
+          return false;
+        }
+    }
+
+  if (en)
+    {
+      /* Play beep */
+
+      if (cxd56_audio_play_beep() != CXD56_AUDIO_ECODE_OK)
+        {
+          return false;
+        }
+    }
+
+  return true;
+}
+
+static bool mediarecorder_done_callback(AsRecorderEvent event, uint32_t result, uint32_t sub_result)
+{
+  printf("mp cb %x %x %x\n", event, result, sub_result);
+
+  return true;
+}
+
 
 void setup()
 {
@@ -60,25 +100,42 @@ void setup()
   Serial.begin(115200);
   while (!Serial);
 
-  Serial.println("Init Audio Library");
-  theAudio = AudioClass::getInstance();
-  theAudio->begin();
+  /* Initialize memory pools and message libs */
+
+  initMemoryPools();
+  createStaticPools(MEM_LAYOUT_RECORDER);
+
+  Serial.println("Init Recorder Library");
+  theRecorder = MediaRecorder::getInstance();
+  theRecorder->begin();
 
   Serial.println("Init Audio Recorder");
+
+  /* Set capture clock */
+
+  theRecorder->setCapturingClkMode(MEDIARECORDER_CAPCLK_NORMAL);
+
   /* Select input device as AMIC */
-  //theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC, 210);
-  theAudio->setRecorderMode(AS_SETRECDR_STS_INPUTDEVICE_MIC);
+
+  theRecorder->activate(AS_SETRECDR_STS_INPUTDEVICE_MIC, mediarecorder_done_callback);
 
   /* Set PCM capture */
+
   uint8_t channel;
   switch (mic_channel_num) {
   case 1: channel = AS_CHANNEL_MONO;   break;
   case 2: channel = AS_CHANNEL_STEREO; break;
   case 4: channel = AS_CHANNEL_4CH;    break;
   }
-  theAudio->initRecorder(AS_CODECTYPE_PCM, "/mnt/sd0/BIN", AS_SAMPLINGRATE_48000, channel);
+  theRecorder->init(AS_CODECTYPE_LPCM,
+                    channel,
+                    AS_SAMPLINGRATE_48000,
+                    AS_BITLENGTH_16,
+                    AS_BITRATE_96000,
+                    "/mnt/sd0/BIN");
 
   /* Launch SubCore */
+
   ret = MP.begin(subcore);
   if (ret < 0) {
     printf("MP.begin error = %d\n", ret);
@@ -97,6 +154,7 @@ void setup()
   cxd56_audio_set_spout(true);
   cxd56_audio_en_output();
 
+#ifdef ENABLE_THROUGH
   cxd56_audio_signal_t sig_id;
   cxd56_audio_sel_t    sel_info;
 
@@ -113,51 +171,55 @@ void setup()
   cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN1, 0);  
   cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_OUT, -20/*db*/);
 
+#endif /* ENABLE_THROUGH */
+
   board_external_amp_mute_control(false);
 
 /* ----- gokan 11-14 ----- */ 
 //  Serial.println("Start!\n");
-  theAudio->startRecorder();
+
+  /* Set Gain */
+
+  theRecorder->setMicGain(180);
+
+  /* Start Recorder */
+
+  theRecorder->start();
 }
 
 void beep_control(uint16_t pw,uint16_t fq)
 {
-  static int beep_fq[3] = {0,0,0};
-  static int beep_pw[3] = {0,0,0};
   int vol;
-  beep_pw[2] = pw;
-  beep_fq[2] = MIN(fq, 650);
-  int beep_ave = (beep_fq[2] + beep_fq[1] + beep_fq[0])/3;
-  int power_ave = (beep_pw[2] + beep_pw[1] + beep_pw[0])/3;
-  beep_fq[1] = beep_fq[2];
-  beep_fq[0] = beep_fq[1];
-  beep_pw[1] = beep_pw[2];
-  beep_pw[0] = beep_pw[1];
+  int beep_ave = MIN(fq, 700);
+  int power_ave = pw;
 
   if(power_ave<50){
+     app_beep(0, 0, 0);
+     return;
+  }else if(power_ave<100){
     vol = -90;
-  }else if(power_ave<200){
+  }else if(power_ave<300){
     vol = -60;
   }else if(power_ave<500){
-    vol = -52;
+    vol = -54;
   }else if(power_ave<800){
-    vol = -46;
+    vol = -48;
   }else if(power_ave<1200){
-    vol = -40;
+    vol = -42;
   }else if(power_ave<2000){
-    vol = -32;      
+    vol = -36;      
   }else{
-    vol = -24;
+    vol = -28;
   }
 
 /*  printf("power_ave =%d\n",power_ave);
   printf("ave =%d\n",beep_ave);
   printf("vol =%d\n",vol);*/
 
-  if ( beep_ave > 100 && beep_ave < 650 ) {
-     theAudio->setBeep(1,vol, beep_ave);
+  if ( beep_ave > 100 && beep_ave < 700 ) {
+     app_beep(1,vol, beep_ave);
   }else{
-     theAudio->setBeep(0, 0, 0);
+     app_beep(0, 0, 0);
   }
 }
 
@@ -174,12 +236,12 @@ void loop()
   uint32_t read_size;
 
   /* Read frames to record in buffer */
-  int err = theAudio->readFrames(buffer, buffer_size, &read_size);
+  int err = theRecorder->readFrames(buffer, buffer_size, &read_size);
 
-  if (err != AUDIOLIB_ECODE_OK && err != AUDIOLIB_ECODE_INSUFFICIENT_BUFFER_AREA) {
+  if (err != MEDIARECORDER_ECODE_OK && err != MEDIARECORDER_ECODE_INSUFFICIENT_BUFFER_AREA) {
     printf("Error err = %d\n", err);
     sleep(1);
-    theAudio->stopRecorder();
+    theRecorder->stop();
     exit(1);
   }
   if ((read_size != 0) && (read_size == buffer_size)) {
@@ -192,7 +254,7 @@ void loop()
     int ret = MP.Recv(&rcvid, &result, subcore);
     if (ret >= 0) {
       for(int i=0;i<mic_channel_num;i++){
-        if(result->peak[i] > 100 && result->peak[i] < 650 ) {
+        if(result->peak[i] > 100 && result->peak[i] < 700 ) {
           MP.Send(50, result->peak[i], 2);
         }
         beep_control(result->power[i],result->peak[i]);

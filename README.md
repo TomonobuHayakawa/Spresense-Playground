@@ -9,6 +9,12 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 --------------------
 ## What's new.
 
+12/5 
+・楽器に向けての @gokankenichi さん作AutoTuneをライブラリ化しました。
+
+※ライセンスちゃんと書きましょうか…。
+
+
 11/25 
 ・高速レンダリングのサンプル追加。
 
@@ -66,12 +72,14 @@ Spresense-Playground
 ---
 ## Arduino ライブラリリスト
 
+### センサドライバ関連
+* BSEC（BME680）
 
 ### 信号処理関連
-* BSEC（BME680）
 * SignalProcessing(FFT/IIR)
 
 ### 音声処理関連
+* AutoTune
 * MIDI
 
 ---
