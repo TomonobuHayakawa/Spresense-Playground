@@ -4,6 +4,8 @@
 
 #include <MP.h>
 #include <MediaRecorder.h>
+#include <Synthesizer.h>
+#include <OutputMixer.h>
 #include <MemoryUtil.h>
 
 //#define ENABLE_THROUGH
@@ -15,6 +17,8 @@ extern "C" {
 }
 
 MediaRecorder *theRecorder;
+OutputMixer *theMixer;
+Synthesizer *theSynthesizer;
 
 /* Select mic channel number */
 const int mic_channel_num = 1;
@@ -29,61 +33,12 @@ struct Capture {
   int  chnum;
 };
 
-/*struct Result {
-  float peak[mic_channel_num];
-  int  chnum;
-};*/
 
 struct Result {
   uint16_t peak[mic_channel_num];
   uint16_t power[mic_channel_num];
   int  chnum;
 };
-
-static bool app_beep(bool en = false, int16_t vol = 255, uint16_t freq = 0)
-{
-  if (!en)
-    {
-      /* Stop beep */
-
-      if (cxd56_audio_stop_beep() != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  if (0 != freq)
-    {
-      /* Set beep frequency parameter */
-
-      if (cxd56_audio_set_beep_freq(freq) != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  if (255 != vol)
-    {
-      /* Set beep volume parameter */
-
-      if (cxd56_audio_set_beep_vol(vol) != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  if (en)
-    {
-      /* Play beep */
-
-      if (cxd56_audio_play_beep() != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  return true;
-}
 
 static bool mediarecorder_done_callback(AsRecorderEvent event, uint32_t result, uint32_t sub_result)
 {
@@ -92,6 +47,29 @@ static bool mediarecorder_done_callback(AsRecorderEvent event, uint32_t result, 
   return true;
 }
 
+static void outputmixer_done_callback(MsgQueId requester_dtq,
+                                      MsgType reply_of,
+                                      AsOutputMixDoneParam *done_param)
+{
+  return;
+}
+
+static void outmixer_send_callback(int32_t identifier, bool is_end)
+{
+   return;
+}
+
+static void synthesizer_done_callback(AsSynthesizerEvent event, uint32_t result, void *param)
+{
+  printf("mp cb %x %x \n", event, result);
+
+  return true;
+}
+
+static void attention_cb(const ErrorAttentionParam *atprm)
+{
+  puts("Attention!");
+}
 
 void setup()
 {
@@ -109,6 +87,11 @@ void setup()
   theRecorder = MediaRecorder::getInstance();
   theRecorder->begin();
 
+  theSynthesizer = Synthesizer::getInstance();
+  theSynthesizer->begin();
+
+  theMixer       = OutputMixer::getInstance();
+
   Serial.println("Init Audio Recorder");
 
   /* Set capture clock */
@@ -117,7 +100,13 @@ void setup()
 
   /* Select input device as AMIC */
 
+  theMixer->create(attention_cb);
+  theSynthesizer->create(attention_cb);
+
   theRecorder->activate(AS_SETRECDR_STS_INPUTDEVICE_MIC, mediarecorder_done_callback);
+  theMixer->activateBaseband();
+  theSynthesizer->create(attention_cb);
+
 
   /* Set PCM capture */
 
@@ -134,6 +123,7 @@ void setup()
                     AS_BITRATE_96000,
                     "/mnt/sd0/BIN");
 
+  theSynthesizer->init(AsSynthesizerSinWave,1,AS_SAMPLINGRATE_48000, AS_BITLENGTH_16,"/mnt/sd0/BIN/OSCPROC");
   /* Launch SubCore */
 
   ret = MP.begin(subcore);
@@ -151,29 +141,25 @@ void setup()
   MP.RecvTimeout(MP_RECV_POLLING);
 
 /* ----- hayakawa 11-24 ----- */ 
-  cxd56_audio_set_spout(true);
-  cxd56_audio_en_output();
-
 #ifdef ENABLE_THROUGH
   cxd56_audio_signal_t sig_id;
   cxd56_audio_sel_t    sel_info;
 
   sig_id = CXD56_AUDIO_SIG_MIC1;
 
-  sel_info.au_dat_sel1 = true;
-  sel_info.au_dat_sel2 = false;
-  sel_info.cod_insel2  = true;
-  sel_info.cod_insel3  = false;
+  sel_info.au_dat_sel1 = false;
+  sel_info.au_dat_sel2 = true;
+  sel_info.cod_insel2  = false;
+  sel_info.cod_insel3  = true;
   sel_info.src1in_sel  = false;
   sel_info.src2in_sel  = false;
 
   cxd56_audio_set_datapath(sig_id, sel_info);
-  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN1, 0);  
-  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_OUT, -20/*db*/);
+  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN2, 0);  
 
 #endif /* ENABLE_THROUGH */
 
-  board_external_amp_mute_control(false);
+
 
 /* ----- gokan 11-14 ----- */ 
 //  Serial.println("Start!\n");
@@ -185,6 +171,7 @@ void setup()
   /* Start Recorder */
 
   theRecorder->start();
+  theSynthesizer->start();
 }
 
 void beep_control(uint16_t pw,uint16_t fq)
@@ -194,7 +181,7 @@ void beep_control(uint16_t pw,uint16_t fq)
   int power_ave = pw;
 
   if(power_ave<50){
-     app_beep(0, 0, 0);
+     theSynthesizer->set(0,0);
      return;
   }else if(power_ave<100){
     vol = -90;
@@ -217,9 +204,10 @@ void beep_control(uint16_t pw,uint16_t fq)
   printf("vol =%d\n",vol);*/
 
   if ( beep_ave > 100 && beep_ave < 700 ) {
-     app_beep(1,vol, beep_ave);
+     theSynthesizer->set(0,beep_ave);
+     cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN2, vol*10);  
   }else{
-     app_beep(0, 0, 0);
+     theSynthesizer->set(0,0);
   }
 }
 
