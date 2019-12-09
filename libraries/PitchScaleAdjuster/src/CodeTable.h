@@ -11,6 +11,7 @@ public:
     m_ommit_notes(ommit),
     m_ommit_num(num) {};
 
+  int   get_key()  {return m_key;}
   char* get_name() {return m_scale_name;}
   int*  get_notes(){return m_ommit_notes;}
   int   get_size() {return m_ommit_num;}

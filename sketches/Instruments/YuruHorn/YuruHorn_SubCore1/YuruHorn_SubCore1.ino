@@ -2,7 +2,7 @@
 #include <MP.h>
 
 #include "FFT.h"
-#include "AutoTune.h"
+#include "PitchScaleAdjuster.h"
 
 /* Use CMSIS library */
 #define ARM_MATH_CM4
@@ -49,9 +49,9 @@ void setup()
   MP.RecvTimeout(MP_RECV_POLLING);
 
   FFT.begin();
-  AutoTune.begin();
+  PitchScaleAdjuster.begin();
 
-  AutoTune.set(E_Major);
+  PitchScaleAdjuster.set(E_Major);
 }
 
 /* Tentative!!*/
@@ -103,7 +103,7 @@ void loop()
     for (int i = 0; i < g_channel; i++) {
       int cnt = FFT.get(pDst,i);
       peak[i] = get_peak_frequency(pDst, FFTLEN, &power[i]);
-      result.peak[i] = (uint16_t)(AutoTune.get(smoothing_peak(peak[i])));
+      result.peak[i] = (uint16_t)(PitchScaleAdjuster.get(smoothing_peak(peak[i])));
       result.power[i] = (uint16_t)(smoothing_pow(power[i])*100);
 //      printf("Sub %8.3f, %8.3f\n", power[i],peak[i]);
 //      printf("Sub %d, %d\n", result.power[i],result.peak[i]);

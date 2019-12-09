@@ -1,11 +1,11 @@
-#include "AutoTune.h"
+#include "PitchScaleAdjuster.h"
 
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 
 
-void AutoTuneClass::begin()
+void PitchScaleAdjusterClass::begin()
 {
   for (int i = 12; i < 128; i++) {
     int pow_i = i - 69;
@@ -40,7 +40,7 @@ void AutoTuneClass::begin()
   }
 }
 
-void AutoTuneClass::set(CodeTypeClass new_code)
+void PitchScaleAdjusterClass::set(CodeTypeClass new_code)
 {
   /* ----- Select Use Note ----- */
   int range_setter = 0;
@@ -48,7 +48,7 @@ void AutoTuneClass::set(CodeTypeClass new_code)
     int j = i + 13;
     int ok = 0;
     for (int o = 0; o < new_code.get_size(); o++) {
-      int ommit_shift = ( new_code.get_notes()[o] + key_value) % 12;
+      int ommit_shift = ( new_code.get_notes()[o] + new_code.get_key()) % 12;
       if ( j % 12 == ommit_shift ) {
 //        printf("ommit %d , %s\n", ommit_shift, octave[ommit_shift].note_name);
         ok = -1;
@@ -76,7 +76,7 @@ void AutoTuneClass::set(CodeTypeClass new_code)
 
 }
 
-float AutoTuneClass::get(float peakFs)
+float PitchScaleAdjusterClass::get(float peakFs)
 {
     for (int i = 1; i < range_number; i++) {
       if (range[i].lower <= peakFs && peakFs < range[i].upper) {
@@ -85,4 +85,6 @@ float AutoTuneClass::get(float peakFs)
     }
 }
 
-AutoTuneClass AutoTune;
+
+PitchScaleAdjusterClass PitchScaleAdjuster;
+;

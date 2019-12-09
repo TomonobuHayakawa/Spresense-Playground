@@ -1,12 +1,13 @@
 # Class
-AutoTuneClass	KEYWORD1
-AutoTune		KEYWORD1
+PitchScaleAdjusterClass	KEYWORD1
+PitchScaleAdjuster		KEYWORD1
 
 # Constants
 
 # Function
 begin			KEYWORD2
 set				KEYWORD2
+set_octave		KEYWORD2
 get				KEYWORD2
 end				KEYWORD2
 

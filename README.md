@@ -79,7 +79,7 @@ Spresense-Playground
 * SignalProcessing(FFT/IIR)
 
 ### 音声処理関連
-* AutoTune
+* PitchScaleAdjuster
 * MIDI
 
 ---
