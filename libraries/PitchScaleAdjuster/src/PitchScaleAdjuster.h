@@ -1,14 +1,17 @@
-#ifndef _AUTO_TUNE_H_
-#define _AUTO_TUNE_H_
+#ifndef _PITCH_SCALE_ADJUSTER_
+#define _PITCH_SCALE_ADJUSTER_
+
+/*Pitch Scale Adjuster
+PITCH_SCALE_ADJUSTER*/
 
 #include "CodeTable.h"
 
-class AutoTuneClass
+class PitchScaleAdjusterClass
 {
 public:
   void  begin();
   void  set(CodeTypeClass);
-  void  octave(int i){octave_shift += i;}
+  void  set_octave(int i){octave_shift += i;}
   float get(float);
   void  end(){}
 
@@ -51,11 +54,11 @@ private:
 //  const char *scale_name = "Maj"; 
 //  int ommit_note[5] = { 1, 3, 6, 8, 10 };  // Major Scale
 
-  int key_value = 0;  // Key = C
-  const char *scale_name = "Oki"; 
-  int ommit_note[6] = { 1, 3, 5, 6, 8, 10 };  // Okinawa Scale
+//  int key_value = 0;  // Key = C
+//  const char *scale_name = "Oki"; 
+//  int ommit_note[6] = { 1, 3, 5, 6, 8, 10 };  // Okinawa Scale
 
-  int get_ommit_size(){ return sizeof ommit_note / sizeof(int); } // int -> int8_t
+//  int get_ommit_size(){ return sizeof ommit_note / sizeof(int); } // int -> int8_t
 
   int range_number;
   int octave_shift = 0;
@@ -72,6 +75,6 @@ private:
 
 };
 
-extern AutoTuneClass AutoTune;
+extern PitchScaleAdjusterClass PitchScaleAdjuster;
 
-#endif
+#endif /* PITCH_SCALE_ADJUSTER */

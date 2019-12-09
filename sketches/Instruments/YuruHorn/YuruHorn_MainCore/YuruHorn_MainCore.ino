@@ -141,10 +141,10 @@ void setup()
     printf("MP.begin error = %d\n", ret);
   }
 
-  ret = MP.begin(2);
+/*  ret = MP.begin(2);
   if (ret < 0) {
     puts("MP.begin error = 2\n");
-  }
+  }*/
 
 /* ----- gokan 11-14 ----- */ 
   /* receive with non-blocking */
