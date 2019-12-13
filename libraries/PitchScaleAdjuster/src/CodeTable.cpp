@@ -1,6 +1,6 @@
 #include "CodeTable.h"
 
-inline int size(int x[]){ return (sizeof(x)/sizeof(int)); }
+inline int size(int x[]){ return sizeof(x); }
 
 /* 
  * CodeTypeClass XXXXX(key code, name string , ommits ,size of ommits); 
