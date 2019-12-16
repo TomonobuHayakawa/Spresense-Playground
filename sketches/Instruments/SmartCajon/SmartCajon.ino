@@ -50,7 +50,12 @@ int detect_peak_a3;
 //toggle switch
 #define OFF 0
 #define ON 1
-int toggle = OFF;
+int toggle0 = OFF;
+int toggle1 = OFF;
+int cnttgl0 = 0;
+int cnttgl1 = 0;
+
+
 
 class BridgeBuffer {
 private:
@@ -183,12 +188,15 @@ static bool start(uint8_t no)
   /* 16bit RAW data  */
   const char *raw_files[] =
   {
-    "drum2_cymbal.raw",    //0
-    "drum2_snare.raw",     //1
-    "drum2_ride.raw",      //2
-    "drum2_kick.raw",      //3
-    "kiichi_akeome.raw",   //4 
-    "clap_01.raw",         //5
+    "drum2_cymbal.raw",     //0
+    "drum2_snare.raw",      //1
+    "drum2_ride.raw",       //2
+//    "drum2_kick.raw",       //3
+    "cat15.raw",            //3
+    "clap_01.raw",          //4
+    "jzt_crsh_splashy.raw", //5
+    "EK_hihat_openup.raw",  //6
+    "christmasbell.raw",    //7
   };
 
   char fullpath[64] = { 0 };
@@ -458,7 +466,7 @@ void setup()
   cxd56_audio_set_datapath(sig_id, sel_info);
   
   /* Set main volume */
-  theMixer->setVolume(0, -60, -60); // master pcm_source mic
+  theMixer->setVolume(0, 0, 0); // master pcm_source mic
 
   /* Unmute */
   board_external_amp_mute_control(false);
@@ -502,37 +510,60 @@ void loop()
   /* Menu operation */
 
 
-  ///ここを差し替える
 
-  //トグルスイッチ処理
+  //トグルスイッチ処理 DSW0 LED1
   //ボタンを押されたらトグルを有効にする
-  if (digitalRead(PIN_D12) == LOW && toggle == OFF) {
-    toggle = ON;
+  if (digitalRead(PIN_D12) == LOW && toggle0 == OFF) {
+    toggle0 = ON;
+    cnttgl0++;
     digitalWrite(LED1, HIGH);
-
     //ボタンが押され続けている場合の処理
     while (digitalRead(PIN_D12) == LOW) {
-    toggle = ON;
+    toggle0 = ON;
     digitalWrite(LED1, HIGH);
-     
     }
-
-    //トグル有効中の通常ループ
-    // led_flash();
   }
-
     //トグル動作中にボタンONでフラグを消す
-  if (digitalRead(PIN_D12) == LOW && toggle == ON) {
-    toggle = OFF;
+  if (digitalRead(PIN_D12) == LOW && toggle0 == ON) {
+    toggle0 = OFF;
+    cnttgl0++;
     digitalWrite(LED1, LOW);
-    
     //ボタンが押され続けている場合の処理
     while (digitalRead(PIN_D12) == LOW)
     {
-    toggle = OFF;
+    toggle0 = OFF;
     digitalWrite(LED1, LOW);
     }
   }
+
+
+    //トグルスイッチ処理 DSW1  LED2
+  //ボタンを押されたらトグルを有効にする
+  if (digitalRead(PIN_D07) == LOW && toggle1 == OFF) {
+    toggle1 = ON;
+    cnttgl1++;
+    digitalWrite(LED2, HIGH);
+    //ボタンが押され続けている場合の処理
+    while (digitalRead(PIN_D07) == LOW) {
+    toggle1 = ON;
+    digitalWrite(LED2, HIGH);
+    }
+  }
+    //トグル動作中にボタンONでフラグを消す
+  if (digitalRead(PIN_D07) == LOW && toggle1 == ON) {
+    toggle1 = OFF;
+    cnttgl1++;
+    digitalWrite(LED2, LOW);
+    //ボタンが押され続けている場合の処理
+    while (digitalRead(PIN_D07) == LOW)
+    {
+    toggle1 = OFF;
+    digitalWrite(LED2, LOW);
+    }
+  }
+
+
+
 
   //タッチセンサ処理
   //read analog input
@@ -549,40 +580,32 @@ void loop()
  
   //detect rising edge with previous sample
 
-   detect_peak_a2 =( gauge_a2_p2 >gauge_a2_p3 )?1:0;
+   detect_peak_a2 =( gauge_a2 >gauge_a2_p1 )?1:0;
    detect_peak_a3 =( gauge_a3 >gauge_a3_p1 )?1:0;
 
 
 
   //threshold input and start event
 
-  if(detect_peak_a2==1 && gauge_a2> 1020 && gauge_a2_p1>1020  && gauge_a2_p2 > 1020){
-    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d　toggle= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle); 
-//    digitalWrite(LED1, HIGH);
-    playno = start_event(playno,0);   
-  }else if(detect_peak_a2==1 && gauge_a2 > 300){  
-    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d toggle= %d\n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle);  
-//    digitalWrite(LED1, HIGH);
-    playno = start_event(playno,2);
-  }else if(detect_peak_a3==1 && gauge_a3 >1000){  
-    printf("gauge_a3= %d gauge_a3_p1= %d gauge_a3_p2= %d toggle= %d\n" ,gauge_a3,gauge_a3_p1,gauge_a3_p2,toggle);  
-//    digitalWrite(LED2, HIGH);
-    if(toggle==OFF){
-    playno = start_event(playno,5);
-    }else{
-    playno = start_event(playno,3);
-    }
+ //PAD 00 (A2 pin)
+  if(detect_peak_a2==1 && gauge_a2 >500){  
+    printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d toggle0= %d  cnt0 = %d toggle1= %d cnt1 = %d \n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle0,cnttgl0,toggle1,cnttgl1);  
+    playno = start_event(playno,cnttgl0%8);
+
+ //PAD 01 (A3 pin)   
+  }else if(detect_peak_a3==1 && gauge_a3 >500){  
+    printf("gauge_a3= %d gauge_a3_p1= %d gauge_a3_p2= %d toggle0= %d cnt0=%d toggle1= %d cnt1 =%d\n" ,gauge_a3,gauge_a3_p1,gauge_a3_p2,toggle0,cnttgl0,toggle1,cnttgl1);  
+    playno = start_event(playno,cnttgl1%8);
   }
+
+  
   /* Processing in accordance with the state */
 
   switch (s_state) {
     case Stopping:
       break;
     case Ready:
-//      digitalWrite(LED1, LOW);
-//      digitalWrite(LED2, LOW);
       break;
-
     case Active:
       /* Send new frames to be decoded until end of file */
       //printf("active\n");
