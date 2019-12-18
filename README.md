@@ -10,7 +10,7 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 ## What's new.
 
 12/5 
-・楽器に向けての @gokankenichi さん作AutoTuneをライブラリ化しました。
+・楽器に向けての @gokankenichi さん作 PitchScaleAdjuster をライブラリ化しました。
 
 ※ライセンスちゃんと書きましょうか…。
 
