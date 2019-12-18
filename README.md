@@ -9,8 +9,32 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 --------------------
 ## What's new.
 
+12/18
+・ゆる楽器に向けてSpresenseのSDKのαリリースをします。
+   - レコグナイザー機能
+   - シンセサイザ機能
+   がArduinoで呼べるようになります。
+
+α版のinstallは、
+
+Arduinoのファイル / 環境設定 の中の
+追加ボードマネージャのURLに、
+https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_instrument_index.json
+を追加してください。
+これを追加すると、ボードマネージャの中に、
+Spresense Instrument
+というボードが新たに選択できます。
+
+これを利用することで、上記機能を使用することができます。
+
+注) 現時点で評価ができているものではありません。バグ等に関しての責任は負いかねます。
+注) 現在提供のAPIは、暫定版です。正式版で変更される可能性があります。
+
+sketches/Instruments
+は、こちらのボードで作成されています。
+
 12/5 
-・楽器に向けての @gokankenichi さん作AutoTuneをライブラリ化しました。
+・楽器に向けての @gokankenichi さん作 PitchScaleAdjuster をライブラリ化しました。
 
 ※ライセンスちゃんと書きましょうか…。
 
