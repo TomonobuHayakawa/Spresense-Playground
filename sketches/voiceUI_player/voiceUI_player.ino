@@ -27,6 +27,7 @@
 #include <audio/utilities/playlist.h>
 #include <stdio.h>
 #include <stdlib.h>
+//#include <arch/chip/cxd56_audio.h>
 
 SDClass theSD;
 FrontEnd *theFrontend;
@@ -201,6 +202,7 @@ static bool start()
   Track *t = &currentTrack;
 
   /* Prepare for playback with the specified track */
+  ledOn(LED1);
 
   err = setPlayer(t);
 
@@ -236,6 +238,7 @@ static bool start()
 
 static void stop()
 {
+  ledOff(LED1);
   printf("stop\n");
   thePlayer->stop(MediaPlayer::Player0,AS_STOPPLAYER_NORMAL);
   myFile.close();
@@ -400,7 +403,7 @@ void setup()
   
   /* Initialize memory pools and message libs */  
   initMemoryPools();
-  createStaticPools(MEM_LAYOUT_RECOGNIZERANDPLAYER);
+  createStaticPools(MEM_LAYOUT_PLAYERANDRECOGNIZER);
 
   /* Load preset data */
 
@@ -481,12 +484,15 @@ void setup()
   theFrontend->activate(frontend_done_callback);
   theRecognizer->activate(recognizer_done_callback);
 
+//  CXD56_AUDIO_ECODE error_code = cxd56_audio_set_spdriver(CXD56_AUDIO_SP_DRV_4DRIVER);
+
   usleep(100 * 1000);
   /* Set main volume */
   theMixer->setVolume(preset.volume, 0, 0);
 
   theFrontend->init(recognizer_cannel_number, recognizer_bit_length, 384,
-                    AsMicFrontendPreProcSampleRateCnv, ObjectConnector::ConnectToRecognizer, "/mnt/spif/BIN/SRC");
+                    ObjectConnector::ConnectToRecognizer, AsMicFrontendPreProcSrc, "/mnt/sd0/BIN/SRC");
+//                    ObjectConnector::ConnectToRecognizer, AsMicFrontendPreProcSrc, "/mnt/spif/BIN/SRC");
 
   theRecognizer->init(recognizer_find_callback,
                       "/mnt/sd0/BIN/RCGPROC");
@@ -528,6 +534,8 @@ void setup()
   theRecognizer->setRecognizerDsp((uint8_t *)&s_setrcgproc, sizeof(s_setrcgproc));
 
   /* Start Recognizer */
+
+ ledOn(LED0);
 
   theFrontend->start();
   theRecognizer->start();
