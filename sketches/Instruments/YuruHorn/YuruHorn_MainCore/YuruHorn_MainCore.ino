@@ -1,9 +1,12 @@
-#ifdef SUBCORE	
-#error "Core selection is wrong!!"	
-#endif	
+#ifdef SUBCORE
+#error "Core selection is wrong!!"
+#endif
 
+#include <SDHCI.h>
 #include <MP.h>
 #include <MediaRecorder.h>
+#include <Synthesizer.h>
+#include <OutputMixer.h>
 #include <MemoryUtil.h>
 
 //#define ENABLE_THROUGH
@@ -15,6 +18,10 @@ extern "C" {
 }
 
 MediaRecorder *theRecorder;
+OutputMixer *theMixer;
+Synthesizer *theSynthesizer;
+
+SDClass SD;  /**< SDClass object */
 
 /* Select mic channel number */
 const int mic_channel_num = 1;
@@ -29,10 +36,6 @@ struct Capture {
   int  chnum;
 };
 
-/*struct Result {
-  float peak[mic_channel_num];
-  int  chnum;
-};*/
 
 struct Result {
   uint16_t peak[mic_channel_num];
@@ -40,58 +43,36 @@ struct Result {
   int  chnum;
 };
 
-static bool app_beep(bool en = false, int16_t vol = 255, uint16_t freq = 0)
-{
-  if (!en)
-    {
-      /* Stop beep */
-
-      if (cxd56_audio_stop_beep() != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  if (0 != freq)
-    {
-      /* Set beep frequency parameter */
-
-      if (cxd56_audio_set_beep_freq(freq) != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  if (255 != vol)
-    {
-      /* Set beep volume parameter */
-
-      if (cxd56_audio_set_beep_vol(vol) != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  if (en)
-    {
-      /* Play beep */
-
-      if (cxd56_audio_play_beep() != CXD56_AUDIO_ECODE_OK)
-        {
-          return false;
-        }
-    }
-
-  return true;
-}
-
 static bool mediarecorder_done_callback(AsRecorderEvent event, uint32_t result, uint32_t sub_result)
 {
-  printf("mp cb %x %x %x\n", event, result, sub_result);
+  printf("mr cb %x %x %x\n", event, result, sub_result);
 
   return true;
 }
 
+static void outputmixer_done_callback(MsgQueId requester_dtq,
+                                      MsgType reply_of,
+                                      AsOutputMixDoneParam *done_param)
+{
+  printf("om cb\n");
+  return;
+}
+
+static void outmixer_send_callback(int32_t identifier, bool is_end)
+{
+  return;
+}
+
+static void synthesizer_done_callback(AsSynthesizerEvent event, uint32_t result, void *param)
+{
+//  printf("ss cb %x %x \n", event, result);
+  return true;
+}
+
+static void attention_cb(const ErrorAttentionParam *atprm)
+{
+  puts("Attention!");
+}
 
 void setup()
 {
@@ -103,13 +84,35 @@ void setup()
   /* Initialize memory pools and message libs */
 
   initMemoryPools();
-  createStaticPools(MEM_LAYOUT_RECORDER);
+  createStaticPools(MEM_LAYOUT_RECORDINGPLAYER);
+
+  SD.begin();
+
+  ret = MP.begin(subcore);
+  if (ret < 0) {
+    printf("MP.begin error = %d\n", ret);
+  }
+
+/*  ret = MP.begin(2);
+  if (ret < 0) {
+    puts("MP.begin error = 2\n");
+  }*/
+
 
   Serial.println("Init Recorder Library");
   theRecorder = MediaRecorder::getInstance();
   theRecorder->begin();
 
+  theSynthesizer = Synthesizer::getInstance();
+  theSynthesizer->begin();
+
+  theMixer       = OutputMixer::getInstance();
+
   Serial.println("Init Audio Recorder");
+
+  /* Activate Baseband */
+
+  theMixer->activateBaseband();
 
   /* Set capture clock */
 
@@ -117,15 +120,22 @@ void setup()
 
   /* Select input device as AMIC */
 
+  theMixer->create(attention_cb);
+  theSynthesizer->create(attention_cb);
+
   theRecorder->activate(AS_SETRECDR_STS_INPUTDEVICE_MIC, mediarecorder_done_callback);
+  theSynthesizer->activate(synthesizer_done_callback, NULL);
+  theMixer->activate(OutputMixer0, HPOutputDevice, outputmixer_done_callback);
+
+  usleep(100 * 1000);
 
   /* Set PCM capture */
 
   uint8_t channel;
   switch (mic_channel_num) {
-  case 1: channel = AS_CHANNEL_MONO;   break;
-  case 2: channel = AS_CHANNEL_STEREO; break;
-  case 4: channel = AS_CHANNEL_4CH;    break;
+    case 1: channel = AS_CHANNEL_MONO;   break;
+    case 2: channel = AS_CHANNEL_STEREO; break;
+    case 4: channel = AS_CHANNEL_4CH;    break;
   }
   theRecorder->init(AS_CODECTYPE_LPCM,
                     channel,
@@ -134,92 +144,85 @@ void setup()
                     AS_BITRATE_96000,
                     "/mnt/sd0/BIN");
 
+  theSynthesizer->init(AsSynthesizerSinWave, 1, AS_SAMPLINGRATE_48000, AS_BITLENGTH_16, "/mnt/sd0/BIN/OSCPROC");
   /* Launch SubCore */
 
-  ret = MP.begin(subcore);
-  if (ret < 0) {
-    printf("MP.begin error = %d\n", ret);
-  }
-
-  ret = MP.begin(2);
-  if (ret < 0) {
-    puts("MP.begin error = 2\n");
-  }
-
-/* ----- gokan 11-14 ----- */ 
+  /* ----- gokan 11-14 ----- */
   /* receive with non-blocking */
   MP.RecvTimeout(MP_RECV_POLLING);
 
-/* ----- hayakawa 11-24 ----- */ 
-  cxd56_audio_set_spout(true);
-  cxd56_audio_en_output();
-
+  /* ----- hayakawa 11-24 ----- */
 #ifdef ENABLE_THROUGH
   cxd56_audio_signal_t sig_id;
   cxd56_audio_sel_t    sel_info;
 
   sig_id = CXD56_AUDIO_SIG_MIC1;
 
-  sel_info.au_dat_sel1 = true;
-  sel_info.au_dat_sel2 = false;
-  sel_info.cod_insel2  = true;
-  sel_info.cod_insel3  = false;
+  sel_info.au_dat_sel1 = false;
+  sel_info.au_dat_sel2 = true;
+  sel_info.cod_insel2  = false;
+  sel_info.cod_insel3  = true;
   sel_info.src1in_sel  = false;
   sel_info.src2in_sel  = false;
 
   cxd56_audio_set_datapath(sig_id, sel_info);
-  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN1, 0);  
-  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_OUT, -20/*db*/);
+  cxd56_audio_set_vol(CXD56_AUDIO_VOLID_MIXER_IN2, 0);
 
 #endif /* ENABLE_THROUGH */
 
-  board_external_amp_mute_control(false);
 
-/* ----- gokan 11-14 ----- */ 
-//  Serial.println("Start!\n");
+
+  /* ----- gokan 11-14 ----- */
+  //  Serial.println("Start!\n");
 
   /* Set Gain */
 
   theRecorder->setMicGain(180);
 
-  /* Start Recorder */
+  /* Main volume set to -16.0 dB, Main player and sub player set to 0 dB */
 
+  theMixer->setVolume(-160, 0, 0);
+
+  /* Start Recorder */
+  theSynthesizer->start();
+  sleep(1); 
   theRecorder->start();
 }
 
-void beep_control(uint16_t pw,uint16_t fq)
+void beep_control(uint16_t pw, uint16_t fq)
 {
   int vol;
   int beep_ave = MIN(fq, 700);
   int power_ave = pw;
-
-  if(power_ave<50){
-     app_beep(0, 0, 0);
-     return;
-  }else if(power_ave<100){
-    vol = -90;
-  }else if(power_ave<300){
-    vol = -60;
-  }else if(power_ave<500){
-    vol = -54;
-  }else if(power_ave<800){
-    vol = -48;
-  }else if(power_ave<1200){
-    vol = -42;
-  }else if(power_ave<2000){
-    vol = -36;      
-  }else{
-    vol = -28;
+const int k=12;
+  if (power_ave < 50) {
+    theSynthesizer->set(0, 0);
+    return;
+  } else if (power_ave < 100) {
+    vol = -90+k;
+  } else if (power_ave < 300) {
+    vol = -60+k;
+  } else if (power_ave < 500) {
+    vol = -54+k;
+  } else if (power_ave < 800) {
+    vol = -48+k;
+  } else if (power_ave < 1200) {
+    vol = -42+k;
+  } else if (power_ave < 2000) {
+    vol = -36+k;
+  } else {
+    vol = -28+k;
   }
 
-/*  printf("power_ave =%d\n",power_ave);
-  printf("ave =%d\n",beep_ave);
-  printf("vol =%d\n",vol);*/
+  /*printf("power_ave =%d\n",power_ave);
+    printf("ave =%d\n",beep_ave);*/
+    printf("vol =%d\n",vol);
 
   if ( beep_ave > 100 && beep_ave < 700 ) {
-     app_beep(1,vol, beep_ave);
-  }else{
-     app_beep(0, 0, 0);
+    theSynthesizer->set(0, beep_ave);
+//    theMixer->setVolume(0, (vol * 10), 0);
+  } else {
+    theSynthesizer->set(0, 0);
   }
 }
 
@@ -229,7 +232,7 @@ void loop()
   int8_t   rcvid = 0;
   Capture  capture;
   Result*  result;
-  
+
   static const int32_t buffer_sample = 768 * mic_channel_num;
   static const int32_t buffer_size = buffer_sample * sizeof(int16_t);
   static char  buffer[buffer_size];
@@ -253,15 +256,14 @@ void loop()
     /* Receive PCM captured buffer from MainCore */
     int ret = MP.Recv(&rcvid, &result, subcore);
     if (ret >= 0) {
-      for(int i=0;i<mic_channel_num;i++){
-        if(result->peak[i] > 100 && result->peak[i] < 700 ) {
-          MP.Send(50, result->peak[i], 2);
+      for (int i = 0; i < mic_channel_num; i++) {
+        if (result->peak[i] > 100 && result->peak[i] < 700 ) {
+//          MP.Send(50, result->peak[i], 2);
         }
-        beep_control(result->power[i],result->peak[i]);
+        beep_control(result->power[i], result->peak[i]);
         printf("main %d, %d, ", result->power[i], result->peak[i]);
       }
       printf("\n");
     }
   }
-
 }
