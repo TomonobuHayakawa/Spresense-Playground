@@ -191,8 +191,8 @@ static bool start(uint8_t no)
     "drum2_cymbal.raw",     //0
     "drum2_snare.raw",      //1
     "drum2_ride.raw",       //2
-//    "drum2_kick.raw",       //3
-    "cat15.raw",            //3
+    "drum2_kick.raw",       //3
+//    "cat15.raw",            //3
     "clap_01.raw",          //4
     "jzt_crsh_splashy.raw", //5
     "EK_hihat_openup.raw",  //6
@@ -440,7 +440,7 @@ void setup()
   cxd56_audio_mic_gain_t  mic_gain;
 
  // mic_gain.gain[0] = 210;
-  mic_gain.gain[0] = 50;
+  mic_gain.gain[0] = 0; // this mic 
   mic_gain.gain[1] = 0;
   mic_gain.gain[2] = 0;
   mic_gain.gain[3] = 0;
@@ -466,7 +466,7 @@ void setup()
   cxd56_audio_set_datapath(sig_id, sel_info);
   
   /* Set main volume */
-  theMixer->setVolume(0, 0, 0); // master pcm_source mic
+  theMixer->setVolume(0, 0, -40); // master pcm_source mic
 
   /* Unmute */
   board_external_amp_mute_control(false);
@@ -580,8 +580,8 @@ void loop()
  
   //detect rising edge with previous sample
 
-   detect_peak_a2 =( gauge_a2 >gauge_a2_p1 )?1:0;
-   detect_peak_a3 =( gauge_a3 >gauge_a3_p1 )?1:0;
+   detect_peak_a2 =( gauge_a2 > gauge_a2_p1 && gauge_a2_p1 < 200 && gauge_a2_p2 < 20 )?1:0;
+   detect_peak_a3 =( gauge_a3 > gauge_a3_p1 && gauge_a3_p1 < 200 && gauge_a3_p2 < 20 )?1:0;
 
 
 
