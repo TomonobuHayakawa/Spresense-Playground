@@ -9,6 +9,32 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 --------------------
 ## What's new.
 
+2/10
+
+・M11S向けのスケッチを追加。
+
+  *sketches/M11S*
+
+の下に、SD書き込みサンプルとWiFiカメラのサンプルがあります。
+
+M11S向けには、M11S向けのパッケージを利用する必要があります。
+※違いは、SPI5のデータ転送をDMAを使って行う部分です。
+
+Arduinoのファイル / 環境設定 の中の <br>
+追加ボードマネージャのURLに、 <br>
+https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_M11S_index.json
+ <br>
+を追加してください。  
+
+これを追加すると、ボードマネージャの中に、  
+
+*Spresense M11S*  
+
+というボードが新たに選択できます。  
+
+M11Sを使う場合は、これを利用してください。
+
+
 1/28
 
 ・スマートドラムを小川君に代わって入れておきました。
@@ -52,50 +78,6 @@ https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/downlo
 
 ・楽器に向けての @gokankenichi さん作 PitchScaleAdjuster をライブラリ化しました。
 
-※ライセンスちゃんと書きましょうか…。
-
-
-11/25 
-
-・高速レンダリングのサンプル追加。
-
-```
-Spresense-Playground
- |
- ├ sketchies : Arduinoスケッチを置く場所。
-     |
-     ├ AudioRendering
-```
-
-・楽器プロジェクトのサンプル追加。
-
-```
-Spresense-Playground
- |
- ├ sketchies : Arduinoスケッチを置く場所。
-     |
-     ├ Instruments
-```
-
-
-・不要になった以下のライブラリ・サンプルを削除。
-
-```
-Spresense-Playground
- |
- ├ libraries : Arduinoライブラリを置く場所。
- |    |
- |    ├ VoiceChanger（SignalProcessingに移行済み）
- | 
- ├ sketchies : Arduinoスケッチを置く場所。
-     |
-     ├ wf931 (本家立ち上げにつき)
-```
-
-
-wf931は、以下。
-https://github.com/SMK-RD/WF931-Sigfox-module
-
 
 --------------------
 ## ディレクトリ構成
@@ -136,10 +118,16 @@ Spresense-Playground
 
 - Instruments
     - SmartCajon
+    - SmartDrum
     - YuruHorn
+
+- M11S
+    - Jpeg_ESP8266_CamServer
+    - Jpeg_shot_with_SD
 
 - USB_UART
 - I2cScanner
+
 - LowPowerSensing
     - bme680_ulp_plus_via_sigfox
     - bme680_uulp_plus_via_sigfox
