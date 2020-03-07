@@ -16,8 +16,8 @@
  */
 
 #include <SPI.h>
+#include <MP.h>
 #include "ESP8266ATLib.h"
-#include "asmp/mpshm.h"
 
 #define SAP_MODE
 //#define BAUDRATE 115200
@@ -43,11 +43,12 @@
 #define CMD_GET_JPEG    (0x01)                      // CMD = Get the JPEG file
 
 #define RES_ACK         (0x01)
+#define RES_READY       (0xAA)
 #define RES_CMDERR      (0xF1)
 #define RES_SYSERR      (0xF2)
 #define RES_CSUMERR     (0xF6)
 
-#define RES_RETRY_TIME  (3000)                      // Retry total time(ms)
+#define RES_RETRY_TIME  (5000)                      // Retry total time(ms)
 #define RES_RETRY_COUNT (500)                       // Retry counter for Response
 
 uint8_t tx_buffer[CHUNK_SIZE];
@@ -61,7 +62,17 @@ mpshm_t shm;
 void send_cmd(uint8_t cmd, uint8_t p1, uint8_t p2, uint8_t p3, uint8_t p4,
               uint8_t p5, uint8_t p6)
 {
-  uint32_t i;
+  for (int i = 0; i < RES_RETRY_COUNT; i++) {
+    memset(tx_buffer,CMD_READ_RES,8);
+    tx_buffer[0] = CMD_READ_RES;
+    SPI5.transfer(tx_buffer, 1);
+    if (tx_buffer[0] == RES_READY) {
+      SPI5.transfer(tx_buffer, 7);
+      break;
+    }
+    delay(RES_RETRY_TIME / RES_RETRY_COUNT);    
+    if (i == RES_RETRY_COUNT-1 ) return false;
+  }
 
   tx_buffer[0] = cmd;
   tx_buffer[1] = p1;
@@ -71,15 +82,13 @@ void send_cmd(uint8_t cmd, uint8_t p1, uint8_t p2, uint8_t p3, uint8_t p4,
   tx_buffer[5] = p5;
   tx_buffer[6] = p6;
 
-  for (tx_buffer[CMD_SIZE - 1] = i = 0; i < (CMD_SIZE - 1); i++) // CS(Check sum)
+  for (int i = tx_buffer[CMD_SIZE - 1] = 0; i < (CMD_SIZE - 1); i++) // CS(Check sum)
   {
     tx_buffer[CMD_SIZE - 1] += tx_buffer[i];
   }
   tx_buffer[CMD_SIZE - 1] ^= 0xFF;
 
-  SPI5.transfer(tx_buffer, CMD_SIZE);
-
-  printf("%x,%x,%x,%x\n",tx_buffer[0],tx_buffer[1],tx_buffer[2],tx_buffer[3]);
+  SPI5.transfer(tx_buffer, CMD_SIZE+8);
   
   return;
 }
@@ -94,27 +103,27 @@ static int recv_res(void)
 
   for (retry = 0; retry < RES_RETRY_COUNT; retry++)
   {
-    SPI5.transfer(tx_buffer, CMD_SIZE);
+    SPI5.transfer(tx_buffer, 1);
 
     if (tx_buffer[0] != 0xFF)                  // 0xFF = Retry
     {
-
-      for (sum = i = 0; i < (RES_SIZE - 1); i++) // CS(Check sum)
-      {
-        sum += tx_buffer[i];
+      SPI5.transfer(&tx_buffer[1], CMD_SIZE-1+8);
+      if(tx_buffer[0] == RES_ACK){
+        for (i=0; i < (RES_SIZE-1); i++){
+          sum += tx_buffer[i];
+        }
+        if (sum  != (tx_buffer[CMD_SIZE-1] ^ 0xFF)){
+          printf("checksum err\n");
+        }else{
+          puts("ok");
+          return 0;
+        }
+      }else{
+        printf("Not ACK\n");
       }
-      sum ^= 0xFF;
-
-      if (tx_buffer[0] == RES_ACK) puts("ACK!!!");
-
-      if ((tx_buffer[0] == RES_ACK)
-          && (sum == tx_buffer[RES_SIZE - 1]))
-      {
-        return 0;                         // Normal end
-      }
-
-      printf("Not ACK\n");                // retry
+      SPI5.transfer(tx_buffer, CMD_SIZE+8);
     }
+
     delay(RES_RETRY_TIME / RES_RETRY_COUNT);
   }
 
@@ -145,8 +154,8 @@ static int recv_data(void *buffer_addr, uint32_t buffer_size, uint32_t *pData_si
     {
       *pData_size = tx_buffer[3] | (tx_buffer[4] << 8) | (tx_buffer[5] << 16)
                     | (tx_buffer[6] << 24);
-      chunk_number = (*pData_size + (CHUNK_SIZE - RES_SIZE - 1))
-                     / (CHUNK_SIZE - RES_SIZE);
+      chunk_number = (*pData_size + (CHUNK_SIZE - RES_SIZE - 1 - 16))
+                     / (CHUNK_SIZE - RES_SIZE - 16);
 
       printf("Data size %d\n", *pData_size);
       printf("Total number of chunk = %d\n", chunk_number);
@@ -157,9 +166,9 @@ static int recv_data(void *buffer_addr, uint32_t buffer_size, uint32_t *pData_si
         goto ERR_EXIT;
       }
 
-      if (*pData_size >= (CHUNK_SIZE - RES_SIZE))
+      if (*pData_size >= (CHUNK_SIZE - RES_SIZE - 16))
       {
-        read_length = CHUNK_SIZE - RES_SIZE;
+        read_length = CHUNK_SIZE - RES_SIZE - 16;
       }
       else
       {
@@ -175,12 +184,12 @@ static int recv_data(void *buffer_addr, uint32_t buffer_size, uint32_t *pData_si
     printf("chunk number = %d\n", i);
     printf("read_length = %d\n", read_length);
 
-    if (read_length > (CHUNK_SIZE - RES_SIZE))
+    if (read_length > (CHUNK_SIZE - RES_SIZE - 16))
     {
       goto ERR_EXIT;
     }
 
-    SPI5.transfer(rx_buffer, read_length);
+    SPI5.transfer(rx_buffer, read_length+8);
 
     memcpy(buffer_addr, rx_buffer, read_length);
     buffer_addr += read_length;
@@ -212,8 +221,7 @@ void setup() {
   sleep(40);
 
   /* Allocate shared RAM */
-  int ret = mpshm_init(&shm, 0, FRAME_SIZE);
-  imgbuf = mpshm_attach(&shm, 0);
+  imgbuf = MP.AllocSharedMemory(FRAME_SIZE);
 
   /* Start ESP8266 library */
   esp8266at.begin(BAUDRATE);
