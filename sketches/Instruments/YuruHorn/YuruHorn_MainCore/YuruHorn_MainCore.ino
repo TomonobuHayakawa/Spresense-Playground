@@ -9,6 +9,8 @@
 #include <OutputMixer.h>
 #include <MemoryUtil.h>
 
+#include <memutils/s_stl/queue.h>
+
 //#define ENABLE_THROUGH
 
 #include <arch/chip/cxd56_audio.h>  /* For set_datapath */
@@ -17,11 +19,15 @@ extern "C" {
   extern void board_external_amp_mute_control(bool);
 }
 
-MediaRecorder *theRecorder;
+FrontEnd *theFrontEnd;
 OutputMixer *theMixer;
 Synthesizer *theSynthesizer;
 
 SDClass SD;  /**< SDClass object */
+
+using namespace s_std;
+
+Queue<AsPcmDataParam,30>  thePcmQue;
 
 /* Select mic channel number */
 const int mic_channel_num = 1;
@@ -43,11 +49,27 @@ struct Result {
   int  chnum;
 };
 
-static bool mediarecorder_done_callback(AsRecorderEvent event, uint32_t result, uint32_t sub_result)
+#define EFFECT_ATTACK     300
+#define EFFECT_DECAY      1
+#define EFFECT_SUSTAIN    100
+#define EFFECT_RELEASE    500
+
+/*static bool mediarecorder_done_callback(AsRecorderEvent event, uint32_t result, uint32_t sub_result)
 {
   printf("mr cb %x %x %x\n", event, result, sub_result);
 
   return true;
+}*/
+
+static void frontend_done_callback(AsPcmDataParam pcm_param)
+{
+  if(thePcmQue.full()){
+    puts("error que full");
+    exit(1);
+  }
+
+  thePcmQue.push(pcm_param);
+  
 }
 
 static void outputmixer_done_callback(MsgQueId requester_dtq,
@@ -100,8 +122,8 @@ void setup()
 
 
   Serial.println("Init Recorder Library");
-  theRecorder = MediaRecorder::getInstance();
-  theRecorder->begin();
+  theFrontEnd = FrontEnd::getInstance();
+  theFrontEnd->begin();
 
   theSynthesizer = Synthesizer::getInstance();
   theSynthesizer->begin();
@@ -113,22 +135,23 @@ void setup()
   /* Activate Baseband */
 
   theMixer->activateBaseband();
+//  theFrontEnd->activate(NULL, AsMicFrontendDeviceMic, false);
+  theFrontEnd->activate(NULL, false);
 
   /* Set capture clock */
 
-  theRecorder->setCapturingClkMode(MEDIARECORDER_CAPCLK_NORMAL);
+//  theRecorder->setCapturingClkMode(MEDIARECORDER_CAPCLK_NORMAL);
 
   /* Select input device as AMIC */
 
   theMixer->create(attention_cb);
   theSynthesizer->create(attention_cb);
 
-  theRecorder->activate(AS_SETRECDR_STS_INPUTDEVICE_MIC, mediarecorder_done_callback);
   theSynthesizer->activate(synthesizer_done_callback, NULL);
   theMixer->activate(OutputMixer0, HPOutputDevice, outputmixer_done_callback);
 
-  usleep(100 * 1000);
-
+//  usleep(100 * 1000);
+  sleep(3);
   /* Set PCM capture */
 
   uint8_t channel;
@@ -137,14 +160,22 @@ void setup()
     case 2: channel = AS_CHANNEL_STEREO; break;
     case 4: channel = AS_CHANNEL_4CH;    break;
   }
-  theRecorder->init(AS_CODECTYPE_LPCM,
-                    channel,
-                    AS_SAMPLINGRATE_48000,
-                    AS_BITLENGTH_16,
-                    AS_BITRATE_96000,
-                    "/mnt/sd0/BIN");
 
-  theSynthesizer->init(AsSynthesizerSinWave, 1, AS_SAMPLINGRATE_48000, AS_BITLENGTH_16, "/mnt/sd0/BIN/OSCPROC");
+  AsDataDest  dest;
+  dest.cb = frontend_done_callback;
+
+  theFrontEnd->init(AS_CHANNEL_MONO,
+                    AS_BITLENGTH_16,
+                    240*3,
+                    AsDataPathCallback,
+                    dest,
+//                    AsMicFrontendPreProcThrough,
+                    AsMicFrontendPreProcSrc,
+//                    AsMicFrontendPreProcVad,
+                      "/mnt/sd0/BIN/SRC");
+//                    "/mnt/sd0/BIN/VAD");
+
+  theSynthesizer->init(AsSynthesizerSinWave, 2, "/mnt/sd0/BIN/OSCPROC",EFFECT_ATTACK,EFFECT_DECAY,EFFECT_SUSTAIN,EFFECT_RELEASE);
   /* Launch SubCore */
 
   /* ----- gokan 11-14 ----- */
@@ -177,8 +208,6 @@ void setup()
 
   /* Set Gain */
 
-  theRecorder->setMicGain(180);
-
   /* Main volume set to -16.0 dB, Main player and sub player set to 0 dB */
 
   theMixer->setVolume(-160, 0, 0);
@@ -186,15 +215,17 @@ void setup()
   /* Start Recorder */
   theSynthesizer->start();
   sleep(1); 
-  theRecorder->start();
+  theFrontEnd->start();
 }
 
 void beep_control(uint16_t pw, uint16_t fq)
 {
   int vol;
-  int beep_ave = MIN(fq, 700);
+  int beep_ave = MIN(fq, 2000);
   int power_ave = pw;
-const int k=12;
+  const int k=12;
+  static int prev_ave =0;
+
   if (power_ave < 50) {
     theSynthesizer->set(0, 0);
     return;
@@ -215,11 +246,15 @@ const int k=12;
   }
 
   /*printf("power_ave =%d\n",power_ave);
-    printf("ave =%d\n",beep_ave);*/
-    printf("vol =%d\n",vol);
+    printf("ave =%d\n",beep_ave);
+    printf("vol =%d\n",vol);*/
 
   if ( beep_ave > 100 && beep_ave < 700 ) {
-    theSynthesizer->set(0, beep_ave);
+    if(prev_ave != beep_ave){
+      printf("beep %d\n",beep_ave);
+      theSynthesizer->set(0, beep_ave);
+      prev_ave = beep_ave;
+    }
 //    theMixer->setVolume(0, (vol * 10), 0);
   } else {
     theSynthesizer->set(0, 0);
@@ -233,20 +268,23 @@ void loop()
   Capture  capture;
   Result*  result;
 
-  static const int32_t buffer_sample = 768 * mic_channel_num;
+  static const int32_t buffer_sample = 240 * mic_channel_num;
   static const int32_t buffer_size = buffer_sample * sizeof(int16_t);
   static char  buffer[buffer_size];
   uint32_t read_size;
 
   /* Read frames to record in buffer */
-  int err = theRecorder->readFrames(buffer, buffer_size, &read_size);
-
-  if (err != MEDIARECORDER_ECODE_OK && err != MEDIARECORDER_ECODE_INSUFFICIENT_BUFFER_AREA) {
-    printf("Error err = %d\n", err);
-    sleep(1);
-    theRecorder->stop();
-    exit(1);
+  if(!thePcmQue.empty()){
+    read_size = thePcmQue.top().size;
+//    printf("pop %d\n",read_size);
+//    memcpy(buffer,thePcmQue.top().mh.getPa(),thePcmQue.top().size);
+    memcpy(buffer,thePcmQue.top().mh.getPa(),read_size);
+    thePcmQue.pop();
+  }else{
+    read_size = 0;
   }
+   
+  
   if ((read_size != 0) && (read_size == buffer_size)) {
     capture.buff   = buffer;
     capture.sample = buffer_sample / mic_channel_num;
@@ -261,9 +299,9 @@ void loop()
 //          MP.Send(50, result->peak[i], 2);
         }
         beep_control(result->power[i], result->peak[i]);
-        printf("main %d, %d, ", result->power[i], result->peak[i]);
+//        printf("main %d, %d, ", result->power[i], result->peak[i]);
       }
-      printf("\n");
+//      printf("\n");
     }
   }
 }

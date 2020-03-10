@@ -63,7 +63,7 @@ float smoothing_peak(float cur)
   float ave = (data[2] + data[1] + data[0])/3;
   data[2] = data[1];
   data[1] = data[0];
-	printf("cur=%8.3f, %8.3f\n",cur,ave);
+//	printf("cur=%8.3f, %8.3f\n",cur,ave);
   return ave;
 }
 
@@ -76,7 +76,7 @@ float smoothing_pow(float cur)
   float ave = (data[2] + data[1] + data[0])/3;
   data[2] = data[1];
   data[1] = data[0];
-	printf("pow=%8.3f, %8.3f\n",cur,ave);
+//	printf("pow=%8.3f, %8.3f\n",cur,ave);
   return ave;
 }
 
@@ -93,6 +93,7 @@ void loop()
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &capture);
   if (ret >= 0) {
+//      printf("rev1 %d\n",capture->sample);
       FFT.put((q15_t*)capture->buff,capture->sample);
   }
 
@@ -119,7 +120,8 @@ void loop()
 
 float get_peak_frequency(float *pData, int fftLen, float *power)
 {
-  float g_fs = 48000.0f;
+//  float g_fs = 48000.0f;
+  float g_fs = 16000.0f;
   uint32_t index;
   float maxValue;
   float delta;
