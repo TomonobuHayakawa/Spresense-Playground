@@ -21,13 +21,27 @@
 
 #include "FFT.h"
 
-/* Use CMSIS library */
-#define ARM_MATH_CM4
-#define __FPU_PRESENT 1U
-#include <cmsis/arm_math.h>
+/*-----------------------------------------------------------------*/
+/*
+ * FFT parameters
+ */
+/* Select FFT length */
 
-/* Select FFT Offset */
-const int g_channel = 4;
+//#define FFT_LEN 32
+//#define FFT_LEN 64
+//#define FFT_LEN 128
+//#define FFT_LEN 256
+//#define FFT_LEN 512
+#define FFT_LEN 1024
+//#define FFT_LEN 2048
+//#define FFT_LEN 4096
+
+/* Number of channels*/
+//#define MAX_CHANNEL_NUM 1
+//#define MAX_CHANNEL_NUM 2
+#define MAX_CHANNEL_NUM 4
+
+FFTClass<MAX_CHANNEL_NUM, FFT_LEN> FFT;
 
 /* Allocate the larger heap size than default */
 
@@ -42,7 +56,7 @@ struct Capture {
 };
 
 struct Result {
-  float peak[g_channel];
+  float peak[MAX_CHANNEL_NUM];
   int  chnum;
 };
 
@@ -67,9 +81,9 @@ void loop()
   int8_t   sndid = 10; /* user-defined msgid */
   int8_t   rcvid;
   Capture *capture;
-  staic Result   result;
+  static Result   result;
 
-  static float pDst[FFTLEN/2];
+  static float pDst[FFT_LEN/2];
 
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &capture);
@@ -80,10 +94,10 @@ void loop()
   float peak[4];
   while(FFT.empty(0) != 1){
 //    printf("peak ");
-      result.chnum = g_channel;
-    for (int i = 0; i < g_channel; i++) {
+      result.chnum = MAX_CHANNEL_NUM;
+    for (int i = 0; i < MAX_CHANNEL_NUM; i++) {
       int cnt = FFT.get(pDst,i);
-      peak[i] = get_peak_frequency(pDst, FFTLEN);
+      peak[i] = get_peak_frequency(pDst, FFT_LEN);
       result.peak[i] = peak[i];
 //      printf("%8.3f, ", peak[i]);
     }

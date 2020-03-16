@@ -25,10 +25,28 @@
 /*
  * FFT parameters
  */
+/* Select FFT length */
+
+//#define FFT_LEN 32
+//#define FFT_LEN 64
+//#define FFT_LEN 128
+//#define FFT_LEN 256
+//#define FFT_LEN 512
+#define FFT_LEN 1024
+//#define FFT_LEN 2048
+//#define FFT_LEN 4096
+
+/* Number of channels*/
+//#define MAX_CHANNEL_NUM 1
+//#define MAX_CHANNEL_NUM 2
+#define MAX_CHANNEL_NUM 4
+
 #define SAMPLING_RATE   48000 // ex.) 48000, 16000
 
-#define FFTLEN          1024 // ex.) 128, 256, 1024
-#define OVERLAP         (FFTLEN/2)  // ex.) 0, 128, 256
+#define FFT_LEN         1024 // ex.) 128, 256, 1024
+#define OVERLAP         (FFT_LEN/2)  // ex.) 0, 128, 256
+
+FFTClass<MAX_CHANNEL_NUM, FFT_LEN> FFT;
 
 /*-----------------------------------------------------------------*/
 /*
@@ -41,18 +59,15 @@
 #define BOTTOM_SAMPLING_RATE  1000 // 1kHz
 #define TOP_SAMPLING_RATE     1500 // 1.5kHz
 
-#define FS2BAND(x)            (x*FFTLEN/SAMPLING_RATE)
+#define FS2BAND(x)            (x*FFT_LEN/SAMPLING_RATE)
 #define BOTTOM_BAND           (FS2BAND(BOTTOM_SAMPLING_RATE))
 #define TOP_BAND              (FS2BAND(TOP_SAMPLING_RATE))
 
-#define MS2FRAME(x)           ((x*SAMPLING_RATE/1000/(FFTLEN-OVERLAP))+1)
+#define MS2FRAME(x)           ((x*SAMPLING_RATE/1000/(FFT_LEN-OVERLAP))+1)
 #define LENGTH_FRAME          MS2FRAME(LENGTH_THRESHOLD)
 #define INTERVAL_FRAME        MS2FRAME(INTERVAL_THRESHOLD)
 
 /*-----------------------------------------------------------------*/
-/* Select FFT Offset */
-const int g_channel = 4;
-
 /* Allocate the larger heap size than default */
 
 USER_HEAP_SIZE(64 * 1024);
@@ -66,7 +81,7 @@ struct Capture {
 };
 
 struct Result {
-  bool found[g_channel] = {false,false,false,false};
+  bool found[MAX_CHANNEL_NUM] = {false,false,false,false};
   int  channel;
   void clear(){ found[0]=false;found[1]=false;found[2]=false;found[3]=false;}
 };
@@ -95,7 +110,7 @@ void loop()
 
   result[pos].clear();
   
-  static float pDst[FFTLEN/2];
+  static float pDst[FFT_LEN/2];
  
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &capture);
@@ -104,8 +119,8 @@ void loop()
   }
 
   while(FFT.empty(0) != 1){
-      result[pos].channel = g_channel;
-    for (int i = 0; i < g_channel; i++) {
+      result[pos].channel = MAX_CHANNEL_NUM;
+    for (int i = 0; i < MAX_CHANNEL_NUM; i++) {
       int cnt = FFT.get(pDst,i);
       result[pos].found[i] = detect_sound(BOTTOM_BAND,TOP_BAND,pDst,i);
 //      if(result[pos].found[i]){ printf("Sub channel %d\n",i); }
@@ -125,8 +140,8 @@ void loop()
  */
 bool detect_sound(int bottom, int top, float* pdata, int channel )
 {
-  static int continuity[g_channel] = {0,0,0,0};
-  static int interval[g_channel] = {0,0,0,0};
+  static int continuity[MAX_CHANNEL_NUM] = {0,0,0,0};
+  static int interval[MAX_CHANNEL_NUM] = {0,0,0,0};
 
   if(bottom > top) return false;
 

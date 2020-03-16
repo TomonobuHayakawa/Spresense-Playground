@@ -19,21 +19,36 @@
 
 #include <MP.h>
 
+/*-----------------------------------------------------------------*/
+/*
+ * FFT parameters
+ */
+
+/* Select FFT length */
+
+//#define FFT_LEN 32
+//#define FFT_LEN 64
+//#define FFT_LEN 128
+//#define FFT_LEN 256
+//#define FFT_LEN 512
+#define FFT_LEN 1024
+//#define FFT_LEN 2048
+//#define FFT_LEN 4096
+
+/* Number of channels*/
+#define MAX_CHANNEL_NUM 1
+//#define MAX_CHANNEL_NUM 2
+//#define MAX_CHANNEL_NUM 4
+
 #include "FFT.h"
 
-/* Use CMSIS library */
-#define ARM_MATH_CM4
-#define __FPU_PRESENT 1U
-#include <cmsis/arm_math.h>
+FFTClass<MAX_CHANNEL_NUM, FFT_LEN> FFT;
 
 arm_rfft_fast_instance_f32 iS;
 arm_biquad_cascade_df2T_instance_f32 bS;
 
 float32_t lpf_coef[5];
 float32_t lpf_buffer[4];
-
-/* Select FFT Offset */
-const int g_channel = 1;
 
 /* Allocate the larger heap size than default */
 
@@ -88,7 +103,7 @@ void setup()
 //  MP.RecvTimeout(MP_RECV_POLLING);
   MP.RecvTimeout(100000);
 
-  FFT.begin(WindowRectangle,1,0);
+  FFT.begin(WindowRectangle,MAX_CHANNEL_NUM,0);
   create_coef(1000, 1);
 
   arm_rfft_1024_fast_init_f32(&iS);
@@ -105,10 +120,10 @@ void loop()
   Request *request;
   Result   result[RESULT_SIZE];
 
-  static float pTmp[(FFTLEN+(MAX_SHIFT*2))*2];
-  static float pDst[FFTLEN];
-  static float pLpfTmp[FFTLEN];
-  static q15_t pOut[RESULT_SIZE][FFTLEN];
+  static float pTmp[(FFT_LEN+(MAX_SHIFT*2))*2];
+  static float pDst[FFT_LEN];
+  static float pLpfTmp[FFT_LEN];
+  static q15_t pOut[RESULT_SIZE][FFT_LEN];
   static int pos=0;
   static int pitch_shift=10;
 
@@ -118,28 +133,28 @@ void loop()
       FFT.put((q15_t*)request->buffer,request->sample);
   }
   while(FFT.empty(0) != 1){
-//      result.chnum = g_channel;
-    for (int i = 0; i < g_channel; i++) {
+//      result.chnum = MAX_CHANNEL_NUM;
+    for (int i = 0; i < MAX_CHANNEL_NUM; i++) {
 
-      int cnt = FFT.get_raw(&pTmp[(MAX_SHIFT+pitch_shift)*2],i,true);
+      int cnt = FFT.get_raw(&pTmp[(MAX_SHIFT+pitch_shift)*2],i);
 
       if(pitch_shift>0){
-        FFT.get_raw(&pTmp[(pitch_shift)*2],i,true);
+        FFT.get_raw(&pTmp[(pitch_shift)*2],i);
         memset(pTmp,0,pitch_shift*2);
         arm_rfft_fast_f32(&iS, &pTmp[0], pDst, 1);
       }else{
-        FFT.get_raw(&pTmp[(MAX_SHIFT-pitch_shift)*2],i,true);
-        memset((pTmp+(FFTLEN-MAX_SHIFT)),0,MAX_SHIFT*2);
+        FFT.get_raw(&pTmp[(MAX_SHIFT-pitch_shift)*2],i);
+        memset((pTmp+(FFT_LEN-MAX_SHIFT)),0,MAX_SHIFT*2);
         arm_rfft_fast_f32(&iS, &pTmp[MAX_SHIFT*2], pDst, 1);        
       }
 
-      arm_biquad_cascade_df2T_f32(&bS, pDst, pLpfTmp, FFTLEN);
-      arm_float_to_q15(pLpfTmp,&pOut[pos][0],FFTLEN);
+      arm_biquad_cascade_df2T_f32(&bS, pDst, pLpfTmp, FFT_LEN);
+      arm_float_to_q15(pLpfTmp,&pOut[pos][0],FFT_LEN);
       
-//      for(int i=4; i<FFTLEN/6;i++){ pOut[pos][i] <<= 2;}
+//      for(int i=4; i<FFT_LEN/6;i++){ pOut[pos][i] <<= 2;}
 
       result[pos].buffer = MP.Virt2Phys(&pOut[pos][0]);
-      result[pos].sample = FFTLEN;
+      result[pos].sample = FFT_LEN;
 
       ret = MP.Send(sndid, &result[pos],0);
       pos = (pos+1)%RESULT_SIZE;

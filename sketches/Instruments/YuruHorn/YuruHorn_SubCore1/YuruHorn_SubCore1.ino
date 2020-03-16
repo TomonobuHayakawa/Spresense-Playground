@@ -1,16 +1,18 @@
 
 #include <MP.h>
 
+#define FFT_LEN 1024
+#define MAX_CHANNEL_NUM 1
+
 #include "FFT.h"
+FFTClass<MAX_CHANNEL_NUM, FFT_LEN> FFT;
+
 #include "PitchScaleAdjuster.h"
 
 /* Use CMSIS library */
 #define ARM_MATH_CM4
 #define __FPU_PRESENT 1U
 #include <cmsis/arm_math.h>
-
-/* Select FFT Offset */
-const int g_channel = 1;
 
 /* Allocate the larger heap size than default */
 
@@ -30,8 +32,8 @@ struct Capture {
 };*/
 
 struct Result {
-  uint16_t peak[g_channel];
-  uint16_t power[g_channel];
+  uint16_t peak[MAX_CHANNEL_NUM];
+  uint16_t power[MAX_CHANNEL_NUM];
   int  chnum;
 };
 
@@ -88,7 +90,7 @@ void loop()
   Capture *capture;
   static Result   result;
 
-  static float pDst[FFTLEN/2];
+  static float pDst[FFT_LEN/2];
 
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &capture);
@@ -100,10 +102,10 @@ void loop()
   float peak[4];
   float power[4];
   while(FFT.empty(0) != 1){
-    result.chnum = g_channel;
-    for (int i = 0; i < g_channel; i++) {
+    result.chnum = MAX_CHANNEL_NUM;
+    for (int i = 0; i < MAX_CHANNEL_NUM; i++) {
       int cnt = FFT.get(pDst,i);
-      peak[i] = get_peak_frequency(pDst, FFTLEN, &power[i]);
+      peak[i] = get_peak_frequency(pDst, FFT_LEN, &power[i]);
       result.peak[i] = (uint16_t)(PitchScaleAdjuster.get(smoothing_peak(peak[i])));
       result.power[i] = (uint16_t)(smoothing_pow(power[i])*100);
 //      printf("Sub %8.3f, %8.3f\n", power[i],peak[i]);
