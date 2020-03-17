@@ -19,7 +19,7 @@
 
 
 #include <stdio.h>
-#include "oscillator.h"
+#include "Oscillator.h"
 
 /*--------------------------------------------------------------------*/
 /*   Wave Generator Base                                              */
