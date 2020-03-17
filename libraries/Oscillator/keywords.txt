@@ -1,0 +1,24 @@
+# Class
+GeneratorBase			KEYWORD1
+SinGenerator			KEYWORD1
+RectGenerator			KEYWORD1
+SawGenerator			KEYWORD1
+EnvelopeGenerator		KEYWORD1
+OscillatorClass			KEYWORD1
+Oscillator			KEYWORD1
+
+# Constants
+SinWave				LITERAL1
+RectWave			LITERAL1
+SawWave				LITERAL1
+
+# Function
+begin				KEYWORD2
+init				KEYWORD2
+exec				KEYWORD2
+flush				KEYWORD2
+set				KEYWORD2
+start				KEYWORD2
+stop				KEYWORD2
+end				KEYWORD2
+
