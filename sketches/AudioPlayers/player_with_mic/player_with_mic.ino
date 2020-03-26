@@ -18,11 +18,12 @@
  */
 
 #include <Audio.h>
-#include <SD.h>
+#include <SDHCI.h>
 #include <arch/chip/cxd56_audio.h>  /* For mic-in */
 
 AudioClass *theAudio;
 File myFile;
+SDClass theSD;
 
 bool ErrEnd = false;
 
@@ -121,7 +122,7 @@ static bool set_mic_to_speaker(int gain = 0)
 void setup()
 {
   /* Initialize SD Card */
-  while (!SD.begin()) {
+  while (!theSD.begin()) {
     ; /* wait until SD card is mounted. */
   }
 
@@ -163,7 +164,7 @@ void setup()
 
   /* Open the file. Note that only one file can be open at a time,
      so you have to close this one before opening another. */
-  myFile = SD.open("Sound.mp3");
+  myFile = theSD.open("Sound.mp3");
 
   /* Verify file open */
   if (!myFile)
