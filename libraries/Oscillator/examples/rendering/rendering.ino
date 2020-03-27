@@ -129,7 +129,8 @@ void setup()
   createStaticPools(MEM_LAYOUT_PLAYER);
 
   /* Use SD card */
-  Oscillator.begin(SinWave, 2);
+//  Oscillator.begin(SinWave, 2);
+  Oscillator.begin(RectWave, 2);
 //  Oscillator.begin(SawWave, 2);
 
   /* Start audio system */
@@ -152,7 +153,7 @@ void setup()
   usleep(100 * 1000);
 
   /* Set main volume */
-  theMixer->setVolume(-32, 0, 0);
+  theMixer->setVolume(-160, 0, 0);
 
   /* Unmute */
   board_external_amp_mute_control(false);
@@ -161,6 +162,10 @@ void setup()
 
   Oscillator.set(0, 0);
   Oscillator.set(1, 0);
+
+  Oscillator.set(0, 1000,700,30,300);
+  Oscillator.set(1, 1000,700,30,300);
+
 }
 
 #define C_NOTE  262
@@ -172,8 +177,8 @@ void setup()
 void loop()
 {
 
-  err_t err = OUTPUTMIXER_ECODE_OK;
-  uint16_t note = 0xff;
+/*  err_t err = OUTPUTMIXER_ECODE_OK;
+  uint16_t note = 0xff;*/
 
   /* Fatal error */
 
@@ -189,23 +194,23 @@ void loop()
     switch (Serial.read()) {
       case 'c': // C
         Oscillator.set(0, C_NOTE);
-        Oscillator.set(1, C_NOTE);
+        Oscillator.set(1, C_NOTE*2);
         break;
       case 'd': // D
         Oscillator.set(0, D_NOTE);
-        Oscillator.set(1, D_NOTE);
+        Oscillator.set(1, D_NOTE*2);
         break;
       case 'e': // E
         Oscillator.set(0, E_NOTE);
-        Oscillator.set(1, E_NOTE);
+        Oscillator.set(1, E_NOTE*2);
         break;
       case 'f': // F
         Oscillator.set(0, F_NOTE);
-        Oscillator.set(1, F_NOTE);
+        Oscillator.set(1, F_NOTE*2);
         break;
       case 'g': // G
         Oscillator.set(0, G_NOTE);
-        Oscillator.set(1, G_NOTE);
+        Oscillator.set(1, G_NOTE*2);
         break;
       case 's': // Stop
         Oscillator.set(0, 0);

@@ -39,7 +39,7 @@ void GeneratorBase::set(uint32_t frequency)
     {
       m_omega = frequency * 0x7fff / m_sampling_rate;
     }
-	printf("freq=%d,omeg=%x\n",frequency,m_omega);
+  printf("freq=%d,omeg=%x\n",frequency,m_omega);
 }
 
 /*--------------------------------------------------------------------*/
@@ -74,7 +74,7 @@ void RectGenerator::exec(q15_t* ptr, uint16_t samples)
 {
   for (int i = 0; i < samples ; i++)
     {
-     q15_t val = (m_theta > 0x3fff) ? 1 : 0;
+     q15_t val = (m_theta > 0x3fff) ?  0x7fff: 0x8000;
      ptr = update_sample(ptr,val);
     }
 }
@@ -164,12 +164,13 @@ uint16_t EnvelopeGenerator::attack(q15_t** top, uint16_t samples)
   while (samples>0)
     {
       float data = *ptr;
-      *ptr = (data * m_cur_coef) / 0x7fff;
+      *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
       m_cur_coef += m_a_delta;
+
       samples--;
       ptr += m_channels;
 
-      if (m_cur_coef > 0x7fff)
+      if (m_cur_coef > (float)0x7fff)
         {
           m_cur_coef = 0x7fff;
           m_cur_state = Decay_state;
@@ -189,7 +190,7 @@ uint16_t EnvelopeGenerator::decay(q15_t** top, uint16_t samples)
   while (samples>0)
     {
       float data = *ptr;
-      *ptr = (data * m_cur_coef) / 0x7fff;
+      *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
       m_cur_coef -= m_d_delta;
       samples--;
       ptr += m_channels;
@@ -213,7 +214,7 @@ uint16_t EnvelopeGenerator::sustain(q15_t** top, uint16_t samples)
   while (samples>0)
     {
       float data = *ptr;
-      *ptr = (data * m_cur_coef) / 0x7fff;
+      *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
       samples--;
       ptr += m_channels;
     }
@@ -231,7 +232,7 @@ uint16_t EnvelopeGenerator::release(q15_t** top, uint16_t samples)
   while (samples>0)
     {
       float data = *ptr;
-      *ptr = (data * m_cur_coef) / 0x7fff;
+      *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
       m_cur_coef -= m_r_delta;
       samples--;
       ptr += m_channels;
