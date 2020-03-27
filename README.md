@@ -9,6 +9,54 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 --------------------
 ## What's new.
 
+3/27
+
+```
+・楽器向けボード(Spresense Instrument)の更新 (1.5.3) を行いました。 <br>
+    - 本線のv1.5.1を取り込みました。 <br>
+    - マイク入力を加工して出力するサンプルを追加しました。 <br>
+    - MP3音声を再生しながら、マイク入力を加工して出力するサンプルを追加しました。 <br>
+      - single_core : MainCoreのみ使用。Arduinoで加工可能。
+
+※今回更新のスケッチは、メモリレイアウトなどの関係から、通常のSpresenseのボードでは動作しません。 <BR>
+  *Spresense Instrument* のボードを使用してください。（使用方法は下記参照）
+
+Spresense-Playground
+ ｜
+ ├ sketchies : Arduinoスケッチを置く場所。
+     ｜
+     ├ AudioPlayers
+     ｜   ｜
+     ｜   ├ player_with_effect_mic
+     ｜
+     ├ SoundEffector
+         ｜
+         ├ single_core
+
+```
+
+α版のinstallは、
+
+Arduinoのファイル / 環境設定 の中の <br>
+追加ボードマネージャのURLに、 <br>
+https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_instrument_index.json <br>
+を追加してください。  
+
+これを追加すると、ボードマネージャの中に、  
+
+*Spresense Instrument*  
+
+というボードが新たに選択できます。  
+
+これを利用することで、上記機能を使用することができます。
+
+注) 現時点で評価ができているものではありません。バグ等に関しての責任は負いかねます。
+注) 現在提供のAPIは、暫定版です。正式版で変更される可能性があります。
+
+*sketches/Instruments*
+
+は、こちらのボードで作成されています。
+
 3/18
 
 ・シンセサイザ機能むけオシレータ&エンベロープジェネレータのライブラリを作成しました。
@@ -56,49 +104,6 @@ https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/downlo
 
 M11Sを使う場合は、これを利用してください。
 
-1/28
-
-・スマートドラムを小川君に代わって入れておきました。
-
-12/27
-
-・シンセサイザ機能の更新
-   - オシレータにエンベロープジェネレータを追加しました。
-   - 最大8chの波形を出力できるようにpost処理のMixerを拡張しました。
-
-12/18
-
-・ゆる楽器に向けてSpresenseのSDKのαリリースをします。
-   - レコグナイザー機能
-   - シンセサイザ機能
-   がArduinoで呼べるようになります。
-
-α版のinstallは、
-
-Arduinoのファイル / 環境設定 の中の <br>
-追加ボードマネージャのURLに、 <br>
-https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_instrument_index.json <br>
-を追加してください。  
-
-これを追加すると、ボードマネージャの中に、  
-
-*Spresense Instrument*  
-
-というボードが新たに選択できます。  
-
-これを利用することで、上記機能を使用することができます。
-
-注) 現時点で評価ができているものではありません。バグ等に関しての責任は負いかねます。
-注) 現在提供のAPIは、暫定版です。正式版で変更される可能性があります。
-
-*sketches/Instruments*
-
-は、こちらのボードで作成されています。
-
-12/5 
-
-・楽器に向けての @gokankenichi さん作 PitchScaleAdjuster をライブラリ化しました。
-
 
 --------------------
 ## ディレクトリ構成
@@ -136,6 +141,8 @@ Spresense-Playground
     - diy_player
     - diy_player_wo_sensing
     - NetRadio_w_sensing
+    - player_with_effect_mic
+    - player_with_mic
 
 - AudioRendering
     - rendering_objif
@@ -149,11 +156,14 @@ Spresense-Playground
     - Jpeg_ESP8266_CamServer
     - Jpeg_shot_with_SD
 
+- SoundEffector
+    - multi_core
+    - single_core
+
 - USB_UART
 - I2cScanner
 
 - LowPowerSensing
     - bme680_ulp_plus_via_sigfox
     - bme680_uulp_plus_via_sigfox
-
 
