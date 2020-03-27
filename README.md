@@ -7,20 +7,27 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 本線リポジトリに取り込まれたものは、削除していきます。
 
 --------------------
+## 現在の各ボードパッケージのバージョン
+
+Spresense HighSpeedADC : v1.5.0 (Base v1.5.0) <br>
+Spresense Instrument   : v1.5.3 (Base v1.5.1) <br>
+Spresense M11S         : v1.5.1 (Base v1.5.0) <br>
+
+-------------------- 
 ## What's new.
 
 3/27
 
-```
 ・楽器向けボード(Spresense Instrument)の更新 (1.5.3) を行いました。 <br>
     - 本線のv1.5.1を取り込みました。 <br>
     - マイク入力を加工して出力するサンプルを追加しました。 <br>
     - MP3音声を再生しながら、マイク入力を加工して出力するサンプルを追加しました。 <br>
-      - single_core : MainCoreのみ使用。Arduinoで加工可能。
+      - single_core : MainCoreのみ使用。Arduinoで加工可能。 <br>
 
 ※今回更新のスケッチは、メモリレイアウトなどの関係から、通常のSpresenseのボードでは動作しません。 <BR>
   *Spresense Instrument* のボードを使用してください。（使用方法は下記参照）
 
+```
 Spresense-Playground
  ｜
  ├ sketchies : Arduinoスケッチを置く場所。
@@ -66,13 +73,13 @@ https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/downlo
 ・FFTライブラリの修正。
 
 FFTライブラリのFFTのTap数、最大のチャンネル数が固定でしか運用できなかったため、
-非常に使いづらかったです。
+非常に使いづらかったです。<br>
 ですが、同時に、CMSIS-DSPのライブラリがTAP数ごとにデータを持つため、
-すべてのTAP数をリンクするとサイズが大きくなってしまう問題がありました。
-そのため、今回の実装で、templateで実装し回避しました。
-※苦肉の策…。
+すべてのTAP数をリンクするとサイズが大きくなってしまう問題がありました。<br>
+そのため、今回の実装で、templateで実装し回避しました。<br>
+※苦肉の策…。<br>
 
-不評であれば、再度考えます。
+不評であれば、再度考えます。<br>
 
 
 3/8
