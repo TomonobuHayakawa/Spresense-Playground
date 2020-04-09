@@ -1,0 +1,13 @@
+# Class
+MM-S50MVClass	KEYWORD1
+MM-S50MV		KEYWORD1
+
+# Constants
+
+# Function
+begin			KEYWORD2
+end				KEYWORD2
+set				KEYWORD2
+get				KEYWORD2
+sync			KEYWORD2
+skip			KEYWORD2
