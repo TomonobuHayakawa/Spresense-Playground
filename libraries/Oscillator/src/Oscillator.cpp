@@ -222,7 +222,7 @@ uint16_t EnvelopeGenerator::sustain(q15_t** top, uint16_t samples)
   *top = ptr;
 
   return samples;
-  
+
 }
 /*--------------------------------------------------------------------*/
 uint16_t EnvelopeGenerator::release(q15_t** top, uint16_t samples)
@@ -312,13 +312,7 @@ void OscillatorClass::init(WaveMode type, uint8_t channel_num)
 
       m_envlop[i].init(m_bit_length, m_channel_num);
 
-      /* set */
-
-/*      m_envlop[i].set(cmd->init_osc_cmd.env.attack,
-                      cmd->init_osc_cmd.env.decay,
-                      cmd->init_osc_cmd.env.sustain,
-                      cmd->init_osc_cmd.env.release);*/
-
+      /* Initial value */
       m_envlop[i].set(1,1,100,1);
     }
 

@@ -163,6 +163,7 @@ void setup()
   Oscillator.set(0, 0);
   Oscillator.set(1, 0);
 
+  /* attack = 1000,decay = 700, sustain = 30, release = 300 */
   Oscillator.set(0, 1000,700,30,300);
   Oscillator.set(1, 1000,700,30,300);
 

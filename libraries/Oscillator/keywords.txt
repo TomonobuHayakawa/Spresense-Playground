@@ -18,7 +18,5 @@ init				KEYWORD2
 exec				KEYWORD2
 flush				KEYWORD2
 set				KEYWORD2
-start				KEYWORD2
-stop				KEYWORD2
 end				KEYWORD2
 
