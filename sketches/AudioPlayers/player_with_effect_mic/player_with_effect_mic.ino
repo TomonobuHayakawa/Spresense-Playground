@@ -47,7 +47,7 @@ static void filter_sample(int16_t *ptr, uint32_t size)
   int16_t *ls = ptr;
   int16_t *rs = ls + 1;
 
-  for (uint32_t cnt = 0; cnt < size; cnt += channel_number){
+  for (uint32_t cnt = 0; cnt < size; cnt += channel_number*sizeof(uint16_t)){
     *ls = *ls + *rs;
     *rs = 0;
     ls+=channel_number;
