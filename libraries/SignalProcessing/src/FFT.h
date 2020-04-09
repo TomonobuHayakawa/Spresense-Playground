@@ -32,9 +32,9 @@
 /*------------------------------------------------------------------*/
 /* WINDOW TYPE */
 typedef enum e_windowType {
-	WindoHamming,
-	WindoHanning,
-	WindowRectangle
+  WindoHamming,
+  WindoHanning,
+  WindowRectangle
 } windowType_t;
 
 /*------------------------------------------------------------------*/
@@ -53,7 +53,7 @@ public:
 
     m_overlap = overlap;
     m_channel = channel;
-  
+
     clear();
     create_coef(type);
     if(!fft_init()){
@@ -83,31 +83,8 @@ public:
     return  true;
   }
 
-  int  get_raw(float* out, int channel, int raw){
-    static float tmpFft[FFTLEN];  
-
-    if(channel >= m_channel) return false;
-    if (ringbuf_fft[channel]->stored() < FFTLEN) return 0;
-
-    for(int i=0;i<m_overlap;i++){
-      tmpInBuf[channel][i]=tmpInBuf[channel][FFTLEN-m_overlap+i];
-    }
-
-    /* Read from the ring buffer */
-    ringbuf_fft[channel]->get(&tmpInBuf[channel][m_overlap], FFTLEN-m_overlap);
-
-    for(int i=0;i<FFTLEN;i++){
-      tmpFft[i] = tmpInBuf[channel][i]*coef[i];
-    }
-
-    if(raw){
-      /* Calculate only FFT */
-      fft(tmpFft, out, FFTLEN);
-    }else{
-      /* Calculate FFT for convert to amplitude */
-      fft_amp(tmpFft, out, FFTLEN);
-    }
-    return (FFTLEN-m_overlap);
+  int  get_raw(float* out, int channel){
+    return get_raw(out, channel, true);
   }
 
   int  get(float* out, int channel){
@@ -187,18 +164,46 @@ private:
     return true;
   }
 
-  void fft(float *pSrc, float *pDst, int fftLen){
+  void fft(float *pSrc, float *pDst){
     arm_rfft_fast_f32(&S, pSrc, pDst, 0);
   }
 
-  void fft_amp(float *pSrc, float *pDst, int fftLen){
+  void fft_amp(float *pSrc, float *pDst){
     /* calculation */
     arm_rfft_fast_f32(&S, pSrc, tmpOutBuf, 0);
 
-    arm_cmplx_mag_f32(&tmpOutBuf[2], &pDst[1], fftLen / 2 - 1);
+    arm_cmplx_mag_f32(&tmpOutBuf[2], &pDst[1], FFTLEN / 2 - 1);
     pDst[0] = tmpOutBuf[0];
-    pDst[fftLen / 2] = tmpOutBuf[1];
+    pDst[FFTLEN / 2] = tmpOutBuf[1];
   }
+
+  int  get_raw(float* out, int channel, int raw){
+    static float tmpFft[FFTLEN];
+
+    if(channel >= m_channel) return false;
+    if (ringbuf_fft[channel]->stored() < FFTLEN) return 0;
+
+    for(int i=0;i<m_overlap;i++){
+      tmpInBuf[channel][i]=tmpInBuf[channel][FFTLEN-m_overlap+i];
+    }
+
+    /* Read from the ring buffer */
+    ringbuf_fft[channel]->get(&tmpInBuf[channel][m_overlap], FFTLEN-m_overlap);
+
+    for(int i=0;i<FFTLEN;i++){
+      tmpFft[i] = tmpInBuf[channel][i]*coef[i];
+    }
+
+    if(raw){
+      /* Calculate only FFT */
+      fft(tmpFft, out);
+    }else{
+      /* Calculate FFT for convert to amplitude */
+      fft_amp(tmpFft, out);
+    }
+    return (FFTLEN-m_overlap);
+  }
+
 
 };
 

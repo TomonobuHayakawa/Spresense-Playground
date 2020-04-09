@@ -1,5 +1,5 @@
 /*
-*  IIR.cpp - IIR(biquad cascade) Library
+ *  IIR.h - IIR(biquad cascade) Library Header
  *  Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
@@ -50,10 +50,10 @@
 /*------------------------------------------------------------------*/
 /* FILTER TYPE */
 typedef enum e_filterType {
-	TYPE_LPF,
-	TYPE_HPF,
-	TYPE_BPF,
-	TYPE_BEF
+  TYPE_LPF,
+  TYPE_HPF,
+  TYPE_BPF,
+  TYPE_BEF
 } filterType_t;
 
 

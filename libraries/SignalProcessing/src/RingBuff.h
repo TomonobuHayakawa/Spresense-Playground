@@ -1,5 +1,5 @@
 /*
- *  RingBuff.h - MP Example for Audio FFT
+ *  RingBuff.h - Ring Buffer for FFT/IIR Filter
  *  Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #define _RINGBUFF_H_
 
 #include <stdlib.h>
- 
+
 class RingBuff
 {
 public:

@@ -16,7 +16,7 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
+
 #include "IIR.h"
 
 RingBuff ringbuf[MAX_CHANNEL_NUM](INPUT_BUFFER);
@@ -41,7 +41,7 @@ bool IIRClass::begin(filterType_t type, int channel, int cutoff, float q)
 bool IIRClass::create_coef(filterType_t type, int cutoff, float q)
 {
   float w,k0,k1,a0,a1,a2,b0,b1,b2;
-  
+
   w = 2.0f * PI * cutoff / 48000;
 
   a1 = -2.0f * cos(w);
@@ -52,7 +52,7 @@ bool IIRClass::create_coef(filterType_t type, int cutoff, float q)
     k0 = sin(w) / (2.0f * q);
     k1 = 1.0f - cos(w);
 
-  	a0 =  1.0f + k0;
+    a0 =  1.0f + k0;
     a2 =  1.0f - k0;
     b0 =  k1 / 2.0f;
     b2 = (k0) / 2.0f;
@@ -66,7 +66,7 @@ bool IIRClass::create_coef(filterType_t type, int cutoff, float q)
     break;
   default:
     return false;
-  }    
+  }
 
   switch(type){
   case TYPE_LPF:
@@ -105,11 +105,11 @@ bool IIRClass::put(q15_t* pSrc, int sample)
   if(sample > ringbuf[0].remain()) return false;
 
   if (m_channel == 1) {
-  	/* the faster optimization */
-  	ringbuf[0].put((q15_t*)pSrc, sample);
+    /* the faster optimization */
+    ringbuf[0].put((q15_t*)pSrc, sample);
   } else {
-  	for (int i = 0; i < m_channel; i++) {
-  	  ringbuf[i].put(pSrc, sample, m_channel, i);
+    for (int i = 0; i < m_channel; i++) {
+      ringbuf[i].put(pSrc, sample, m_channel, i);
     }
   }
   return  true;

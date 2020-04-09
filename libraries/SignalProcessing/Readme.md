@@ -123,9 +123,9 @@ FFTClass<"最大チャンネル数", "FFTのTAP数"> FFT;
 
 	以下のサンプルコードを参考にしてください。
 	
-	examples/fft/peak_detector/SubFFT/SubFFT.ino
-	examples/fft/sound_detector/SubFFT/SubFFT.ino
-	examples/fft/voice_changer/SubFFT/SubFFT.ino
+	examples/PeakFetector/SubFFT/SubFFT.ino
+	examples/SoundFetector/SubFFT/SubFFT.ino
+	examples/Voice_changer/SubFFT/SubFFT.ino
 
 
 ## IIR
@@ -214,6 +214,6 @@ IIRライブラリは、新規に追加しました。
 
 	以下のサンプルコードを参考にしてください。
 	
-	examples/iir/hpf/SubFFT/SubFFT.ino
-	examples/iir/lpf/SubFFT/SubFFT.ino
+	examples/HighPassSound/SubFFT/SubFFT.ino
+	examples/LowPassSound/SubFFT/SubFFT.ino
 
