@@ -17,10 +17,12 @@ Spresense M11S         : v1.5.1 (Base v1.5.0) <br>
 ## What's new.
 
 4/10
+
 ・SignalProcessingを本線に入れたのに合わせて、こちらも更新。
 ※次のリリース（v2.00）に入ります。
 
 4/2
+
 ・CO-Spresense向けのサンプルを追加。
 
 3/27
