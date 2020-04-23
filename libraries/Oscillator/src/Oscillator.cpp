@@ -17,7 +17,6 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
 #include <stdio.h>
 #include "Oscillator.h"
 
@@ -26,10 +25,11 @@
 /*--------------------------------------------------------------------*/
 void GeneratorBase::init(uint8_t bits/* only 16bits*/ , uint32_t rate, uint8_t channels)
 {
+  (void) bits;
   m_theta = 0;
   m_omega = 0;
   m_sampling_rate = rate;
-  m_channels = (channels < 2) ? 2 : channels;
+  m_channels = channels;
 
 }
 /*--------------------------------------------------------------------*/
@@ -39,7 +39,6 @@ void GeneratorBase::set(uint32_t frequency)
     {
       m_omega = frequency * 0x7fff / m_sampling_rate;
     }
-  printf("freq=%d,omeg=%x\n",frequency,m_omega);
 }
 
 /*--------------------------------------------------------------------*/
@@ -51,7 +50,7 @@ q15_t* GeneratorBase::update_sample(q15_t* ptr, q15_t val)
       *(ptr+1) = val;
     }
   m_theta = (m_theta + m_omega) & 0x7fff;
-  ptr += m_channels;
+  ptr += (m_channels < 2) ? 2 : m_channels;
   return ptr;
 }
 
@@ -129,6 +128,17 @@ void EnvelopeGenerator::stop(void)
 }
 
 /*--------------------------------------------------------------------*/
+q15_t* EnvelopeGenerator::update_sample(q15_t* ptr, q15_t val)
+{
+  if (m_channels < 2)
+    {
+      *(ptr+1) = *ptr;
+    }
+  ptr += (m_channels < 2) ? 2 : m_channels;
+  return ptr;
+}
+
+/*--------------------------------------------------------------------*/
 void EnvelopeGenerator::exec(q15_t* ptr, uint16_t samples)
 {
   while (samples > 0)
@@ -166,9 +176,8 @@ uint16_t EnvelopeGenerator::attack(q15_t** top, uint16_t samples)
       float data = *ptr;
       *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
       m_cur_coef += m_a_delta;
-
+      ptr = update_sample(ptr,*ptr);
       samples--;
-      ptr += m_channels;
 
       if (m_cur_coef > (float)0x7fff)
         {
@@ -192,8 +201,8 @@ uint16_t EnvelopeGenerator::decay(q15_t** top, uint16_t samples)
       float data = *ptr;
       *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
       m_cur_coef -= m_d_delta;
+      ptr = update_sample(ptr,*ptr);
       samples--;
-      ptr += m_channels;
 
       if (m_cur_coef < m_s_level)
         {
@@ -215,8 +224,8 @@ uint16_t EnvelopeGenerator::sustain(q15_t** top, uint16_t samples)
     {
       float data = *ptr;
       *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
+      ptr = update_sample(ptr,*ptr);
       samples--;
-      ptr += m_channels;
     }
 
   *top = ptr;
@@ -234,8 +243,8 @@ uint16_t EnvelopeGenerator::release(q15_t** top, uint16_t samples)
       float data = *ptr;
       *ptr = (q15_t)((data * m_cur_coef) / 0x7fff);
       m_cur_coef -= m_r_delta;
+      ptr = update_sample(ptr,*ptr);
       samples--;
-      ptr += m_channels;
 
       if (m_cur_coef < 0)
         {
@@ -256,8 +265,8 @@ uint16_t EnvelopeGenerator::ready(q15_t** top, uint16_t samples)
   while (samples > 0)
     {
       *ptr = 0;
+      ptr = update_sample(ptr,*ptr);
       samples--;
-      ptr += m_channels;
     }
 
   *top = ptr;
@@ -270,7 +279,7 @@ uint16_t EnvelopeGenerator::ready(q15_t** top, uint16_t samples)
 /*--------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------*/
-void OscillatorClass::init(WaveMode type, uint8_t channel_num)
+bool Oscillator::init(WaveMode type, uint8_t channel_num)
 {
   /* Init signal process. */
 
@@ -282,26 +291,25 @@ void OscillatorClass::init(WaveMode type, uint8_t channel_num)
   switch (m_type)
     {
       case SinWave:
-        for (int i = 0; i < MAX_CHANNEL_NUMBER; i++)
+        for (int i = 0; i < m_channel_num; i++)
           {
             m_wave[i] = &m_sin[i];
           }
         break;
       case RectWave:
-        for (int i = 0; i < MAX_CHANNEL_NUMBER; i++)
+        for (int i = 0; i < m_channel_num; i++)
           {
             m_wave[i] = &m_rect[i];
           }
         break;
       case SawWave:
-        for (int i = 0; i < MAX_CHANNEL_NUMBER; i++)
+        for (int i = 0; i < m_channel_num; i++)
           {
             m_wave[i] = &m_saw[i];
           }
         break;
       default:
-        puts("error!");
-        return;
+        return false;
     }
 
   for (int i = 0; i < m_channel_num; i++)
@@ -309,17 +317,18 @@ void OscillatorClass::init(WaveMode type, uint8_t channel_num)
       m_wave[i]->init(m_bit_length,
                       m_sampling_rate,
                       m_channel_num);
-
       m_envlop[i].init(m_bit_length, m_channel_num);
 
       /* Initial value */
       m_envlop[i].set(1,1,100,1);
     }
 
+  return true;
+
 }
 
 /*--------------------------------------------------------------------*/
-void OscillatorClass::exec(q15_t* ptr, uint16_t sample)
+void Oscillator::exec(q15_t* ptr, uint16_t sample)
 {
 
   /* Byte size per sample.
@@ -335,14 +344,37 @@ void OscillatorClass::exec(q15_t* ptr, uint16_t sample)
 }
 
 /*--------------------------------------------------------------------*/
-void OscillatorClass::flush()
+void Oscillator::flush()
 {
 
 }
+/*--------------------------------------------------------------------*/
+bool Oscillator::set(uint8_t ch, WaveMode type)
+{
+  switch (type)
+    {
+      case SinWave:
+        m_sin[ch].set(*m_wave[ch]);
+        m_wave[ch] = &m_sin[ch];
+        break;
+      case RectWave:
+        m_rect[ch].set(*m_wave[ch]);
+        m_wave[ch] = &m_rect[ch];
+        break;
+      case SawWave:
+        m_saw[ch].set(*m_wave[ch]);
+        m_wave[ch] = &m_saw[ch];
+        break;
+      default:
+        return false;
+    }
+  return true;
+}
 
 /*--------------------------------------------------------------------*/
-void OscillatorClass::set(uint8_t ch, uint16_t frequency)
+bool Oscillator::set(uint8_t ch, uint16_t frequency)
 {
+  if(ch>=m_channel_num) return false;
 
   m_wave[ch]->set(frequency);
 
@@ -354,13 +386,16 @@ void OscillatorClass::set(uint8_t ch, uint16_t frequency)
     {
       m_envlop[ch].start();
     }
+
+  return true;
 }
 
 /*--------------------------------------------------------------------*/
-void OscillatorClass::set(uint8_t ch, float a, float d, q15_t s, float r)
+bool Oscillator::set(uint8_t ch, float a, float d, q15_t s, float r)
 {
+  if(ch>=m_channel_num) return false;
+
   m_envlop[ch].set(a,d,s,r);
+
+  return true;
 }
-
-
-OscillatorClass Oscillator;

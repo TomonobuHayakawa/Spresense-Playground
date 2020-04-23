@@ -47,6 +47,13 @@ public:
   virtual void exec(q15_t*, uint16_t) = 0;
   void set(uint32_t);
 
+  void set(GeneratorBase& prev){
+    this->m_sampling_rate = prev.m_sampling_rate;
+    this->m_theta = prev.m_theta;
+    this->m_omega = prev.m_omega;
+    this->m_channels = prev.m_channels;
+  }
+
 protected:
   q15_t* update_sample(q15_t* ptr, q15_t val);
 
@@ -54,12 +61,14 @@ protected:
   q15_t     m_theta;
   q15_t     m_omega;
   uint8_t   m_channels;
+
 };
 
 class SinGenerator : public GeneratorBase
 {
 public:
   void exec(q15_t*, uint16_t);
+
 };
 
 class RectGenerator : public GeneratorBase
@@ -97,6 +106,7 @@ public:
   void stop(void);
 
 private:
+  q15_t* update_sample(q15_t*,q15_t);
 
   enum EgState
   {
@@ -129,24 +139,25 @@ private:
 /*--------------------------------------------------------------------*/
 /*  Oscillator                                                        */
 /*--------------------------------------------------------------------*/
-class OscillatorClass
+class Oscillator
 {
 public:
 
   /* For Arduino */
-  void begin(WaveMode type, uint8_t channel_num){
-    init(type, channel_num);
+  bool begin(WaveMode type, uint8_t channel_num){
+    return init(type, channel_num);
   }
 
   void end(){
     flush();
   }
 
-  void init(WaveMode type, uint8_t channel_num);
+  bool init(WaveMode type, uint8_t channel_num);
   void exec(q15_t* ptr, uint16_t sample);
   void flush();
-  void set(uint8_t ch, uint16_t frequency);
-  void set(uint8_t ch, float attack, float decay, q15_t sustain, float release);
+  bool set(uint8_t ch, WaveMode type);
+  bool set(uint8_t ch, uint16_t frequency);
+  bool set(uint8_t ch, float attack, float decay, q15_t sustain, float release);
 
 private:
   WaveMode m_type;
@@ -161,7 +172,5 @@ private:
   EnvelopeGenerator m_envlop[MAX_CHANNEL_NUMBER];
 
 };
-
-extern OscillatorClass Oscillator;
 
 #endif /* __OSCILLATOR_H__ */

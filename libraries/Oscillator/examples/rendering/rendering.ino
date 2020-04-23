@@ -27,22 +27,20 @@
 
 #include <stdio.h>
 
+Oscillator  *theOscillator;
 OutputMixer *theMixer;
 bool ErrEnd = false;
 
 static bool getFrame(AsPcmDataParam *pcm)
 {
   const uint32_t sample = 480;
-
   /* Alloc MemHandle */
   if (pcm->mh.allocSeg(S0_REND_PCM_BUF_POOL, (sample * 2 * 2)) != ERR_OK) {
     return false;
   }
+  theOscillator->exec((q15_t*)pcm->mh.getPa(), sample);
 
-  Oscillator.exec((q15_t*)pcm->mh.getPa(), sample);
-
-  q15_t* ad = pcm->mh.getPa();
-
+//  q15_t* ad = (q15_t*) pcm->mh.getPa();
 //  printf("p0=%x.p1=%x.p2=%x.p3=%x\n",*ad,*(ad+1),*(ad+2),*(ad+3));
 
   /* Set PCM parameters */
@@ -56,7 +54,6 @@ static bool getFrame(AsPcmDataParam *pcm)
 
   return true;
 }
-
 
 static bool active()
 {
@@ -91,7 +88,8 @@ static void outputmixer_done_callback(MsgQueId requester_dtq,
                                       MsgType reply_of,
                                       AsOutputMixDoneParam *done_param)
 {
-  printf(">> %x done\n", reply_of);
+  (void)done_param;
+  printf(">> %x done from %x\n", reply_of, requester_dtq);
   return;
 }
 
@@ -103,6 +101,8 @@ static void outputmixer_done_callback(MsgQueId requester_dtq,
 */
 static void outmixer_send_callback(int32_t identifier, bool is_end)
 {
+  (void)identifier;
+  (void)is_end;
   return;
 }
 
@@ -118,20 +118,23 @@ static void attention_cb(const ErrorAttentionParam *atprm)
 
 void setup()
 {
-  printf("setup() start\n");
-
-  /* Display menu */
-
   Serial.begin(115200);
+
+  printf("setup() start\n");
 
   /* Initialize memory pools and message libs */
   initMemoryPools();
   createStaticPools(MEM_LAYOUT_PLAYER);
 
-  /* Use SD card */
-//  Oscillator.begin(SinWave, 2);
-  Oscillator.begin(RectWave, 2);
-//  Oscillator.begin(SawWave, 2);
+  /* Create Objects */
+  theOscillator = new Oscillator();
+
+//  if(!theOscillator->begin(SinWave, 2)){
+  if(!theOscillator->begin(RectWave, 2)){
+//  if(!theOscillator->begin(SawWave, 2)){
+      puts("begin error!");
+      exit(1);
+  }
 
   /* Start audio system */
   theMixer  = OutputMixer::getInstance();
@@ -160,13 +163,18 @@ void setup()
 
   printf("setup() complete\n");
 
-  Oscillator.set(0, 0);
-  Oscillator.set(1, 0);
+  bool er;
+  er = theOscillator->set(0, 0);
+  er = theOscillator->set(1, 0);
 
   /* attack = 1000,decay = 700, sustain = 30, release = 300 */
-  Oscillator.set(0, 1000,700,30,300);
-  Oscillator.set(1, 1000,700,30,300);
+  er = theOscillator->set(0, 1000,700,30,300);
+  er = theOscillator->set(1, 1000,700,30,300);
 
+  if(!er){
+    puts("init error!");
+    exit(1);
+  }
 }
 
 #define C_NOTE  262
@@ -177,48 +185,51 @@ void setup()
 
 void loop()
 {
-
-/*  err_t err = OUTPUTMIXER_ECODE_OK;
-  uint16_t note = 0xff;*/
-
-  /* Fatal error */
-
-  if (ErrEnd) {
-    printf("Error End\n");
-    goto stop_rendering;
-  }
-  
   /* Menu operation */
 
   if (Serial.available() > 0)
   {
+    bool er = true;
     switch (Serial.read()) {
+      case 'i': // Sin
+        er = theOscillator->set(0,SinWave);
+        break;
+      case 'r': // Rect
+        er = theOscillator->set(0,RectWave);
+        break;
+      case 'a': // Saw
+        er = theOscillator->set(0,SawWave);
+        break;
       case 'c': // C
-        Oscillator.set(0, C_NOTE);
-        Oscillator.set(1, C_NOTE*2);
+        er = theOscillator->set(0, C_NOTE);
+        er = theOscillator->set(1, C_NOTE*2);
         break;
       case 'd': // D
-        Oscillator.set(0, D_NOTE);
-        Oscillator.set(1, D_NOTE*2);
+        er = theOscillator->set(0, D_NOTE);
+        er = theOscillator->set(1, D_NOTE*2);
         break;
       case 'e': // E
-        Oscillator.set(0, E_NOTE);
-        Oscillator.set(1, E_NOTE*2);
+        er = theOscillator->set(0, E_NOTE);
+        er = theOscillator->set(1, E_NOTE*2);
         break;
       case 'f': // F
-        Oscillator.set(0, F_NOTE);
-        Oscillator.set(1, F_NOTE*2);
+        er = theOscillator->set(0, F_NOTE);
+        er = theOscillator->set(1, F_NOTE*2);
         break;
       case 'g': // G
-        Oscillator.set(0, G_NOTE);
-        Oscillator.set(1, G_NOTE*2);
+        er = theOscillator->set(0, G_NOTE);
+        er = theOscillator->set(1, G_NOTE*2);
         break;
       case 's': // Stop
-        Oscillator.set(0, 0);
-        Oscillator.set(1, 0);
+        er = theOscillator->set(0, 0);
+        er = theOscillator->set(1, 0);
         break;
       default:
         break;
+    }
+    if(!er){
+      puts("set error!");
+      goto stop_rendering;
     }
   }
 
