@@ -14,9 +14,13 @@ https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
 
 ## sketchs
 
-pickup.ino
+Pickup/Pickup.ino
 
 16面体の物体をつかんで持ち上げ移動するスケッチ
+
+TerminalControl/TerminalControl.ino
+
+シリアルモニターへの入力によってArmを制御するスケッチ
 
 
 ※時間ができたら拡充できるといいな…。

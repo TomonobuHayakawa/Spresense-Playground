@@ -43,7 +43,7 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 #define NumServo_Max 4 //4 servos connetcting
 
-bool move_joint(uint8_t joint, int degrees)
+bool pos_joint(uint8_t joint, int degrees)
 {
   if(joint>=NumServo_Max) return false;
 
@@ -69,10 +69,10 @@ void setup() {
   delay(10);
 
   /* Initial Posture*/
-  pwm.writeMicroseconds(CHUCK,50);
-  pwm.writeMicroseconds(UPPER,110);
-  pwm.writeMicroseconds(LOWER,90);
-  pwm.writeMicroseconds(BASE ,90);
+  pos_joint(CHUCK,50);
+  pos_joint(UPPER,110);
+  pos_joint(LOWER,90);
+  pos_joint(BASE ,90);
   delay(2);
 
 }
@@ -80,32 +80,40 @@ void setup() {
 void loop() {
   Serial.println("Pickup Start");
 
-  move_joint(UPPER,30);
-  move_joint(LOWER,19);
+  /* arm down */
+  pos_joint(UPPER,80);
+  pos_joint(LOWER,20);
   sleep(2);
 
-  move_joint(CHUCK,90);
+  /* pinch in */
+  pos_joint(CHUCK,90);
   sleep(2);
 
-  move_joint(UPPER,110);
-  move_joint(LOWER,90);
+  /* arm up */
+  pos_joint(UPPER,110);
+  pos_joint(LOWER,90);
   sleep(2);
 
-  move_joint(BASE ,150);
+  /* turn left */
+  pos_joint(BASE ,150);
   sleep(2);
 
-  move_joint(UPPER,30);
-  move_joint(LOWER,20);
+  /* arm down */
+  pos_joint(UPPER,80);
+  pos_joint(LOWER,22);
   sleep(2);
 
-  move_joint(CHUCK,50);
+  /* pinch out */
+  pos_joint(CHUCK,50);
   sleep(2);
 
-  move_joint(UPPER,110);
-  move_joint(LOWER,90);
+  /* arm up */
+  pos_joint(UPPER,110);
+  pos_joint(LOWER,90);
   sleep(2);
 
-  move_joint(BASE ,90);
+  /* turn right */
+  pos_joint(BASE ,90);
 
   Serial.println("Pickup End");
   sleep(10);
