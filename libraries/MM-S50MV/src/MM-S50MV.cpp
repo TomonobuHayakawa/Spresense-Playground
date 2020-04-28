@@ -94,7 +94,7 @@ void MMS50MVClass::led(uint8_t r, uint8_t g, uint8_t b)
   SPI5.transfer(buffer,256);
 }
 
-int32_t MMS50MVClass::get()
+int32_t MMS50MVClass::get1d()
 {
   memset(buffer,0,256);
   
@@ -120,10 +120,39 @@ int32_t MMS50MVClass::get()
     return -1;
   }
 
-  return ((buffer[4] << 24)|(buffer[5] << 16)|(buffer[6] << 8)|buffer[7]);
+  return (((buffer[4] << 24)|(buffer[5] << 16)|(buffer[6] << 8)|buffer[7]) / (0x400000 / 1000));
 }
 
-bool MMS50MVClass::get(int32_t* ptr)
+uint16_t MMS50MVClass::get1p()
+{
+  memset(buffer,0,256);
+  
+  SPI5.transfer(buffer,255);
+  SPI5.transfer(&buffer[255],1);
+//  SPI5.transfer(buffer,256);
+
+  if (buffer[0] != 0xe9){
+    printf("magic error! %x\n",buffer[0]);
+    skip(256);
+    set(0, 0xff);
+    skip(256);
+    sync();
+    set(0, 0);
+    skip(256);
+    delay(500);    
+    return -1;
+  }
+
+  if (buffer[1] != buffer[255]) {
+    printf("ID error! %d,%d\n",buffer[1],buffer[255]);
+    printf("%x,%d,%d,%d\n",buffer[0],buffer[1],buffer[2],buffer[3]);
+    return -1;
+  }
+
+  return ((buffer[8] << 24)|(buffer[9] << 16));
+}
+
+bool MMS50MVClass::get3d(int32_t* ptr)
 {
   memset(buffer,0,256);
   
@@ -140,7 +169,34 @@ bool MMS50MVClass::get(int32_t* ptr)
     return false;
   }
 
-  memcpy(ptr,&buffer[12],4*8);
+//  memcpy(ptr,&buffer[10],4*8*4);
+
+  for(int i=10;i<(4*8*4+10);i+=4,ptr++){
+    *ptr = (((buffer[i] << 24) | (buffer[i+1] << 16) | (buffer[i+2] << 8)| buffer[i+3]) / (0x400000 / 1000));
+//    printf("raw=%d\n",*ptr);
+  }
+  
+  return true;
+}
+
+bool MMS50MVClass::get3p(uint16_t* ptr)
+{
+  memset(buffer,0,256);
+  
+  SPI5.transfer(buffer,255);
+  SPI5.transfer(&buffer[255],1);
+
+  if (buffer[0] != 0xe9){
+    printf("magic error! %x\n",buffer[0]);
+    return false;
+  }
+
+  if (buffer[1] != buffer[255]) {
+    printf("ID error! %d,%d\n",buffer[0],buffer[255]);
+    return false;
+  }
+
+  memcpy(ptr,&buffer[(4*8*4+10)],4*8*2);
 
   return true;
 }

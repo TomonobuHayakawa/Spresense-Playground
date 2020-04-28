@@ -32,8 +32,11 @@ public:
   void set(uint8_t cmd, uint8_t val);
   void led(uint8_t,uint8_t,uint8_t);
 
-  int32_t get();
-  bool get(int32_t*);
+  int32_t  get(){ return get1d(); }
+  int32_t  get1d();
+  uint16_t get1p();
+  bool     get3d(int32_t*);
+  bool     get3p(uint16_t*);
 
 private:
   uint8_t buffer[256];

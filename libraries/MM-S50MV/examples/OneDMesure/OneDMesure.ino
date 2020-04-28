@@ -25,15 +25,13 @@ void loop()
   static  int ledg = 0;
   static  int ledb = 0;
 
-  int32_t range = MMS50MV.get();
-  if(range<0){
+  int32_t dis = MMS50MV.get();
+  if(dis<0){
     return;
   }
-//  printf("range=%x\n",range);
-  
+
 // MMS50MV.led(ledr,ledg,ledb);
     
-  int dis = range / (0x400000 / 1000); // 9bit:22bit (m)
   printf("dis=%d(mm)\n",dis);
 
   // LED color
