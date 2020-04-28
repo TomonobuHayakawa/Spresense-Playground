@@ -18,7 +18,7 @@
  */
 
 /*****************************************************
-ピンの接続　pca9685側　 
+ピンの接続　pca9685側
 OE->フリー(内部でプルダウンされている)
 全体の出力カットに利用
 
@@ -89,7 +89,7 @@ void loop() {
   static uint8_t upper_pos = INI_UPPER_POS;
   static uint8_t lower_pos = INI_LOWER_POS;
   static uint8_t base_pos  = INI_BASE_POS;
-  
+
   /* Menu operation */
 
   if (Serial.available() > 0)
@@ -99,7 +99,7 @@ void loop() {
           lower_pos += 5;
           pos_joint(LOWER,lower_pos);
           break;
-        case 'd': // arm doown
+        case 'd': // arm down
           lower_pos -= 5;
           pos_joint(LOWER,lower_pos);
           break;
@@ -122,11 +122,11 @@ void loop() {
         case 'i': // pinch in
           chuck_pos += 3;
           pos_joint(CHUCK,chuck_pos);
-          break;          
+          break;
         case 'o': // pinch out
           chuck_pos -= 3;
           pos_joint(CHUCK,chuck_pos);
-          break;          
+          break;
         default:
           break;
         }
