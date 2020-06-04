@@ -1,5 +1,5 @@
 /*
- *  FFT.cpp - FFT Library
+ *  FFT.h - FFT Library
  *  Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
@@ -28,76 +28,183 @@
 #include "RingBuff.h"
 
 /*------------------------------------------------------------------*/
-/* Configurations                                                   */
-/*------------------------------------------------------------------*/
-/* Select FFT length */
-
-//#define FFTLEN 32
-//#define FFTLEN 64
-//#define FFTLEN 128
-//#define FFTLEN 256
-//#define FFTLEN 512
-#define FFTLEN 1024
-//#define FFTLEN 2048
-//#define FFTLEN 4096
-
-/* Number of channels*/
-//#define MAX_CHANNEL_NUM 1
-//#define MAX_CHANNEL_NUM 2
-#define MAX_CHANNEL_NUM 4
-
-#define INPUT_BUFFER (FFTLEN*sizeof(q15_t)*2)
-
-/*------------------------------------------------------------------*/
 /* Type Definition                                                  */
 /*------------------------------------------------------------------*/
 /* WINDOW TYPE */
 typedef enum e_windowType {
-	WindoHamming,
-	WindoHanning,
-	WindowRectangle
+  WindoHamming,
+  WindoHanning,
+  WindowRectangle
 } windowType_t;
 
 /*------------------------------------------------------------------*/
 /* Input buffer                                                      */
 /*------------------------------------------------------------------*/
-class FFTClass
+template <int MAX_CHNUM, int FFTLEN> class FFTClass
 {
 public:
   void begin(){
-      begin(WindoHamming, MAX_CHANNEL_NUM, (FFTLEN/2));
+      begin(WindoHamming, MAX_CHNUM, (FFTLEN/2));
   }
 
-  bool begin(windowType_t type, int channel, int overlap);
-  bool put(q15_t* pSrc, int size);
+  bool begin(windowType_t type, int channel, int overlap){
+    if(channel > MAX_CHNUM) return false;
+    if(overlap > (FFTLEN/2)) return false;
 
-  int  get_raw(float* out, int channel, int raw);
+    m_overlap = overlap;
+    m_channel = channel;
+
+    clear();
+    create_coef(type);
+    if(!fft_init()){
+       return false;
+    }
+
+    for(int i=0;i<MAX_CHNUM;i++){
+      ringbuf_fft[i] = new RingBuff(MAX_CHNUM*FFTLEN*sizeof(q15_t));
+    }
+
+    return true;
+  }
+
+  bool put(q15_t* pSrc, int sample){
+    /* Ringbuf size check */
+    if(m_channel > MAX_CHNUM) return false;
+    if(sample > ringbuf_fft[0]->remain()) return false;
+
+    if (m_channel == 1) {
+      /* the faster optimization */
+      ringbuf_fft[0]->put((q15_t*)pSrc, sample);
+    } else {
+      for (int i = 0; i < m_channel; i++) {
+        ringbuf_fft[i]->put(pSrc, sample, m_channel, i);
+      }
+    }
+    return  true;
+  }
+
+  int  get_raw(float* out, int channel){
+    return get_raw(out, channel, true);
+  }
+
   int  get(float* out, int channel){
     return get_raw(out, channel, false);
   }
 
-  void clear();
+  void clear(){
+    for (int i = 0; i < MAX_CHNUM; i++) {
+      memset(tmpInBuf[i], 0, FFTLEN);
+    }
+  }
+
   void end(){}
-  bool empty(int channel);
-	
+
+
+  bool empty(int channel){
+    return (ringbuf_fft[channel]->stored() < FFTLEN);
+  }
+
 private:
+
+  RingBuff* ringbuf_fft[MAX_CHNUM];
 
   int m_channel;
   int m_overlap;
   arm_rfft_fast_instance_f32 S;
 
   /* Temporary buffer */
-  float tmpInBuf[MAX_CHANNEL_NUM][FFTLEN];
+  float tmpInBuf[MAX_CHNUM][FFTLEN];
   float coef[FFTLEN];
   float tmpOutBuf[FFTLEN];
 
-  void create_coef(windowType_t);
-  void fft_init();
-  void fft(float *pSrc, float *pDst, int fftLen);
-  void fft_amp(float *pSrc, float *pDst, int fftLen);
+  void create_coef(windowType_t type){
+    for (int i = 0; i < FFTLEN / 2; i++){
+      if(type == WindoHamming){
+        coef[i] = 0.54f - (0.46f * arm_cos_f32(2 * PI * (float)i / (FFTLEN - 1)));
+      }else if(type == WindoHanning){
+        coef[i] = 0.54f - (1.0f * arm_cos_f32(2 * PI * (float)i / (FFTLEN - 1)));
+      }else{
+        coef[i] = 1;
+      }
+      coef[FFTLEN-1-i] = coef[i];
+    }
+  }
+
+  bool fft_init(){
+    switch (FFTLEN){
+      case 32:
+        arm_rfft_32_fast_init_f32(&S);
+        break;
+      case 64:
+        arm_rfft_64_fast_init_f32(&S);
+        break;
+      case 128:
+        arm_rfft_128_fast_init_f32(&S);
+        break;
+      case 256:
+        arm_rfft_256_fast_init_f32(&S);
+        break;
+      case 512:
+        arm_rfft_512_fast_init_f32(&S);
+        break;
+      case 1024:
+        arm_rfft_1024_fast_init_f32(&S);
+        break;
+      case 2096:
+        arm_rfft_2048_fast_init_f32(&S);
+        break;
+      case 4096:
+        arm_rfft_4096_fast_init_f32(&S);
+        break;
+      default:
+        puts("error!");
+        return false;
+        break;
+    }
+    return true;
+  }
+
+  void fft(float *pSrc, float *pDst){
+    arm_rfft_fast_f32(&S, pSrc, pDst, 0);
+  }
+
+  void fft_amp(float *pSrc, float *pDst){
+    /* calculation */
+    arm_rfft_fast_f32(&S, pSrc, tmpOutBuf, 0);
+
+    arm_cmplx_mag_f32(&tmpOutBuf[2], &pDst[1], FFTLEN / 2 - 1);
+    pDst[0] = tmpOutBuf[0];
+    pDst[FFTLEN / 2] = tmpOutBuf[1];
+  }
+
+  int  get_raw(float* out, int channel, int raw){
+    static float tmpFft[FFTLEN];
+
+    if(channel >= m_channel) return false;
+    if (ringbuf_fft[channel]->stored() < FFTLEN) return 0;
+
+    for(int i=0;i<m_overlap;i++){
+      tmpInBuf[channel][i]=tmpInBuf[channel][FFTLEN-m_overlap+i];
+    }
+
+    /* Read from the ring buffer */
+    ringbuf_fft[channel]->get(&tmpInBuf[channel][m_overlap], FFTLEN-m_overlap);
+
+    for(int i=0;i<FFTLEN;i++){
+      tmpFft[i] = tmpInBuf[channel][i]*coef[i];
+    }
+
+    if(raw){
+      /* Calculate only FFT */
+      fft(tmpFft, out);
+    }else{
+      /* Calculate FFT for convert to amplitude */
+      fft_amp(tmpFft, out);
+    }
+    return (FFTLEN-m_overlap);
+  }
+
 
 };
-
-extern FFTClass FFT;
 
 #endif /*_FFT_H_*/

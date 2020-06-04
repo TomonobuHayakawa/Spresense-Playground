@@ -43,7 +43,7 @@ Track currentTrack;
  * Set either 1, 2, or 4.
  */
 
-static const uint8_t  recognizer_cannel_number = 1;
+static const uint8_t  recognizer_channel_number = 1;
 
 /* Audio bit depth
  * Set 16 or 24
@@ -490,7 +490,7 @@ void setup()
   /* Set main volume */
   theMixer->setVolume(preset.volume, 0, 0);
 
-  theFrontend->init(recognizer_cannel_number, recognizer_bit_length, 384,
+  theFrontend->init(recognizer_channel_number, recognizer_bit_length, 384,
                     ObjectConnector::ConnectToRecognizer, AsMicFrontendPreProcSrc, "/mnt/sd0/BIN/SRC");
 //                    ObjectConnector::ConnectToRecognizer, AsMicFrontendPreProcSrc, "/mnt/spif/BIN/SRC");
 

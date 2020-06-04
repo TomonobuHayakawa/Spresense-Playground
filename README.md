@@ -7,77 +7,127 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 本線リポジトリに取り込まれたものは、削除していきます。
 
 --------------------
+## 現在の各ボードパッケージのバージョン
+
+Spresense HighSpeedADC : v1.5.0 (Base v1.5.0) <br>
+Spresense Instrument   : v1.5.3 (Base v1.5.1) <br>
+Spresense M11S         : v1.5.1 (Base v1.5.0) <br>
+
+-------------------- 
 ## What's new.
 
-12/18
-・ゆる楽器に向けてSpresenseのSDKのαリリースをします。
-   - レコグナイザー機能
-   - シンセサイザ機能
-   がArduinoで呼べるようになります。
+4/23
+
+・オシレータライブラリの更新。<BR>
+   - 波形タイプの動的変更<BR>
+   - monoチャンネルのバグ修正<BR>
+   
+
+4/10
+
+・SignalProcessingを本線に入れたのに合わせて、こちらも更新。
+※次のリリース（v2.00）に入ります。
+
+4/2
+
+・CO-Spresense向けのサンプルを追加。
+
+3/27
+
+・オシレータのバグを修正。
+
+・楽器向けボード(Spresense Instrument)の更新 (1.5.3) を行いました。 <br>
+    - 本線のv1.5.1を取り込みました。 <br>
+    - マイク入力を加工して出力するサンプルを追加しました。 <br>
+    - MP3音声を再生しながら、マイク入力を加工して出力するサンプルを追加しました。 <br>
+      - single_core : MainCoreのみ使用。Arduinoで加工可能。 <br>
+
+※今回更新のスケッチは、メモリレイアウトなどの関係から、通常のSpresenseのボードでは動作しません。 <BR>
+  *Spresense Instrument* のボードを使用してください。（使用方法は下記参照）
+
+```
+Spresense-Playground
+ ｜
+ ├ sketchies : Arduinoスケッチを置く場所。
+     ｜
+     ├ AudioPlayers
+     ｜   ｜
+     ｜   ├ player_with_effect_mic
+     ｜
+     ├ SoundEffector
+         ｜
+         ├ single_core
+
+```
 
 α版のinstallは、
 
-Arduinoのファイル / 環境設定 の中の
-追加ボードマネージャのURLに、
-https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_instrument_index.json
-を追加してください。
-これを追加すると、ボードマネージャの中に、
-Spresense Instrument
-というボードが新たに選択できます。
+Arduinoのファイル / 環境設定 の中の <br>
+追加ボードマネージャのURLに、 <br>
+https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_instrument_index.json <br>
+を追加してください。  
+
+これを追加すると、ボードマネージャの中に、  
+
+*Spresense Instrument*  
+
+というボードが新たに選択できます。  
 
 これを利用することで、上記機能を使用することができます。
 
 注) 現時点で評価ができているものではありません。バグ等に関しての責任は負いかねます。
 注) 現在提供のAPIは、暫定版です。正式版で変更される可能性があります。
 
-sketches/Instruments
+*sketches/Instruments*
+
 は、こちらのボードで作成されています。
 
-12/5 
-・楽器に向けての @gokankenichi さん作 PitchScaleAdjuster をライブラリ化しました。
+3/18
 
-※ライセンスちゃんと書きましょうか…。
+・シンセサイザ機能むけオシレータ&エンベロープジェネレータのライブラリを作成しました。
 
+3/16
 
-11/25 
-・高速レンダリングのサンプル追加。
+・FFTライブラリの修正。
 
-```
-Spresense-Playground
- |
- ├ sketchies : Arduinoスケッチを置く場所。
-     |
-     ├ AudioRendering
-```
+FFTライブラリのFFTのTap数、最大のチャンネル数が固定でしか運用できなかったため、
+非常に使いづらかったです。<br>
+ですが、同時に、CMSIS-DSPのライブラリがTAP数ごとにデータを持つため、
+すべてのTAP数をリンクするとサイズが大きくなってしまう問題がありました。<br>
+そのため、今回の実装で、templateで実装し回避しました。<br>
+※苦肉の策…。<br>
 
-・楽器プロジェクトのサンプル追加。
-
-```
-Spresense-Playground
- |
- ├ sketchies : Arduinoスケッチを置く場所。
-     |
-     ├ Instruments
-```
+不評であれば、再度考えます。<br>
 
 
-・不要になった以下のライブラリ・サンプルを削除。
+3/8
 
-```
-Spresense-Playground
- |
- ├ libraries : Arduinoライブラリを置く場所。
- |    |
- |    ├ VoiceChanger（SignalProcessingに移行済み）
- | 
- ├ sketchies : Arduinoスケッチを置く場所。
-     |
-     ├ wf931 (本家立ち上げにつき)
-```
+・M11SのコードのUpdate。連続稼働時のバグ修正。
 
+2/10
 
-wf931は、以下。
-https://github.com/SMK-RD/WF931-Sigfox-module
+・M11S向けのスケッチを追加。
+
+  *sketches/M11S*
+
+の下に、SD書き込みサンプルとWiFiカメラのサンプルがあります。
+
+M11S向けには、M11S向けのパッケージを利用する必要があります。
+※違いは、SPI5のデータ転送をDMAを使って行う部分です。
+
+Arduinoのファイル / 環境設定 の中の <br>
+追加ボードマネージャのURLに、 <br>
+https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_M11S_index.json
+ <br>
+を追加してください。  
+
+これを追加すると、ボードマネージャの中に、  
+
+*Spresense M11S*  
+
+というボードが新たに選択できます。  
+
+M11Sを使う場合は、これを利用してください。
 
 
 --------------------
@@ -106,6 +156,9 @@ Spresense-Playground
 * PitchScaleAdjuster
 * MIDI
 
+### シンセサイザ機能関連
+* Oscillator
+
 ---
 ## Arduino スケッチリスト
 - AudioPlayers
@@ -113,18 +166,31 @@ Spresense-Playground
     - diy_player
     - diy_player_wo_sensing
     - NetRadio_w_sensing
+    - player_with_effect_mic
+    - player_with_mic
 
 - AudioRendering
     - rendering_objif
 
+- Co-Spresense
+
 - Instruments
     - SmartCajon
+    - SmartDrum
     - YuruHorn
+
+- M11S
+    - Jpeg_ESP8266_CamServer
+    - Jpeg_shot_with_SD
+
+- SoundEffector
+    - multi_core
+    - single_core
 
 - USB_UART
 - I2cScanner
+
 - LowPowerSensing
     - bme680_ulp_plus_via_sigfox
     - bme680_uulp_plus_via_sigfox
-
 

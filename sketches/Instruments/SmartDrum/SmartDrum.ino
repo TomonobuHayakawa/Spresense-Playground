@@ -1,6 +1,6 @@
 /*
- *  SmartCajon.ino - Smart Cajon application
- *  Copyright 2019 Sony Semiconductor Solutions Corporation
+ *  SmartDrum.ino - Smart Drum application
+ *  Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -440,7 +440,7 @@ void setup()
   cxd56_audio_mic_gain_t  mic_gain;
 
  // mic_gain.gain[0] = 210;
-  mic_gain.gain[0] = 0; // this mic 
+  mic_gain.gain[0] = 0;  //this mic
   mic_gain.gain[1] = 0;
   mic_gain.gain[2] = 0;
   mic_gain.gain[3] = 0;
@@ -580,20 +580,20 @@ void loop()
  
   //detect rising edge with previous sample
 
-   detect_peak_a2 =( gauge_a2 > gauge_a2_p1 && gauge_a2_p1 < 200 && gauge_a2_p2 < 20 )?1:0;
-   detect_peak_a3 =( gauge_a3 > gauge_a3_p1 && gauge_a3_p1 < 200 && gauge_a3_p2 < 20 )?1:0;
+   detect_peak_a2 =( gauge_a2 >gauge_a2_p1 && gauge_a2_p1 < 100 && gauge_a2_p2 < 80 )?1:0;
+   detect_peak_a3 =( gauge_a3 >gauge_a3_p1 && gauge_a3_p1 < 100 && gauge_a3_p2 < 80 )?1:0;
 
 
 
   //threshold input and start event
 
  //PAD 00 (A2 pin)
-  if(detect_peak_a2==1 && gauge_a2 >500){  
+  if(detect_peak_a2==1 && gauge_a2 >600){  
     printf("gauge_a2= %d gauge_a2_p1= %d gauge_a2_p2= %d toggle0= %d  cnt0 = %d toggle1= %d cnt1 = %d \n" ,gauge_a2,gauge_a2_p1,gauge_a2_p2,toggle0,cnttgl0,toggle1,cnttgl1);  
     playno = start_event(playno,cnttgl0%8);
 
  //PAD 01 (A3 pin)   
-  }else if(detect_peak_a3==1 && gauge_a3 >500){  
+  }else if(detect_peak_a3==1 && gauge_a3 >600){  
     printf("gauge_a3= %d gauge_a3_p1= %d gauge_a3_p2= %d toggle0= %d cnt0=%d toggle1= %d cnt1 =%d\n" ,gauge_a3,gauge_a3_p1,gauge_a3_p2,toggle0,cnttgl0,toggle1,cnttgl1);  
     playno = start_event(playno,cnttgl1%8);
   }
