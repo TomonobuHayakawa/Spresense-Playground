@@ -20,9 +20,15 @@
 
 AudioClass *theAudio;
 
-uint32_t fs = 162; // Hz
+const uint8_t  lower_limit_tempo = 40;
+const uint8_t  higher_limit_tempo = 205;
+
+uint32_t high_fs = 264; // Hz
+uint32_t low_fs = 162; // Hz
 uint8_t  length = 5; // ms
+uint8_t  beat = 4;
 uint8_t  tempo = 100;
+int32_t  volume = -40;
 uint32_t interval;
 
 void setup()
@@ -43,11 +49,12 @@ void setup()
 
 void loop()
 {
+  static int i = 1;
   if (Serial.available() > 0)
     {
        String string = Serial.readStringUntil('\n');
        long tmp = string.toInt();
-       if( (40 <= tmp) && (tmp <=205) ){
+       if( (lower_limit_tempo <= tmp) && (tmp <= higher_limit_tempo) ){
          tempo = (0xff & tmp);
          printf("Now tempo is : %d\tPlease input tempo!\n",tempo);
        }
@@ -55,7 +62,13 @@ void loop()
 
   interval = ((60 * 1000 * 1000) / tempo) - (length * 1000);
 
-  theAudio->setBeep(1,-40,fs);
+  if (i == beat) {
+    theAudio->setBeep(1,volume,high_fs);
+    i=1;
+  } else {
+    theAudio->setBeep(1,volume,low_fs);
+    i++;
+  }
   usleep(length * 1000);
   theAudio->setBeep(0,0,0);
   usleep(interval);
