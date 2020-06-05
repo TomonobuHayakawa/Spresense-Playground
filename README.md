@@ -16,12 +16,23 @@ Spresense M11S         : v1.5.1 (Base v1.5.0) <br>
 -------------------- 
 ## What's new.
 
+6/5
+
+・YuruSynthに向けて準備。<BR>
+   - メトロノームのサンプルを作成<BR>
+   - YuruSynthのベースコード作成<BR>
+
+4/28
+
+・CO-Spresense向けのサンプルの更新。
+   - TerminalからARMを制御するサンプル作成<BR>
+   - 音声によるARMの制御をするサンプル作成<BR>
+
 4/23
 
 ・オシレータライブラリの更新。<BR>
    - 波形タイプの動的変更<BR>
    - monoチャンネルのバグ修正<BR>
-   
 
 4/10
 
@@ -173,11 +184,16 @@ Spresense-Playground
     - rendering_objif
 
 - Co-Spresense
+    - Pickup
+    - TerminalControl
+    - VoiceControl
 
 - Instruments
+    - Metronome
     - SmartCajon
     - SmartDrum
     - YuruHorn
+    - YuruSynth
 
 - M11S
     - Jpeg_ESP8266_CamServer
