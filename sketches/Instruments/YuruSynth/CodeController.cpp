@@ -49,9 +49,10 @@ int CodeController::get(const char* str)
 int CodeController::get(const char* str, int no)
 {
   for (int i = 0; i < sizeof(codes); i++) {
-   if(strcmp(str,codes[i].name)==0) {
-   	return get(codes[i].get(no));
+    if(strcmp(str,codes[i].name)==0) {
+      return get(codes[i].get(no));
     }
   }
   return 0;
 }
+

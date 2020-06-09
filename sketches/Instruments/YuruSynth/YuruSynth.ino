@@ -23,14 +23,12 @@
 #include <OutputMixer.h>
 #include <MemoryUtil.h>
 #include <Oscillator.h>
+
 #include "CodeController.h"
 
-/* Content information definition. */
+#include "Score.h"
 
-#define PLAYBACK_FILE_NAME    "Paprika.mp3"
-#define PLAYBACK_CH_NUM        AS_CHANNEL_STEREO
-#define PLAYBACK_SAMPLING_RATE AS_SAMPLINGRATE_AUTO
-#define PLAYBACK_CODEC_TYPE    AS_CODECTYPE_MP3
+/* Content information definition. */
 
 /* Set volume[db] */
 
@@ -52,9 +50,6 @@ static struct PLAY_ELM_T
   uint8_t               channel_number;
 }
 play_elm;
-
-uint8_t  beat = 4;
-uint8_t  tempo = 103;
 
 SDClass theSD;
 MediaPlayer *thePlayer;
@@ -474,15 +469,17 @@ void setup()
 
 void loop()
 {
+  static String current_code = "C";
+  
   while (Serial.available() > 0)
   {
     bool er = true;
     switch (Serial.read()) {
       case 'i': 
-        er = theOscillator->set(0, theCodeController->get("C4"));
+        er = theOscillator->set(0, theCodeController->get(current_code.c_str(),0));
         break;
       case 'o': 
-        er = theOscillator->set(1, theCodeController->get("D4"));
+        er = theOscillator->set(1, theCodeController->get(current_code.c_str(),1));
         break;
       default:
         break;
@@ -494,13 +491,22 @@ void loop()
   
   uint32_t interval = (60 * 1000 * 1000) / tempo;
 
-  static int i = 1;
-  if (i == beat) {
+  static int i = 0;
+  static int j = 0;
+
+  if (i == beat-1) {
     puts("*");
-    i=1;
+    i=0;
+    if(j>=score_size-1){
+      j=0;
+    }else{
+      j++;
+    }
   } else {
-    puts(".");
+//    puts(".");
     i++;
-  }  
+  }
+  current_code = score[j][i];
+  Serial.println(current_code);
   usleep(interval);
 }

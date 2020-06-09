@@ -52,17 +52,21 @@ private:
   struct CodeStruct {
     char name[5];
     char note[4][4];
-    char* get(int no) { return note[no][4]; }
+    char* get(int no) { return note[no]; }
   };
   
-  const struct CodeStruct codes[3] = {
-    {"C",  {"C3", "E4", "G4" ,"C5" }},
-    {"C#m",{"C#3","E4", "G#4","C#5"}},
-    {"D",  {"D3", "F#4","A4", "D5" }},
-/*        'D': ['D3','F#4','A4','D5'],
-        'D/C': ['C3','D4','F#4','A4'],
-        'D/F#': ['F#3','F#4','A4','D5'],
-        'E': ['E3','G#4','B4','E5'],
+  const struct CodeStruct codes[9] = {
+    {"C",   {"C3", "E4", "G4" ,"C5" }},
+    {"C#m", {"C#3","E4", "G#4","C#5"}},
+    {"D",   {"D3", "F#4","A4", "D5" }},
+    {"D/C", {"C3", "D4", "F#4","A4" }},
+    {"D/F#",{"F#3","F#4","A4", "D5" }},
+    {"E",   {"E3" ,"G#4","B4", "E5" }},
+    {"E7",  {"E3" ,"G#4","B4", "D5" }},
+    {"Em",  {"E3" ,"G4" ,"B4", "E5" }},
+    {"F#7", {"A#3","C#4","E4", "F#4"}},
+
+/*        'E': ['E3','G#4','B4','E5'],
         'E7': ['E3','G#4','B4','D5'],
         'Em': ['E3','G4','B4','E5'],
         'F#7': ['A#3','C#4','E4','F#4'],
