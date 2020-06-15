@@ -30,7 +30,7 @@ void loop()
     return;
   }
 
-// MMS50MV.led(ledr,ledg,ledb);
+MMS50MV.led(ledr,ledg,ledb);
     
   printf("dis=%d(mm)\n",dis);
 

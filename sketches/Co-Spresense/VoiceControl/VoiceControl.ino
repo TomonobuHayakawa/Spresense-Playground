@@ -276,6 +276,7 @@ void liftup()
   /* arm down */
   pos_joint(UPPER,80);
   pos_joint(LOWER,20);
+  pos_joint(CHUCK,30);
   sleep(1);
 
   /* pinch in */
@@ -316,50 +317,59 @@ void loop() {
 
   /* Menu operation */
 
-  if (Serial.available() > 0)
-    {
       switch (g_event_char) {
         case 'u': // arm up
-          lower_pos += 5;
+          lower_pos += 15;
           pos_joint(LOWER,lower_pos);
+          g_event_char = '*';
           break;
         case 'd': // arm doown
-          lower_pos -= 5;
+          lower_pos -= 15;
           pos_joint(LOWER,lower_pos);
+          g_event_char = '*';
           break;
         case 'r': // turn right
-          base_pos -= 5;
+          base_pos += 30;
           pos_joint(BASE,base_pos);
+          g_event_char = '*';
           break;
         case 'l': // turn left
-          base_pos += 5;
+          base_pos -= 30;
           pos_joint(BASE,base_pos);
+          g_event_char = '*';
           break;
         case 's': // stretch out
-          upper_pos -= 5;
+          upper_pos -= 15;
           pos_joint(UPPER,upper_pos);
+          g_event_char = '*';
           break;
         case 'b': // bend
-          upper_pos += 5;
+          upper_pos += 15;
           pos_joint(UPPER,upper_pos);
+          g_event_char = '*';
           break;
         case 'i': // pinch in
-          chuck_pos += 3;
+          chuck_pos += 15;
           pos_joint(CHUCK,chuck_pos);
+          g_event_char = '*';
           break;
         case 'o': // pinch out
-          chuck_pos -= 3;
+          chuck_pos -= 15;
           pos_joint(CHUCK,chuck_pos);
+          g_event_char = '*';
           break;
         case 'f': // lift up
           liftup();
+          g_event_char = '*';
           break;
         case 't': // take down
           takedown();
+          g_event_char = '*';
           break;
         default:
           break;
         }
-      printf("chuck = %d, upper = %d, lower = %d, base = %d\n",chuck_pos,upper_pos,lower_pos,base_pos);
-   }
+//      printf("chuck = %d, upper = %d, lower = %d, base = %d\n",chuck_pos,upper_pos,lower_pos,base_pos);
+
+      usleep(100*1000);
 }

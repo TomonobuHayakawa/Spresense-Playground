@@ -16,6 +16,11 @@ Spresense M11S         : v1.5.1 (Base v1.5.0) <br>
 -------------------- 
 ## What's new.
 
+6/15
+
+・MM-S50MVライブラリ更新
+   - Magicナンバーのエラー時の処理を修正しました。
+
 6/5
 
 ・YuruSynthに向けて準備。<BR>

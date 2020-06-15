@@ -106,11 +106,12 @@ int32_t MMS50MVClass::get1d()
     printf("magic error! %x\n",buffer[0]);
     skip(256);
     set(0, 0xff);
+    delay(500);    
     skip(256);
     sync();
     set(0, 0);
-    skip(256);
     delay(500);    
+    skip(256);
     return -1;
   }
 
@@ -135,11 +136,12 @@ uint16_t MMS50MVClass::get1p()
     printf("magic error! %x\n",buffer[0]);
     skip(256);
     set(0, 0xff);
+    delay(500);    
     skip(256);
     sync();
     set(0, 0);
-    skip(256);
     delay(500);    
+    skip(256);
     return -1;
   }
 
