@@ -16,6 +16,10 @@ Spresense M11S         : v1.5.1 (Base v1.5.0) <br>
 -------------------- 
 ## What's new.
 
+11/17
+・サンプルスケッチ、CO2センシング+Ambient via LTE/GS2200追加
+
+
 6/15
 
 ・MM-S50MVライブラリ更新
