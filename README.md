@@ -9,14 +9,20 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 --------------------
 ## 現在の各ボードパッケージのバージョン
 
-Spresense HighSpeedADC : v1.5.0 (Base v1.5.0) <br>
-Spresense Instrument   : v1.5.3 (Base v1.5.1) <br>
-Spresense M11S         : v1.5.1 (Base v1.5.0) <br>
+Spresense HighSpeedADC : v2.0.2 (Base v2.0.1) <br>
+Spresense Instrument   : v2.0.2 (Base v2.0.1) <br>
+Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
 
 -------------------- 
 ## What's new.
 
+11/20
+
+・CO2センシング+Ambient via GS2200のバグ修正とUpdate
+
+
 11/17
+
 ・サンプルスケッチ、CO2センシング+Ambient via LTE/GS2200追加
 
 
