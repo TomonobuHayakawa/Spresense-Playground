@@ -139,6 +139,8 @@ bool AmbientGs2200Class::send()
 
   uint16_t length = data.length();
 
+  puts(data.c_str());
+
   if( ATCMD_RESP_OK != AtCmd_SendBulkData( server_cid, data.c_str(), length )){
     // Data is not sent, we need to re-send the data
     ConsoleLog( "Send Error.");
@@ -147,9 +149,18 @@ bool AmbientGs2200Class::send()
 
   sleep(1);
 
+  puts(post.c_str());
+
+  if( ATCMD_RESP_OK != AtCmd_SendBulkData( server_cid, post.c_str(), post.length() )){
+    // Data is not sent, we need to re-send the data
+    ConsoleLog( "Send Error.");
+    delay(1);
+  }
+
   ATCMD_RESP_E resp;
 
-  while( !Get_GPIO37Status() );
+  /* wait dissconnect. */
+  while( !Get_GPIO37Status() ){sleep(1);};
 
   while( Get_GPIO37Status() ){
     resp = AtCmd_RecvResponse();
@@ -160,13 +171,11 @@ bool AmbientGs2200Class::send()
       }
       WiFi_InitESCBuffer();
     }else if( ATCMD_RESP_DISCONNECT == resp ){
-//          resp = AtCmd_NCLOSE(server_cid);
+//        resp = AtCmd_NCLOSE(server_cid);
       resp = AtCmd_NCLOSEALL();
       WiFi_InitESCBuffer();
     }
-
-    sleep(2);
-
+    sleep(1);
   }
 
   return true;

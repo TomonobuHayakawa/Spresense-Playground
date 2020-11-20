@@ -23,7 +23,6 @@
 #include <GS2200AtCmd.h>
 #include <GS2200Hal.h>
 #include "AppFunc.h"
-#include "config.h"
 
 
 /*-------------------------------------------------------------------------*
@@ -49,6 +48,8 @@ extern uint32_t ESCBufferCnt;
 /*-------------------------------------------------------------------------*
  * Locals:
  *-------------------------------------------------------------------------*/
+static String apSsid;
+static String apPass;
 
 
 /*-------------------------------------------------------------------------*
@@ -118,8 +119,11 @@ static void led_effect(void)
  *---------------------------------------------------------------------------*
  * Description: Minimum set of node initialization AT commands
  *---------------------------------------------------------------------------*/
-void App_InitModule(void)
+void App_InitModule(String& ssid, String& pass)
 {
+  apSsid = ssid;
+  apPass = pass;
+
   ATCMD_RESP_E r = ATCMD_RESP_UNMATCH;
   ATCMD_REGDOMAIN_E regDomain;
   char macid[20];
@@ -191,7 +195,7 @@ void App_ConnectAP(void)
   ATCMD_RESP_E r;
 
 #ifdef APP_DEBUG
-  ConsolePrintf("Associating to AP: %s\r\n", AP_SSID);
+  ConsolePrintf("Associating to AP: %s\r\n", apSsid.c_str());
 #endif
 
   /* Set Infrastructure mode */
@@ -211,12 +215,12 @@ void App_ConnectAP(void)
 
   /* Set WPA2 Passphrase */
   do{
-    r = AtCmd_WPAPSK( (char *)AP_SSID, (char *)PASSPHRASE );
+    r = AtCmd_WPAPSK( (char *)apSsid.c_str(), (char *)apPass.c_str() );
   }while(ATCMD_RESP_OK != r); 
 
   /* Associate with AP */
   do{
-    r = AtCmd_WA( (char *)AP_SSID, (char *)"", 0 );
+    r = AtCmd_WA( (char *)apSsid.c_str(), (char *)"", 0 );
   }while(ATCMD_RESP_OK != r); 
 
   /* L2 Network Status */
@@ -244,8 +248,7 @@ char App_ConnectWeb(const char* ip, const uint16_t port)
   resp = ATCMD_RESP_UNMATCH;
   ConsoleLog( "Start TCP Client");
   printf("%s\t%s\n",ip , String(port).c_str());
-//  resp = AtCmd_NCTCP( ip , String(port).c_str(), &cid);
-  resp = AtCmd_NCTCP( "54.65.206.59" , "80", &cid);
+  resp = AtCmd_NCTCP( ip , String(port).c_str(), &cid);
 
   if (resp != ATCMD_RESP_OK) {
     ConsoleLog( "No Connect!" );

@@ -21,7 +21,7 @@
 /*-------------------------------------------------------------------------*
  * Function ProtoTypes:
  *-------------------------------------------------------------------------*/
-void App_InitModule(void);
+void App_InitModule(String&, String&);
 void App_ConnectAP(void);
 char App_ConnectWeb(const char*, const uint16_t);
 
