@@ -20,6 +20,15 @@ Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
 
 ・CO2センシング+Ambient via GS2200のバグ修正とUpdate
 
+●補足；このサンプルは、以下のライブラリが必要です。 <br>
+
+ - CO2センサ： https://github.com/sparkfun/SparkFun_SCD30_Arduino_Library のシリアルの速度を115200に変更。 <br>
+ ⇒ こっちつかってもらってもよいです。 https://github.com/TomonobuHayakawa/SCD30 <br>
+ - WiFiとAmbientを使うとき：https://github.com/jittermaster/GS2200-WiFi <br>
+ - OLEDを使うとき：https://github.com/olikraus/U8g2_Arduino <br>
+
+※https://github.com/olikraus/U8g2_Arduino のライブラリのbuildが非常に遅いので要注意。 <br>
+
 
 11/17
 
