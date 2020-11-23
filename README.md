@@ -16,6 +16,12 @@ Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
 -------------------- 
 ## What's new.
 
+11/23
+
+・CO2センシング+AWS/Azure/Watson via Sigfox <br>
+    - Sigfoxは別途KCCS側の設定が必要です。 <br>
+    - ライブラリは、こちらになります。: https://github.com/SMK-RD/WF931-Sigfox-module <br>
+
 11/20
 
 ・CO2センシング+Ambient via GS2200のバグ修正とUpdate
@@ -60,7 +66,7 @@ Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
 
 4/10
 
-・SignalProcessingを本線に入れたのに合わせて、こちらも更新。
+・SignalProcessingを本線に入れたのに合わせて、こちらも更新。<BR>
 ※次のリリース（v2.00）に入ります。
 
 4/2
