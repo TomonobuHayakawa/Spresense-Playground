@@ -217,6 +217,10 @@ Spresense-Playground
 - AudioRendering
     - rendering_objif
 
+- CO2_sensing_via_LTE
+- CO2_sensing_via_Sigfox
+- CO2_sensing_via_WiFi
+
 - Co-Spresense
     - Pickup
     - TerminalControl
@@ -243,4 +247,6 @@ Spresense-Playground
 - LowPowerSensing
     - bme680_ulp_plus_via_sigfox
     - bme680_uulp_plus_via_sigfox
+
+- weight_sensing
 
