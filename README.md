@@ -16,6 +16,10 @@ Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
 -------------------- 
 ## What's new.
 
+11/27
+
+・加重センサを使った重さ計測のサンプル追加<br>
+
 11/23
 
 ・CO2センシング+AWS/Azure/Watson via Sigfox <br>
