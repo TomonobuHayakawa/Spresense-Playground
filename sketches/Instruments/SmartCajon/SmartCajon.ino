@@ -24,7 +24,7 @@
 #include <stdlib.h>
 
 #include <arch/board/board.h>
-#include <arch/chip/cxd56_audio.h>  /* For set_datapath */
+#include <arch/board/cxd56_audio.h>  /* For set_datapath */
 #define READSAMPLE (240)
 #define BYTEWIDTH (2)
 #define CHNUM (2)
@@ -414,6 +414,7 @@ void setup()
   createStaticPools(MEM_LAYOUT_PLAYER);
 
   /* Use SD card */
+  board_power_control(PMIC_GPO(5), true);
   theSD.begin();
 
   /* Start audio system */
@@ -511,24 +512,24 @@ void loop()
 
 
 
-  //ãƒˆã‚°ãƒ«ã‚¹ã‚¤ãƒƒãƒå‡¦ç† DSW0 LED1
-  //ãƒœã‚¿ãƒ³ã‚’æŠ¼ã•ã‚ŒãŸã‚‰ãƒˆã‚°ãƒ«ã‚’æœ‰åŠ¹ã«ã™ã‚‹
+  //ƒgƒOƒ‹ƒXƒCƒbƒ`ˆ— DSW0 LED1
+  //ƒ{ƒ^ƒ“‚ð‰Ÿ‚³‚ê‚½‚çƒgƒOƒ‹‚ð—LŒø‚É‚·‚é
   if (digitalRead(PIN_D12) == LOW && toggle0 == OFF) {
     toggle0 = ON;
     cnttgl0++;
     digitalWrite(LED1, HIGH);
-    //ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚Œç¶šã‘ã¦ã„ã‚‹å ´åˆã®å‡¦ç†
+    //ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‘±‚¯‚Ä‚¢‚éê‡‚Ìˆ—
     while (digitalRead(PIN_D12) == LOW) {
     toggle0 = ON;
     digitalWrite(LED1, HIGH);
     }
   }
-    //ãƒˆã‚°ãƒ«å‹•ä½œä¸­ã«ãƒœã‚¿ãƒ³ONã§ãƒ•ãƒ©ã‚°ã‚’æ¶ˆã™
+    //ƒgƒOƒ‹“®ì’†‚Éƒ{ƒ^ƒ“ON‚Åƒtƒ‰ƒO‚ðÁ‚·
   if (digitalRead(PIN_D12) == LOW && toggle0 == ON) {
     toggle0 = OFF;
     cnttgl0++;
     digitalWrite(LED1, LOW);
-    //ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚Œç¶šã‘ã¦ã„ã‚‹å ´åˆã®å‡¦ç†
+    //ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‘±‚¯‚Ä‚¢‚éê‡‚Ìˆ—
     while (digitalRead(PIN_D12) == LOW)
     {
     toggle0 = OFF;
@@ -537,24 +538,24 @@ void loop()
   }
 
 
-    //ãƒˆã‚°ãƒ«ã‚¹ã‚¤ãƒƒãƒå‡¦ç† DSW1  LED2
-  //ãƒœã‚¿ãƒ³ã‚’æŠ¼ã•ã‚ŒãŸã‚‰ãƒˆã‚°ãƒ«ã‚’æœ‰åŠ¹ã«ã™ã‚‹
+    //ƒgƒOƒ‹ƒXƒCƒbƒ`ˆ— DSW1  LED2
+  //ƒ{ƒ^ƒ“‚ð‰Ÿ‚³‚ê‚½‚çƒgƒOƒ‹‚ð—LŒø‚É‚·‚é
   if (digitalRead(PIN_D07) == LOW && toggle1 == OFF) {
     toggle1 = ON;
     cnttgl1++;
     digitalWrite(LED2, HIGH);
-    //ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚Œç¶šã‘ã¦ã„ã‚‹å ´åˆã®å‡¦ç†
+    //ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‘±‚¯‚Ä‚¢‚éê‡‚Ìˆ—
     while (digitalRead(PIN_D07) == LOW) {
     toggle1 = ON;
     digitalWrite(LED2, HIGH);
     }
   }
-    //ãƒˆã‚°ãƒ«å‹•ä½œä¸­ã«ãƒœã‚¿ãƒ³ONã§ãƒ•ãƒ©ã‚°ã‚’æ¶ˆã™
+    //ƒgƒOƒ‹“®ì’†‚Éƒ{ƒ^ƒ“ON‚Åƒtƒ‰ƒO‚ðÁ‚·
   if (digitalRead(PIN_D07) == LOW && toggle1 == ON) {
     toggle1 = OFF;
     cnttgl1++;
     digitalWrite(LED2, LOW);
-    //ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚Œç¶šã‘ã¦ã„ã‚‹å ´åˆã®å‡¦ç†
+    //ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‘±‚¯‚Ä‚¢‚éê‡‚Ìˆ—
     while (digitalRead(PIN_D07) == LOW)
     {
     toggle1 = OFF;
@@ -565,7 +566,7 @@ void loop()
 
 
 
-  //ã‚¿ãƒƒãƒã‚»ãƒ³ã‚µå‡¦ç†
+  //ƒ^ƒbƒ`ƒZƒ“ƒTˆ—
   //read analog input
   //preserve previous data for rising edge detection
   gauge_a2_p3 = gauge_a2_p2;
