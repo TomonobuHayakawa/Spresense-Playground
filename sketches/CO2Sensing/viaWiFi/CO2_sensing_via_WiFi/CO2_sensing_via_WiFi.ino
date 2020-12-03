@@ -1,5 +1,5 @@
 /*
- *  CO2_sensing_via_WiFi.ino - CO2 Sensing for Emviroment via GS2200.
+ *  CO2_sensing_via_WiFi.ino - CO2 Sensing for Emviroment to upload the Ambient via GS2200.
  *  Copyright 2020 Sresense Users
  *
  *  This library is free software; you can redistribute it and/or
@@ -37,12 +37,12 @@
 #include "AmbientGs2200.h"
 #endif
 
-SCD30 airSensor;
-
 #ifdef USE_OLED
 #include "U8g2lib.h"
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 #endif
+
+SCD30 airSensor;
 
 const char* apn_file  = "apn.txt";
 const char* pass_file = "pass.txt";
@@ -106,29 +106,29 @@ bool settingString(const char* name, String& data)
 
 void setting()
 {
-  Serial.print("Please input Apn Name(");
-  bool ret = settingString(apn_file, apSsid);
+  Serial.print("Please input AP SSID (");
+  if(!settingString(apn_file, apSsid)){ goto ERROR_EXIT; }
 
-  Serial.print("Please input Apn Passphase(");
-  ret = settingString(pass_file, apPass);
+  Serial.print("Please input AP Passphase(");
+  if(!settingString(pass_file, apPass)){ goto ERROR_EXIT; }
   
   Serial.print("Please input Ambient Channel ID(");
-  ret = settingUint16(id_file, channelId);
+  if(!settingUint16(id_file, channelId)){ goto ERROR_EXIT; }
   
   Serial.print("Please input Ambient writeKey(");
-  ret = settingString(key_file, writeKey);
+  if(!settingString(key_file, writeKey)){ goto ERROR_EXIT; }
 
   Serial.print("Please input Sensing Interval(sec) (");
-  ret = settingUint16(sens_file, sensing_interval);
+  if(!settingUint16(sens_file, sensing_interval)){ goto ERROR_EXIT; }
 
   Serial.print("Please input Sensing Interval(1/n) (");
-  ret = settingUint16(up_file, upload_interval);
+  if(!settingUint16(up_file, upload_interval)){ goto ERROR_EXIT; }
 
-  if(!ret)
-  {
-    Serial.println("Setting Error!");
-    exit(1);
-  }
+  return;
+
+ERROR_EXIT:
+  Serial.println("Setting Error!");
+  exit(1);
 }
 
 
@@ -170,20 +170,18 @@ bool drawSettingMode()
   u8g2.sendBuffer(); 
 #endif
 
-  bool ret = true;
-  if(!readString(apn_file, apSsid)){ ret = false; }
-  if(!readString(pass_file, apPass)){ ret = false; }
-  if(!readUint16(id_file, channelId)){ ret = false; }
-  if(!readString(key_file, writeKey)){ ret = false; }
-  if(!readUint16(sens_file, sensing_interval)){ ret = false; }
-  if(!readUint16(up_file, upload_interval)){ ret = false; }
+  if(!readString(apn_file, apSsid)){ goto ERROR_RETURN; }
+  if(!readString(pass_file, apPass)){ goto ERROR_RETURN; }
+  if(!readUint16(id_file, channelId)){ goto ERROR_RETURN; }
+  if(!readString(key_file, writeKey)){ goto ERROR_RETURN; }
+  if(!readUint16(sens_file, sensing_interval)){ goto ERROR_RETURN; }
+  if(!readUint16(up_file, upload_interval)){ goto ERROR_RETURN; }
 
-  if(!ret) {
-    Serial.println("Setting Error!");
-    return false;
-  }
-  
   return true;
+
+ERROR_RETURN:
+  Serial.println("Setting Error!");
+  return false;
 }
 
 
@@ -308,7 +306,7 @@ void loop()
       Serial.println("*** Send comleted! ***\n");
     }
 #endif
-  
+
     counter = 0;
 
   }else{
@@ -316,4 +314,5 @@ void loop()
   }
   
   sleep(sensing_interval);
+
 }
