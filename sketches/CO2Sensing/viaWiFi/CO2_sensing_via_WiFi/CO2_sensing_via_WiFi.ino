@@ -166,7 +166,7 @@ bool drawSettingMode()
 #ifdef USE_OLED
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_6x10_tr);
-  u8g2.drawStr(20,40,"Device Booting... ");
+  u8g2.drawStr(10,40,"Device Booting... ");
   u8g2.sendBuffer(); 
 #endif
 
@@ -192,7 +192,8 @@ void menu()
 #ifdef USE_OLED
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_6x10_tr);
-    u8g2.drawStr(20,40,"Plase Setup via serial! ");
+    u8g2.drawStr(20,40,"Please Setup");
+    u8g2.drawStr(35,60,"via serial! ");
     u8g2.sendBuffer();
 #endif
     setting();

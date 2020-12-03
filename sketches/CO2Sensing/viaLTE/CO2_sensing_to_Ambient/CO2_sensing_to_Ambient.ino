@@ -37,12 +37,6 @@
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 #endif
 
-
-/* Change the settings according to your sim card */
-#define APN_NAME "XXXXXX"
-#define APN_USRNAME "XXXXXX"
-#define APN_PASSWD "XXXXXX"
-
 SCD30 airSensor;
 
 const char* apn_file  = "apn.txt";
@@ -62,8 +56,8 @@ static String writeKey  = "xxxxxxxxxxxxx";
 
 static int setting_mode_time = 500; /* 5000ms */
 
-static uint16_t sensing_interval = 5; /* 5s */
-static uint16_t upload_interval  = 6; /* 1/n */
+static uint16_t sensing_interval = 0; /* 5s */
+static uint16_t upload_interval  = 0; /* 1/n */
 
 #define STRING_BUFFER_SIZE 128
 char StringBuffer[STRING_BUFFER_SIZE];
@@ -172,7 +166,7 @@ bool drawSettingMode()
 #ifdef USE_OLED
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_6x10_tr);
-  u8g2.drawStr(20,40,"Device Booting... ");
+  u8g2.drawStr(10,40,"Device Booting... ");
   u8g2.sendBuffer();
 #endif
 
@@ -198,7 +192,8 @@ void menu()
 #ifdef USE_OLED
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_6x10_tr);
-    u8g2.drawStr(20,40,"Plase Setup via serial! ");
+    u8g2.drawStr(20,40,"Please Setup");
+    u8g2.drawStr(35,60,"via serial! ");
     u8g2.sendBuffer();
 #endif
     setting();
@@ -237,8 +232,11 @@ void setup()
 
 #ifdef UPLOAD_AMBIENT
   /* LTE Module Initialize */
-  bool ret = theAmbient.begin(APN_NAME ,APN_USRNAME ,APN_PASSWD);
-  if (ret == false) {
+  while(1) {
+    Serial.println("Connecting Network...");
+    if (theAmbient.begin(apnName ,usrName ,apnPass)) {
+      break;
+    }
     Serial.println("theAmbient begin failed");
     theAmbient.end(); while(1);
   }
@@ -266,7 +264,7 @@ void drawParameter(uint16_t co2, float temp, float humidity)
   u8g2.setFont(u8g2_font_6x10_tr);
   u8g2.drawStr(20,40,"CO2(ppm):");
   u8g2.drawStr(85,40,String(co2).c_str());
-  u8g2.drawStr(24,56,"Temp(��C):");
+  u8g2.drawStr(24,56,"Temp(C):");
   u8g2.drawStr(85,56,String(temp).c_str());
   u8g2.drawStr(24,72,"Humi(%):");
   u8g2.drawStr(85,72,String(humidity).c_str());
@@ -291,9 +289,12 @@ void loop()
     Serial.println();
   } else {
     Serial.println("No data");
+    sleep(1);
+    airSensor.begin();
   }
   
 #ifdef USE_OLED
+//  u8g2.clearDisplay();
   u8g2.clearBuffer();
   drawBackgraund(airSensor.getCO2());
   drawParameter(airSensor.getCO2(),airSensor.getTemperature(),airSensor.getHumidity());
