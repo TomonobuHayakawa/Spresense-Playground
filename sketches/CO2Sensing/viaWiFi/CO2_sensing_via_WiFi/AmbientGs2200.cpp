@@ -115,7 +115,9 @@ bool AmbientGs2200Class::send()
 {
   // Prepare for the next chunck of incoming data
   WiFi_InitESCBuffer();
-  server_cid = App_ConnectWeb(server,port);
+  do{
+    server_cid = App_ConnectWeb(server,port);
+  }while(server_cid == ATCMD_INVALID_CID);
 
   /* Retrieve the file with the specified URL. */
   String post = "{\"writeKey\":\"" + mWriteKey + "\",";
@@ -144,7 +146,7 @@ bool AmbientGs2200Class::send()
   if( ATCMD_RESP_OK != AtCmd_SendBulkData( server_cid, data.c_str(), length )){
     // Data is not sent, we need to re-send the data
     ConsoleLog( "Send Error.");
-    delay(1);
+    return false;
   }
 
   sleep(1);
@@ -154,7 +156,7 @@ bool AmbientGs2200Class::send()
   if( ATCMD_RESP_OK != AtCmd_SendBulkData( server_cid, post.c_str(), post.length() )){
     // Data is not sent, we need to re-send the data
     ConsoleLog( "Send Error.");
-    delay(1);
+    return false;
   }
 
   ATCMD_RESP_E resp;
