@@ -22,6 +22,9 @@
 #include <File.h>
 #include <Flash.h>
 
+#include <LowPower.h>
+#include <RTC.h>
+
 /***   Select Mode   ***/
 #define USE_OLED
 #define UPLOAD_AMBIENT
@@ -29,16 +32,24 @@
 #ifdef UPLOAD_AMBIENT
 #include <Arduino.h>
 #include "Ambient_SpresenseLTEM.h"
+LTEScanner theLteScanner;
 #endif
 
 #ifdef USE_OLED
-#include "SparkFun_SCD30_Arduino_Library.h" 
 #include "U8g2lib.h"
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 #endif
 
+#include "SparkFun_SCD30_Arduino_Library.h" 
 SCD30 airSensor;
 
+/**--- Definitions -------------------------------------*/
+const int good_thr          = 1500; /* 2000ppm */
+const int bad_thr           = 3500; /* 6000ppm */
+const int reboot_thr        = 10;   /* 6000ppm */
+const int setting_mode_time = 500;  /* 5000ms */
+
+/**--- File name on FLASH ------------------------------*/
 const char* apn_file  = "apn.txt";
 const char* name_file = "name.txt";
 const char* pass_file = "pass.txt";
@@ -47,6 +58,7 @@ const char* key_file  = "key.txt";
 const char* sens_file = "sens.txt";
 const char* up_file   = "up.txt";
 
+/**--- Setting Parameters ------------------------------*/
 static String apnName = "xxxxxxxx";
 static String usrName = "xxxxxxxx";
 static String apnPass = "xxxxxxxx";
@@ -54,14 +66,123 @@ static String apnPass = "xxxxxxxx";
 static uint16_t channelId = 00000;
 static String writeKey  = "xxxxxxxxxxxxx";
 
-static int setting_mode_time = 500; /* 5000ms */
-
-static uint16_t sensing_interval = 0; /* 5s */
+/**--- Variable ----------------------------------------*/
+static uint16_t sensing_interval = 0; /* n(s) */
 static uint16_t upload_interval  = 0; /* 1/n */
+//static uint16_t refresh_interval  = 10; /* 1/n */
+
+static uint16_t error0 = 0; /* modem error */
+static uint16_t error1 = 0; /* I2C error */
+static uint16_t error2 = 0; /* No data */
 
 #define STRING_BUFFER_SIZE 128
 char StringBuffer[STRING_BUFFER_SIZE];
 
+/**--- I2C adjust ---------------------------------------*/
+#define IC_ENABLE   0x0418d46c
+#define IC_SDA_HOLD  0x0418d47c
+#define IC_SDA_SETUP 0x0418d494
+#define SCU_CKEN    0x0410071c
+
+void setup_i2c0_holdtime()
+{
+  uint32_t sdahold;
+  uint32_t sdasetup;
+
+  *(volatile uint32_t*)SCU_CKEN |= 2;
+
+  uint32_t enable = *(volatile uint32_t*)IC_ENABLE;
+
+  sdahold =  *(volatile uint32_t*)IC_SDA_HOLD;
+  printf("IC_SDA_HOLD=0x%08x\n", sdahold);
+  sdasetup =  *(volatile uint32_t*)IC_SDA_SETUP;
+  printf("IC_SDA_SETUP=0x%08x\n", sdasetup);
+
+  *(volatile uint32_t*)IC_ENABLE = enable & 0xfffffffe;
+
+  *(volatile uint32_t*)IC_SDA_HOLD = 0x00050005;
+  //*(volatile uint32_t*)IC_SDA_SETUP = 0x0;
+  *(volatile uint32_t*)IC_ENABLE = enable | 1;
+
+  sdahold =  *(volatile uint32_t*)IC_SDA_HOLD;
+  printf("IC_SDA_HOLD=0x%08x\n", sdahold);
+  sdasetup =  *(volatile uint32_t*)IC_SDA_SETUP;
+  printf("IC_SDA_SETUP=0x%08x\n", sdasetup);
+
+  printf("I2C0 hold time setting end\n"); 
+}
+
+/**--- State class --------------------------------------*/
+enum e_STATE {
+  E_ERROR =0,
+  E_GOOD,
+  E_WARN,
+  E_BAD
+};
+
+class State{
+
+public:
+  State():m_cur(E_ERROR){}
+  void print();
+  bool update(uint16_t);
+  void clear(){m_cur=E_ERROR;}
+  e_STATE get(){return m_cur;}
+private:
+  e_STATE m_cur;
+};
+
+void State::print()
+{
+#ifdef USE_OLED
+  u8g2.setFont(u8g2_font_open_iconic_weather_2x_t);
+#endif
+
+  switch (m_cur){
+  case E_GOOD:
+#ifdef USE_OLED
+    u8g2.drawGlyph(8,16,69);
+    u8g2.updateDisplayArea(0,0, 4, 2);
+#endif
+  Serial.println("GOOD!");
+  break;
+  case E_WARN:
+#ifdef USE_OLED
+    u8g2.drawGlyph(8,16,64);
+    u8g2.updateDisplayArea(0,0, 4, 2);      
+#endif
+  Serial.println("WARN!");
+  break;
+  case E_BAD:
+#ifdef USE_OLED
+    u8g2.drawGlyph(8,16,67);
+    u8g2.updateDisplayArea(0,0, 4, 2);      
+#endif
+  Serial.println("BAD!");
+  break;
+  default:
+  break; 
+  }
+}
+
+bool State::update(uint16_t co2)
+{
+  e_STATE next;
+  if(co2<good_thr){
+    next = E_GOOD;
+  }else if(co2<bad_thr){
+    next = E_WARN;
+  }else{
+    next = E_BAD;
+  }
+
+  if(m_cur==next) return false;
+
+  m_cur = next;
+  return true;
+}
+
+/**------------------------------------------*/
 bool settingUint16(const char* name, uint16_t& data)
 {
   Serial.print(data);
@@ -133,6 +254,7 @@ ERROR_EXIT:
   exit(1);
 }
 
+/**------------------------------------------*/
 bool readUint16(const char* name, uint16_t& data)
 {
   Serial.println(name);
@@ -199,26 +321,76 @@ void menu()
     setting();
   }
 
-  Serial.println("Please push \'s\' to Setting menu.");
-  for(int i=0;i<setting_mode_time;i++){
-    if(Serial.available()){
-      if(Serial.read()=='s'){
-        Serial.read(); // remove '\n'
-        setting();
-        break;
+  bootcause_e bc = LowPower.bootCause();
+
+  if ((bc == POR_SUPPLY) || (bc == POR_NORMAL)) {
+
+    Serial.println("Please push \'s\' to Setting menu.");
+    for(int i=0;i<setting_mode_time;i++){
+      if(Serial.available()){
+        if(Serial.read()=='s'){
+          Serial.read(); // remove '\n'
+          setting();
+          break;
+        }
       }
+      usleep(10000); // 10ms
     }
-    usleep(10000); // 10ms
   }
   Serial.println("Nomal mode start!.");
 }
 
 
+/**------------------------------------------*/
+#ifdef USE_OLED
+void drawBackgraund()
+{
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(20,40,"CO2(ppm):");
+  u8g2.drawStr(24,56,"Temp(C):");
+  u8g2.drawStr(24,72,"Humi(%):");
+//  u8g2.drawStr(24,88,"I2C Error:");
+  u8g2.sendBuffer();
+}
+
+void drawParameter(uint16_t co2, float temp, float humidity)
+{
+/*  u8g2.setDrawColor(1); 
+  u8g2.drawBox(96,32,28,40);
+  u8g2.setDrawColor(2); */
+
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(88,40,String(co2).c_str());
+  u8g2.drawStr(88,56,String(temp).c_str());
+  u8g2.drawStr(88,72,String(humidity).c_str());
+/*  u8g2.updateDisplayArea(11,4, 4, 1); 
+  u8g2.updateDisplayArea(11,6, 4, 1); 
+  u8g2.updateDisplayArea(11,8, 4, 1);*/
+  u8g2.sendBuffer();
+}
+
+void drawError()
+{
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(20,40,"I2C Error! ");
+  u8g2.sendBuffer();
+  sleep(1);
+}
+
+#endif
+
+/**------------------------------------------*/
 void setup()
 {
-  Wire.begin();
-
   Serial.begin(115200);
+
+  Wire.begin();
+  setup_i2c0_holdtime();
+
+  RTC.begin();
+  LowPower.begin();
 
 #ifdef USE_OLED
   u8g2.begin();
@@ -238,85 +410,123 @@ void setup()
       break;
     }
     Serial.println("theAmbient begin failed");
-    theAmbient.end(); while(1);
+    theAmbient.end();
+    LowPower.deepSleep(3);
   }
   theAmbient.setupChannel(channelId, writeKey);
 #endif
 
-  sleep(1);
-}
-
 #ifdef USE_OLED
-void drawBackgraund(uint16_t co2)
-{
-  u8g2.setFont(u8g2_font_open_iconic_weather_2x_t);
-  if(co2<3000){
-    u8g2.drawGlyph(10,20,69);
-  }else if(co2<8000){
-    u8g2.drawGlyph(10,20,64);
-  }else{
-    u8g2.drawGlyph(10,20,67);
-  }
+  drawBackgraund();
+#endif
 }
 
-void drawParameter(uint16_t co2, float temp, float humidity)
-{
-  u8g2.setFont(u8g2_font_6x10_tr);
-  u8g2.drawStr(20,40,"CO2(ppm):");
-  u8g2.drawStr(85,40,String(co2).c_str());
-  u8g2.drawStr(24,56,"Temp(C):");
-  u8g2.drawStr(85,56,String(temp).c_str());
-  u8g2.drawStr(24,72,"Humi(%):");
-  u8g2.drawStr(85,72,String(humidity).c_str());
-}
-#endif
+/**------------------------------------------*/
+State theState;
 
 void loop()
 {
   static int counter = 0;
+  static int counter_disp = 0;
+  static int continuous_error = 0;
+  static int co2 = 0;
+  static float temp = 0;
+  static float humi = 0;
 
-  if (airSensor.dataAvailable())
-  {
+  if(counter == 0){
+    counter = upload_interval;
+  }
+
+  if(airSensor.dataAvailable()) {
+    co2 = airSensor.getCO2();
+    temp = airSensor.getTemperature();
+    humi = airSensor.getHumidity();
+    
     Serial.print("co2(ppm):");
-    Serial.print(airSensor.getCO2());
+    Serial.print(co2);
 
     Serial.print(" temp(C):");
-    Serial.print(airSensor.getTemperature(), 1);
+    Serial.print(temp, 2);
 
     Serial.print(" humidity(%):");
-    Serial.print(airSensor.getHumidity(), 1);
+    Serial.print(humi, 2);
 
     Serial.println();
-  } else {
-    Serial.println("No data");
-    sleep(1);
-    airSensor.begin();
-  }
-  
+    
+    if(theState.update(co2)){
+      theState.print();
+    }
+
+    continuous_error=0;
+
 #ifdef USE_OLED
-//  u8g2.clearDisplay();
-  u8g2.clearBuffer();
-  drawBackgraund(airSensor.getCO2());
-  drawParameter(airSensor.getCO2(),airSensor.getTemperature(),airSensor.getHumidity());
-  u8g2.sendBuffer();
+    drawParameter(co2,temp,humi);
 #endif
 
-  if(counter >= upload_interval){
+  }else{
+    continuous_error++;
+    error2++;
+    Serial.println("I2C error!");
+
+#ifdef USE_OLED
+//    drawError();
+#endif
+
+    if(continuous_error>reboot_thr){
+
 #ifdef UPLOAD_AMBIENT
-    theAmbient.set(1, (String(airSensor.getCO2()).c_str()));
-    theAmbient.set(2, (String(airSensor.getTemperature()).c_str()));
-    theAmbient.set(3, (String(airSensor.getHumidity()).c_str()));
+      theAmbient.end();
+      sleep(1);
+      return;
+#endif
+      LowPower.deepSleep(2);
+    }
+    airSensor.begin();
+    sleep(1);
+    return;
+  }
+  
+
+  if(counter >= upload_interval){
+
+#ifdef UPLOAD_AMBIENT
+    puts("upload Ambient.");
+    String strength = theLteScanner.getSignalStrength();
+    Serial.print(strength);
+    Serial.println(" [dBm]");
+
+    u8g2.setFont(u8g2_font_6x10_tr);
+    u8g2.drawStr(70,10,strength.c_str());
+    u8g2.drawStr(90,10," [dBm]");
+    u8g2.sendBuffer();
+
+    theAmbient.set(1, (String(co2).c_str()));
+    theAmbient.set(2, (String(temp).c_str()));
+    theAmbient.set(3, (String(humi).c_str()));
+    theAmbient.set(4, (String(error0).c_str()));
+//    theAmbient.set(5, (String(error1).c_str()));
+    theAmbient.set(6, (String(error2).c_str()));
+    puts("Send Ambient.");
     int ret = theAmbient.send();
 
     if (ret == 0) {
-      Serial.println("*** ERROR! RESET Wifi! ***\n");
-      exit(1);
+      error0++;
+      Serial.println("*** ERROR! LTE reboot! ***\n");
+      theAmbient.end();
+      while(1) {
+        Serial.println("Connecting Network...");
+        if (theAmbient.begin(apnName ,usrName ,apnPass)) {
+          break;
+        }
+      }
+      
     }else{
       Serial.println("*** Send comleted! ***\n");
+      counter = 1;
     }
+#else
+    counter = 1;
 #endif
-
-    counter = 0;
 
   }else{
     counter++;
