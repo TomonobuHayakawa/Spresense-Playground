@@ -16,13 +16,23 @@ Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
 -------------------- 
 ## What's new.
 
+12/25
+
+・CO2センシングのUpdate <br>
+    - AmbientへのUpdateサンプルの更新。（エラー処理追加（電源断リブート）、状態管理をクラス化、I2Cの調整機能追加）<br>
+    - IIJのMachinistへのUpdateサンプルを追加。 https://machinist.iij.jp/ <br>
+
+    ※Ambient_SpresenseLTEMのライブラリを更新しました。なので、自分のところのforkを使ってください。
+    https://github.com/TomonobuHayakawa/Ambient_SpresenseLTEM
+
+
 11/27
 
 ・加重センサを使った重さ計測のサンプル追加<br>
 
 11/23
 
-・CO2センシング+AWS/Azure/Watson via Sigfox <br>
+・CO2センシング+AWS/Azure/Watson via Sigfox
     - Sigfoxは別途KCCS側の設定が必要です。 <br>
     - ライブラリは、こちらになります。: https://github.com/SMK-RD/WF931-Sigfox-module <br>
 
