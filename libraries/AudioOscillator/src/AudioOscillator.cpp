@@ -1,5 +1,5 @@
 /*
- *  Oscillator.h - Oscillator Library for Synthesizer
+ *  AudioOscillator.cpp - Oscillator Library for Synthesizer
  *  Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  */
 
 #include <stdio.h>
-#include "Oscillator.h"
+#include "AudioOscillator.h"
 
 /*--------------------------------------------------------------------*/
 /*   Wave Generator Base                                              */
@@ -30,6 +30,7 @@ void GeneratorBase::init(uint8_t bits/* only 16bits*/ , uint32_t rate, uint8_t c
   m_omega = 0;
   m_sampling_rate = rate;
   m_channels = channels;
+  m_fraction = 2;
 
 }
 /*--------------------------------------------------------------------*/
@@ -64,6 +65,29 @@ void SinGenerator::exec(q15_t* ptr, uint16_t samples)
       q15_t val = arm_sin_q15(m_theta);
       ptr = update_sample(ptr,val);
     }
+}
+
+/*--------------------------------------------------------------------*/
+void SinGenerator::multi(q15_t* ptr, uint16_t samples)
+{
+  for (int i = 0; i < samples ; i++)
+    {
+
+      *ptr = *ptr - ((*ptr)*((uint32_t)(0x8000 + arm_sin_q15(m_theta)) >> m_fraction)/0xffff);
+
+      if (m_channels < 2)
+        {
+          *(ptr+1) = *ptr;
+        }
+      m_theta = (m_theta + m_omega) & 0x7fff;
+      ptr  += (m_channels < 2) ? 2 : m_channels;
+    }
+}
+
+/*--------------------------------------------------------------------*/
+void SinGenerator::coeff(uint8_t coeff)
+{
+  m_fraction = coeff;
 }
 
 /*--------------------------------------------------------------------*/
@@ -318,9 +342,14 @@ bool Oscillator::init(WaveMode type, uint8_t channel_num)
                       m_sampling_rate,
                       m_channel_num);
       m_envlop[i].init(m_bit_length, m_channel_num);
-
       /* Initial value */
       m_envlop[i].set(1,1,100,1);
+
+      m_lfo[i].init(m_bit_length,
+                    m_sampling_rate,
+                    m_channel_num);
+      m_enable_lfo[i] = false;
+
     }
 
   return true;
@@ -339,6 +368,9 @@ void Oscillator::exec(q15_t* ptr, uint16_t sample)
   for (int i = 0; i < m_channel_num; i++)
     {
       m_wave[i]->exec((ptr + i), samples);
+      if(m_enable_lfo[i] == true){
+        m_lfo[i].multi((ptr + i), samples);
+      }
       m_envlop[i].exec((ptr + i), samples);
     }
 }
@@ -399,3 +431,22 @@ bool Oscillator::set(uint8_t ch, float a, float d, q15_t s, float r)
 
   return true;
 }
+
+/*--------------------------------------------------------------------*/
+bool Oscillator::lfo(uint8_t ch, uint16_t frequency, uint8_t coeff)
+{
+  if(ch>=m_channel_num) return false;
+
+  if(frequency == 0) {
+    m_enable_lfo[ch] = false;
+    return true;
+  }
+
+  m_enable_lfo[ch] = true;
+  m_lfo[ch].coeff(coeff);
+  m_lfo[ch].set(frequency);
+
+  return true;
+}
+
+

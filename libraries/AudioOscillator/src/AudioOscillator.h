@@ -1,5 +1,5 @@
 /*
- *  Oscillator.h - Oscillator Library Header for Synthesizer
+ *  AudioOscillator.h - Oscillator Library Header for Synthesizer
  *  Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  *  This library is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef __OSCILLATOR_H__
-#define __OSCILLATOR_H__
+#ifndef __AUDIO_OSCILLATOR_H__
+#define __AUDIO_OSCILLATOR_H__
 
 /* Use CMSIS library */
 #define ARM_MATH_CM4
@@ -61,14 +61,16 @@ protected:
   q15_t     m_theta;
   q15_t     m_omega;
   uint8_t   m_channels;
+  uint8_t   m_fraction;  /* for LFO*/
 
 };
 
 class SinGenerator : public GeneratorBase
 {
 public:
+  void coeff(uint8_t);
   void exec(q15_t*, uint16_t);
-
+  void multi(q15_t*, uint16_t);
 };
 
 class RectGenerator : public GeneratorBase
@@ -158,6 +160,7 @@ public:
   bool set(uint8_t ch, WaveMode type);
   bool set(uint8_t ch, uint16_t frequency);
   bool set(uint8_t ch, float attack, float decay, q15_t sustain, float release);
+  bool lfo(uint8_t ch, uint16_t frequency, uint8_t coeff);
 
 private:
   WaveMode m_type;
@@ -171,6 +174,9 @@ private:
   SawGenerator   m_saw[MAX_CHANNEL_NUMBER];
   EnvelopeGenerator m_envlop[MAX_CHANNEL_NUMBER];
 
+  SinGenerator   m_lfo[MAX_CHANNEL_NUMBER];
+  bool           m_enable_lfo[MAX_CHANNEL_NUMBER];
+
 };
 
-#endif /* __OSCILLATOR_H__ */
+#endif /* __AUDIO_OSCILLATOR_H__ */

@@ -16,6 +16,13 @@ Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
 -------------------- 
 ## What's new.
 
+2021/01/14
+
+・AudioOscillator (旧Oscillator) の更新<br>
+    - 本線に向けて名前の変更。（Oscillator -> AudioOscillator）。<br>
+    - LFOの追加。<br>
+
+
 12/25
 
 ・CO2センシングのUpdate <br>

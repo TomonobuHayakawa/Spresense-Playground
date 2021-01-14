@@ -1,21 +1,21 @@
 /*
-    rendering.ino - Rendering example for Oscillator
-    Copyright 2020 Sony Semiconductor Solutions Corporation
-
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ *  rendering.ino - Rendering example for AudioOscillator
+ *  Copyright 2020 Sony Semiconductor Solutions Corporation
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 #include <OutputMixer.h>
 #include <MemoryUtil.h>
@@ -23,13 +23,23 @@
 #include <stdlib.h>
 #include <arch/board/board.h>
 
-#include <Oscillator.h>
-
-#include <stdio.h>
+#include <AudioOscillator.h>
 
 Oscillator  *theOscillator;
 OutputMixer *theMixer;
 bool ErrEnd = false;
+
+static void menu()
+{
+  printf("=== MENU (input key ?) ==============\n");
+  printf("c: Sound \"Do\"\n");
+  printf("d: Sound \"Ro\"\n");
+  printf("e: Sound \"Mi\"\n");
+  printf("f: Sound \"Fa\"\n");
+  printf("g: Sound \"So\"\n");
+  printf("s: Stop sound\n");
+  printf("=====================================\n");
+}
 
 static bool getFrame(AsPcmDataParam *pcm)
 {
@@ -39,9 +49,6 @@ static bool getFrame(AsPcmDataParam *pcm)
     return false;
   }
   theOscillator->exec((q15_t*)pcm->mh.getPa(), sample);
-
-//  q15_t* ad = (q15_t*) pcm->mh.getPa();
-//  printf("p0=%x.p1=%x.p2=%x.p3=%x\n",*ad,*(ad+1),*(ad+2),*(ad+3));
 
   /* Set PCM parameters */
   pcm->identifier = 0;
@@ -130,8 +137,8 @@ void setup()
   theOscillator = new Oscillator();
 
 //  if(!theOscillator->begin(SinWave, 2)){
-  if(!theOscillator->begin(RectWave, 2)){
-//  if(!theOscillator->begin(SawWave, 2)){
+//  if(!theOscillator->begin(RectWave, 2)){
+  if(!theOscillator->begin(SawWave, 2)){
       puts("begin error!");
       exit(1);
   }
@@ -162,14 +169,18 @@ void setup()
   board_external_amp_mute_control(false);
 
   printf("setup() complete\n");
+  menu();
 
   bool er;
   er = theOscillator->set(0, 0);
   er = theOscillator->set(1, 0);
 
   /* attack = 1000,decay = 700, sustain = 30, release = 300 */
-  er = theOscillator->set(0, 1000,700,30,300);
-  er = theOscillator->set(1, 1000,700,30,300);
+  er = theOscillator->set(0, 700,200,50,400);
+  er = theOscillator->set(1, 700,200,50,400);
+
+  er = theOscillator->lfo(0, 4, 2);
+  er = theOscillator->lfo(1, 4, 2);
 
   if(!er){
     puts("init error!");
