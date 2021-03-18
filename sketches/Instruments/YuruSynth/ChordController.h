@@ -1,11 +1,11 @@
-#ifndef CODE_CONTROLLER_H_
-#define CODE_CONTROLLER_H_
+#ifndef CHORD_CONTROLLER_H_
+#define CHORD_CONTROLLER_H_
 
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 
-class CodeController
+class ChordController
 {
 public:
   void  begin();
@@ -49,13 +49,13 @@ private:
     {11, "B"}
   };
 
-  struct CodeStruct {
+  struct ChordStruct {
     char name[5];
     char note[4][4];
     char* get(int no) { return note[no]; }
   };
-  
-  const struct CodeStruct codes[9] = {
+
+  const struct ChordStruct chords[16] = {
     {"C",   {"C3", "E4", "G4" ,"C5" }},
     {"C#m", {"C#3","E4", "G#4","C#5"}},
     {"D",   {"D3", "F#4","A4", "D5" }},
@@ -65,19 +65,14 @@ private:
     {"E7",  {"E3" ,"G#4","B4", "D5" }},
     {"Em",  {"E3" ,"G4" ,"B4", "E5" }},
     {"F#7", {"A#3","C#4","E4", "F#4"}},
-
-/*        'E': ['E3','G#4','B4','E5'],
-        'E7': ['E3','G#4','B4','D5'],
-        'Em': ['E3','G4','B4','E5'],
-        'F#7': ['A#3','C#4','E4','F#4'],
-        'G': ['G3','B4','D5','G5'],
-        'G#7': ['C3','D#4','F#4','G#4'],
-        'A': ['A3','C#4','E4','A4'],
-        'B': ['B3','D#4','F#4','B4'],
-        'B/D#': ['D#3','D#4','F#4','B4'],
-        'B7': ['B3','D#4','F#4','A4'],
-        'Bm7': ['B3','D4','F#4','A4']*/
+    {"G",   {"G3" ,"B4", "D5", "G5" }},
+    {"G#7", {"C3" ,"D#4","F#4","G#4"}},
+    {"A",   {"A3" ,"C#4","E4", "A4"}},
+    {"B",   {"B3" ,"D#4","F#4","B4"}},
+    {"B/D#",{"D#3","D#4","F#4","B4"}},
+    {"B7",  {"B3" ,"D#4","F#4","A4"}},
+    {"Bm7", {"B3" ,"D4" ,"F#4","A4"}}
   };
 };
 
-#endif /* CODE_CONTROLLER_H_ */
+#endif /* CHORD_CONTROLLER_H_ */

@@ -1,6 +1,6 @@
-#include "CodeController.h"
+#include "ChordController.h"
 
-void CodeController::begin()
+void ChordController::begin()
 {
   for (int i = 12; i < 128; i++) {
     int pow_i = i - 69;
@@ -36,7 +36,7 @@ void CodeController::begin()
 
 }
 
-int CodeController::get(const char* str)
+int ChordController::get(const char* str)
 {
   for (int i = 12; i < 128; i++) {
   	if(!(note[i] == str)) {
@@ -46,11 +46,11 @@ int CodeController::get(const char* str)
   return 0;
 }
 
-int CodeController::get(const char* str, int no)
+int ChordController::get(const char* str, int no)
 {
-  for (int i = 0; i < sizeof(codes); i++) {
-    if(strcmp(str,codes[i].name)==0) {
-      return get(codes[i].get(no));
+  for (int i = 0; i < sizeof(chords); i++) {
+    if(strcmp(str,chords[i].name)==0) {
+      return get(chords[i].get(no));
     }
   }
   return 0;
