@@ -26,6 +26,7 @@
 #include <MP.h>
 
 #include "ChordController.h"
+#include "KeyInfo.h"
 #include "Score.h"
 
 /****************************************************************************
@@ -37,17 +38,27 @@
 #define CHANNEL_NUMBER        8
 
 /* Oscillator parameter */
-
+/* Organ */
+/*
+#define OSC_WAVE_MODE         AsSynthesizerSinWave
 #define OSC_CH_NUM            CHANNEL_NUMBER
 #define OSC_EFFECT_ATTACK     1
 #define OSC_EFFECT_DECAY      1
 #define OSC_EFFECT_SUSTAIN    100
 #define OSC_EFFECT_RELEASE    1
+*/
+
+/* Piano */
+#define OSC_WAVE_MODE         AsSynthesizerRectWave
+#define OSC_CH_NUM            CHANNEL_NUMBER
+#define OSC_EFFECT_ATTACK     20
+#define OSC_EFFECT_DECAY      500
+#define OSC_EFFECT_SUSTAIN    1
+#define OSC_EFFECT_RELEASE    1
 
 /* DSP file path */
 
 #define DSPBIN_PATH           "/mnt/sd0/BIN/YUSYNTH"
-//#define DSPBIN_PATH           "/mnt/sd0/BIN/OSCPROC"
 
 /* Set volume[db] */
 
@@ -56,13 +67,11 @@
 #define VOLUME_SYNTH      -80
 
 /* Keyboard params */
-
 const int keyboard_core = 1;
-const unsigned int number_of_keyinfo = 6;
-const unsigned int number_of_keybits = 5;
-unsigned char keyinfo[number_of_keyinfo];
 
+/* Chord clear flag */
 bool clear_flg = false;
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -89,7 +98,7 @@ OutputMixer *theMixer;
 Synthesizer *theSynthesizer;
 
 ChordController *theChordController;
-
+KeyInfo theKeyInfo;
 
 /****************************************************************************
  * Private Functions
@@ -148,7 +157,7 @@ static void attention_synth_cb(const ErrorAttentionParam *atprm)
  * @return true on success, false otherwise
  */
 
-static bool mediaplayer_done_callback(AsPlayerEvent event, uint32_t result, uint32_t sub_result)
+static bool mediaplayer_done_callback(AsPlayerEvent /*event*/, uint32_t /*result*/, uint32_t /*sub_result*/)
 {
   sem_post(&play_elm.sem);
 
@@ -163,9 +172,9 @@ static bool mediaplayer_done_callback(AsPlayerEvent event, uint32_t result, uint
  * @param [in,out] done_param   AsOutputMixDoneParam type pointer
  */
 
-static void outputmixer0_done_callback(MsgQueId              requester_dtq,
-                                       MsgType               reply_of,
-                                       AsOutputMixDoneParam *done_param)
+static void outputmixer0_done_callback(MsgQueId              /*requester_dtq*/,
+                                       MsgType               /*reply_of*/,
+                                       AsOutputMixDoneParam* /*done_param*/)
 {
   return;
 }
@@ -187,11 +196,11 @@ static void outputmixer1_done_callback(MsgQueId requester_dtq,
  * @return true on success, false otherwise
  */
 
-static void synthesizer_done_callback(AsSynthesizerEvent event,
-                                      uint32_t           result,
-                                      void              *param)
+static void synthesizer_done_callback(AsSynthesizerEvent /*event*/,
+                                      uint32_t           /*result*/,
+                                      void*              /*param*/)
 {
-  return true;
+  return;
 }
 
 /****************************************************************************/
@@ -202,7 +211,7 @@ static void synthesizer_done_callback(AsSynthesizerEvent event,
  * @param [in] is_end       For normal request give false, for stop request give true
  */
 
-static void outmixer1_send_callback(int32_t identifier, bool is_end)
+static void outmixer1_send_callback(int32_t /*identifier*/, bool is_end)
 {
   AsRequestNextParam next;
 
@@ -293,7 +302,7 @@ void play_process( MediaPlayer *thePlayer, struct PLAY_ELM_T *elm, File& file)
  *  This is the /BIN directory on the SD card. <br>
  */
 
-static int player_thread(int argc, FAR char *argv[])
+static int player_thread(int /*argc*/, FAR char *argv[])
 {
   File               file;
   struct PLAY_ELM_T *elm;
@@ -437,7 +446,7 @@ void setup()
   theMixer->activate(OutputMixer1, HPOutputDevice, outputmixer1_done_callback);
 
   /* Initialize synthesizer. */
-  theSynthesizer->init(AsSynthesizerSinWave,
+  theSynthesizer->init(OSC_WAVE_MODE,
                        OSC_CH_NUM,
                        DSPBIN_PATH,
                        OSC_EFFECT_ATTACK,
@@ -481,8 +490,8 @@ void setup()
 /* ------------------------------------------------------------------------ */
 void loop()
 {
-  static int i = 0;
-  static int j = 0;
+  static unsigned int i = 0;
+  static unsigned int j = 0;
   static String current_chord = score[j][i];
 
   int8_t   sndid = 100;
@@ -515,7 +524,7 @@ void loop()
     timer_flg = false;
   }
 
-  int ret = MP.Send(sndid, &keyinfo, keyboard_core);
+  int ret = MP.Send(sndid, theKeyInfo.adr(), keyboard_core);
   if (ret < 0) {
     puts("Keyboad Error!");
     return;
@@ -524,25 +533,25 @@ void loop()
   ret = MP.Recv(&rcvid, &tmp, keyboard_core);
   if (ret < 0) {
     puts("Keyboad Deadlock!");
-    sleep(1); return;
+    sleep(1);
+    return;
   }
 
   // print keyinfo
-/*  for(int i=0;i<number_of_keyinfo;i++) {
-    printf("%x ",keyinfo[i]);
-  }
-  putchar('\n');
-*/
+//  theKeyInfo.print();
 
   // Set Beat
-  for(int k=1; k<number_of_keybits; k++)
+  for(unsigned int k=1; k<theKeyInfo.max_bits(); k++)
   {
-    if(keyinfo[1] & (0x01 << k)){
-      er = theSynthesizer->set(k-1, theChordController->get(current_chord.c_str(),k-1));
-      usleep(10*1000);
+  	if(theKeyInfo.get(0,k)){
+      if(theKeyInfo.is_change(0,k)){
+        er = theSynthesizer->set(k-1, theChordController->get(current_chord.c_str(),k-1));
+      }
     }else{
       er = theSynthesizer->set(k-1, 0);
-      usleep(10*1000);
     }
+    usleep(10*1000);
   }
+
+  theKeyInfo.update();
 }
