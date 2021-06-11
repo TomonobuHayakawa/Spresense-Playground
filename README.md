@@ -10,11 +10,27 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 ## 現在の各ボードパッケージのバージョン
 
 Spresense HighSpeedADC : v2.0.2 (Base v2.0.1) <br>
-Spresense Instrument   : v2.0.2 (Base v2.0.1) <br>
-Spresense M11S         : v2.0.2 (Base v2.0.1) <br>
+Spresense Instrument   : v2.2.1 (Base v2.2.1) <br>
 
 -------------------- 
 ## What's new.
+
+2021/06/11
+
+・Instrumentのパッケージを2.2.1に更新しました。 <br>
+ <br>
+
+・M11Sのパッケージはサポート外にしました。 <br>
+ <br>
+
+・キーワード検出（音声認識）の結果を LCD (ILI9340) に表示するデモアプリを入れました。 <br>
+
+```
+sketchies : Arduinoスケッチを置く場所。
+  ｜
+  ├ keyword_detector_demo
+```
+
 
 2021/03/19
 
@@ -173,37 +189,6 @@ FFTライブラリのFFTのTap数、最大のチャンネル数が固定でし�
 
 不評であれば、再度考えます。<br>
 
-
-3/8
-
-・M11SのコードのUpdate。連続稼働時のバグ修正。
-
-2/10
-
-・M11S向けのスケッチを追加。
-
-  *sketches/M11S*
-
-の下に、SD書き込みサンプルとWiFiカメラのサンプルがあります。
-
-M11S向けには、M11S向けのパッケージを利用する必要があります。
-※違いは、SPI5のデータ転送をDMAを使って行う部分です。
-
-Arduinoのファイル / 環境設定 の中の <br>
-追加ボードマネージャのURLに、 <br>
-https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/download/common/package_spresense_M11S_index.json
- <br>
-を追加してください。  
-
-これを追加すると、ボードマネージャの中に、  
-
-*Spresense M11S*  
-
-というボードが新たに選択できます。  
-
-M11Sを使う場合は、これを利用してください。
-
-
 --------------------
 ## ディレクトリ構成
 
@@ -261,6 +246,8 @@ Spresense-Playground
     - SmartDrum
     - YuruHorn
     - YuruSynth
+    
+- keyword_detector_demo
 
 - M11S
     - Jpeg_ESP8266_CamServer
