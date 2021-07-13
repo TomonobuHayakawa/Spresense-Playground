@@ -29,6 +29,13 @@
 #define USE_OLED
 #define UPLOAD_AMBIENT
 
+/***   Select device   ***/
+#ifdef  USE_OLED
+//#define USE_SSD1327
+#define USE_SSD1306
+#endif
+
+/***   Includes   ***/
 #ifdef UPLOAD_AMBIENT
 #include <Arduino.h>
 #include "Ambient_SpresenseLTEM.h"
@@ -37,7 +44,12 @@ LTEScanner theLteScanner;
 
 #ifdef USE_OLED
 #include "U8g2lib.h"
+#ifdef  USE_SSD1327
 U8G2_SSD1327_EA_W128128_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+#endif
+#ifdef  USE_SSD1306
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+#endif
 #endif
 
 #include "SparkFun_SCD30_Arduino_Library.h" 
@@ -312,11 +324,18 @@ void menu()
   if(!drawSettingMode()) {
 
 #ifdef USE_OLED
+#ifdef  USE_SSD1327
     u8g2.clearBuffer();
     u8g2.setFont(u8g2_font_6x10_tr);
     u8g2.drawStr(20,40,"Please Setup");
     u8g2.drawStr(35,60,"via serial! ");
     u8g2.sendBuffer();
+#endif
+#ifdef  USE_SSD1306
+    u8g2.setFont(u8g2_font_6x10_tr);
+    u8g2.drawStr(20,30,"Please Setup");
+    u8g2.drawStr(35,50,"via serial! ");
+#endif
 #endif
     setting();
   }
@@ -354,6 +373,40 @@ void drawBackgraund()
   u8g2.sendBuffer();
 }
 
+void oled_display(uint16_t co2,uint16_t temp,uint16_t hum){
+  char disp_co2[5]  ;
+  char disp_temp[5] ;
+  char disp_hum[5]  ;
+  
+  sprintf(disp_co2,"%4d",co2);
+  sprintf(disp_temp,"%2d",temp);
+  sprintf(disp_hum,"%2d",hum);
+
+  u8g2.clearBuffer();
+
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(0,30,"CO2");
+  u8g2.setFont(u8g2_font_fur30_tn);
+  u8g2.drawStr(20,30,disp_co2);
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(110,30,"ppm");
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(0,60,"TEMP");
+  u8g2.setFont(u8g2_font_10x20_tr);
+  u8g2.drawStr(28,60,disp_temp);
+  u8g2.setFont(u8g2_font_unifont_t_chinese2);
+  u8g2.drawStr(48,60,"'C");
+
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(71,60,"HUM");
+  u8g2.setFont(u8g2_font_10x20_tr);
+  u8g2.drawStr(97,60,disp_hum);
+  u8g2.setFont(u8g2_font_6x10_tr);
+  u8g2.drawStr(119,60,"%");
+  u8g2.sendBuffer();
+  u8g2.refreshDisplay();
+}
+
 void drawParameter(uint16_t co2, float temp, float humidity)
 {
 /*  u8g2.setDrawColor(1); 
@@ -387,7 +440,7 @@ void setup()
   Serial.begin(115200);
 
   Wire.begin();
-  setup_i2c0_holdtime();
+//  setup_i2c0_holdtime();
 
   RTC.begin();
   LowPower.begin();
@@ -398,7 +451,12 @@ void setup()
 
   menu();
 
-  airSensor.begin();
+  if (airSensor.begin() == false)
+  {
+    Serial.println("Air sensor not detected. Please check wiring. Freezing...");
+    while (1)
+      ;
+  }
 
   Serial.println("Device Initilizized.");
 
@@ -417,7 +475,11 @@ void setup()
 #endif
 
 #ifdef USE_OLED
+#ifdef  USE_SSD1327
+  u8g2.clearBuffer();
   drawBackgraund();
+  u8g2.sendBuffer();
+#endif
 #endif
 }
 
@@ -452,15 +514,23 @@ void loop()
     Serial.print(humi, 2);
 
     Serial.println();
-    
+
+#ifdef  USE_SSD1327
     if(theState.update(co2)){
       theState.print();
     }
+#endif
 
     continuous_error=0;
 
 #ifdef USE_OLED
+#ifdef  USE_SSD1327
+    drawBackgraund();
     drawParameter(co2,temp,humi);
+#else
+    u8g2.clearBuffer();
+    oled_display(co2,temp,humi);
+#endif
 #endif
 
   }else{
@@ -469,7 +539,9 @@ void loop()
     Serial.println("I2C error!");
 
 #ifdef USE_OLED
-//    drawError();
+#ifdef  USE_SSD1327
+    drawError();
+#endif
 #endif
 
     if(continuous_error>reboot_thr){
@@ -485,7 +557,6 @@ void loop()
     sleep(1);
     return;
   }
-  
 
   if(counter >= upload_interval){
 
@@ -495,10 +566,20 @@ void loop()
     Serial.print(strength);
     Serial.println(" [dBm]");
 
+#ifdef USE_OLED
+#ifdef  USE_SSD1327
     u8g2.setFont(u8g2_font_6x10_tr);
     u8g2.drawStr(70,10,strength.c_str());
     u8g2.drawStr(90,10," [dBm]");
     u8g2.sendBuffer();
+#else
+    u8g2.setFont(u8g2_font_5x8_tr);
+    u8g2.drawStr(108,8,strength.c_str());
+    u8g2.setFont(u8g2_font_4x6_tr);
+    u8g2.drawStr(114,14,"dBm");
+    u8g2.sendBuffer();
+#endif
+#endif
 
     theAmbient.set(1, (String(co2).c_str()));
     theAmbient.set(2, (String(temp).c_str()));
