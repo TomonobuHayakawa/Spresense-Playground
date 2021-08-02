@@ -24,6 +24,7 @@
 
 #include <LowPower.h>
 #include <RTC.h>
+#include <Watchdog.h>
 
 /***   Select Mode   ***/
 #define USE_OLED
@@ -312,6 +313,8 @@ bool drawSettingMode()
   if(!readUint16(sens_file, sensing_interval)){ goto ERROR_RETURN; }
   if(!readUint16(up_file, upload_interval)){ goto ERROR_RETURN; }
 
+  Watchdog.start(sensing_interval*3*1000);
+
   return true;
 
 ERROR_RETURN:
@@ -383,6 +386,7 @@ void oled_display(uint16_t co2,uint16_t temp,uint16_t hum){
   sprintf(disp_hum,"%2d",hum);
 
   u8g2.clearBuffer();
+  u8g2.setFlipMode(0);
 
   u8g2.setFont(u8g2_font_6x10_tr);
   u8g2.drawStr(0,30,"CO2");
@@ -444,6 +448,7 @@ void setup()
 
   RTC.begin();
   LowPower.begin();
+  Watchdog.begin();
 
 #ifdef USE_OLED
   u8g2.begin();
@@ -612,7 +617,7 @@ void loop()
   }else{
     counter++;
   }
-
+  Watchdog.kick();
   sleep(sensing_interval);
 
 }
