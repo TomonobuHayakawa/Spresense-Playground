@@ -1,6 +1,6 @@
 /*
  *  MM-S50MV.cpp - MM-S50MV Library
- *  Copyright 2020 Tomonobu Hayakawa
+ *  Author Tomonobu Hayakawa
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@ void MMS50MVClass::begin()
 
 void MMS50MVClass::end()
 {
+  SPI5.end();
 }
 
 void MMS50MVClass::skip(int cnt)

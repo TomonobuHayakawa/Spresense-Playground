@@ -1,6 +1,6 @@
 /*
  *  MM-S50MV.h - MM-S50MV Library Header
- *  Copyright 2020 Tomonobu Hayakawa
+ *  Author Tomonobu Hayakawa
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,29 @@
 
 #include <SPI.h>
 
+/*------------------------------------------------------------------*/
+/* Definitions                                                      */
+/*------------------------------------------------------------------*/
+
+#define MMS50MV_CMD_MODE     0x00
+#define MMS50MV_MODE_NOMAL   0x00
+#define MMS50MV_MODE_SYNC    0xFF
+
+#define MMS50MV_RATE_LOW     0x10
+#define MMS50MV_RATE_HIGH    0x11
+
+#define MMS50MV_CMD_DISTANCE 0x12
+#define MMS50MV_DIST_SHORT   0x00
+#define MMS50MV_DIST_LONG    0x01
+
+#define MMS50MV_CMD_STANDBY  0x80
+#define MMS50MV_ACTIVE       0x00
+#define MMS50MV_STANDBY      0x01
+
+
+/*------------------------------------------------------------------*/
+/* Class                                                            */
+/*------------------------------------------------------------------*/
 class MMS50MVClass{
   
 public:

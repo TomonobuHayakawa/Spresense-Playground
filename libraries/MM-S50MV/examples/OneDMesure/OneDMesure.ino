@@ -7,11 +7,11 @@ void setup()
 
   MMS50MV.skip(256);
   delay(500);
-  MMS50MV.set(0, 0xff); // sync mode.
+  MMS50MV.set(MMS50MV_CMD_MODE, MMS50MV_MODE_SYNC);  // sync mode.
   delay(500);
   MMS50MV.skip(256);
-  MMS50MV.sync();       // sync.
-  MMS50MV.set(0, 0);    // normal mode. 
+  MMS50MV.sync();                                    // sync.
+  MMS50MV.set(MMS50MV_CMD_MODE, MMS50MV_MODE_NOMAL); // normal mode. 
   delay(500);
 
   MMS50MV.set(0x10, 0); // 256frames/s
@@ -30,8 +30,7 @@ void loop()
     return;
   }
 
-MMS50MV.led(ledr,ledg,ledb);
-    
+  MMS50MV.led(ledr,ledg,ledb);
   printf("dis=%d(mm)\n",dis);
 
   // LED color
@@ -78,4 +77,5 @@ MMS50MV.led(ledr,ledg,ledb);
     }
 
 //    sleep(1);
+
 }
