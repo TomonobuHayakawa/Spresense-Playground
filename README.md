@@ -19,10 +19,17 @@ Spresense Instrument   : v2.2.1 (Base v2.2.1) <br>
 
 ・シンプルなMQTTのスケッチを追加しました。 <br>
 
-- MQTT
-    - viaLTE
-        - simple_pub : 非認証、非暗号でpublishするサンプル
-        - simple_sub : 非認証、非暗号でsubscribeするサンプル
+- MQTT <br>
+    - viaLTE <br>
+        - simple_pub : 非認証、非暗号でpublishするサンプル <br>
+        - simple_sub : 非認証、非暗号でsubscribeするサンプル <br>
+
+・MM-S50MVライブラリ（Spresense用TOF）の細かな更新をしました。 <br>
+
+- マクロの準備。 <br>
+- 3次元測定サンプルのパラメータ変更。 <br>
+- 改行コード変更 <br>
+
 
 2021/06/11
 
