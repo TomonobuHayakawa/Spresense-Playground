@@ -15,6 +15,15 @@ Spresense Instrument   : v2.2.1 (Base v2.2.1) <br>
 -------------------- 
 ## What's new.
 
+2021/11/12
+
+・シンプルなMQTTのスケッチを追加しました。 <br>
+
+- MQTT
+    - viaLTE
+        - simple_pub : 非認証、非暗号でpublishするサンプル
+        - simple_sub : 非認証、非暗号でsubscribeするサンプル
+
 2021/06/11
 
 ・Instrumentのパッケージを2.2.1に更新しました。 <br>
@@ -231,9 +240,14 @@ Spresense-Playground
 - AudioRendering
     - rendering_objif
 
-- CO2_sensing_via_LTE
-- CO2_sensing_via_Sigfox
-- CO2_sensing_via_WiFi
+- CO2Sensing
+    - viaLTE
+        - CO2_sensing_to_Ambient
+        - CO2_sensing_to_Machinist
+    - viaSigfox
+        - CO2_sensing_via_Sigfox
+    - viaWiFi
+        - CO2_sensing_via_WiFi
 
 - Co-Spresense
     - Pickup
@@ -252,6 +266,11 @@ Spresense-Playground
 - M11S
     - Jpeg_ESP8266_CamServer
     - Jpeg_shot_with_SD
+
+- MQTT
+    - viaLTE
+        - simple_pub : 非認証、非暗号でpublishするサンプル
+        - simple_sub : 非認証、非暗号でsubscribeするサンプル
 
 - SoundEffector
     - multi_core
