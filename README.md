@@ -15,6 +15,16 @@ Spresense Instrument   : v2.2.1 (Base v2.2.1) <br>
 -------------------- 
 ## What's new.
 
+2021/11/19
+
+・MQTT使って、相互のSpresense のシリアルを入力したら、もう一方のSpresenseのLEDを点灯させるデモを追加。
+
+- MQTT <br>
+    - viaLTE <br>
+        - M2M
+          - m2m_client0
+          - m2m_client1
+
 2021/11/12
 
 ・シンプルなMQTTのスケッチを追加しました。 <br>
