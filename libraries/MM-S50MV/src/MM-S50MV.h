@@ -58,11 +58,16 @@ public:
   int32_t  get(){ return get1d(); }
   int32_t  get1d();
   uint16_t get1p();
-  bool     get3d(int32_t*);
-  bool     get3p(uint16_t*);
+  void     get3d(int32_t*);
+  void     get3p(uint16_t*);
 
 private:
+
   uint8_t buffer[256];
+
+  bool check_magic(void);
+  bool check_sequence_id(void);
+  void get_data(void);
 
 };
 

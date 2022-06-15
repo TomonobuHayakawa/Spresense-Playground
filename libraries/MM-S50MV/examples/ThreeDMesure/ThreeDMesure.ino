@@ -25,17 +25,15 @@ void setup()
 void loop()
 {
   static  int32_t data[8][4];
-  static  int ledr = 0;
+/*  static  int ledr = 0;
   static  int ledg = 0;
-  static  int ledb = 0;
+  static  int ledb = 0;*/
 
 //  printf("range=%d\n",MMS50MV.get1d());
 
   int32_t* ptr = (int32_t*)data;
-  if(!MMS50MV.get3d(ptr)){
-    puts("error!");
-    return;
-  }
+
+  MMS50MV.get3d(ptr);
 
   for(int j=0;j<8;j++){
     for(int i=0;i<4;i++){

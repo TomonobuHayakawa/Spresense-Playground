@@ -20,6 +20,9 @@
 #include "MM-S50MV.h"
 
 
+/*****************************************************************************/
+/* Public                                                                    */
+/*****************************************************************************/
 void MMS50MVClass::begin()
 {
   SPI5.begin();
@@ -97,44 +100,70 @@ void MMS50MVClass::led(uint8_t r, uint8_t g, uint8_t b)
 
 int32_t MMS50MVClass::get1d()
 {
-  memset(buffer,0,256);
-  
-  SPI5.transfer(buffer,255);
-  SPI5.transfer(&buffer[255],1);
-//  SPI5.transfer(buffer,256);
-
-  if (buffer[0] != 0xe9){
-    printf("magic error! %x\n",buffer[0]);
-    skip(256);
-    set(0, 0xff);
-    delay(500);    
-    skip(256);
-    sync();
-    set(0, 0);
-    delay(500);    
-    skip(256);
-    return -1;
-  }
-
-  if (buffer[1] != buffer[255]) {
-    printf("ID error! %d,%d\n",buffer[1],buffer[255]);
-    printf("%x,%d,%d,%d\n",buffer[0],buffer[1],buffer[2],buffer[3]);
-    return -1;
-  }
-
-  return (((buffer[4] << 24)|(buffer[5] << 16)|(buffer[6] << 8)|buffer[7]) / (0x400000 / 1000));
+  int32_t result;
+  get_data();
+  result = ((buffer[4] << 24)|(buffer[5] << 16)|(buffer[6] << 8)|buffer[7]) / (0x400000 / 1000);
+  return result;
 }
 
 uint16_t MMS50MVClass::get1p()
 {
-  memset(buffer,0,256);
-  
-  SPI5.transfer(buffer,255);
-  SPI5.transfer(&buffer[255],1);
-//  SPI5.transfer(buffer,256);
+  get_data();
+  uint16_t result = ((buffer[8] << 8)|buffer[9]) / 0x10;
+  return result;
+}
 
+void MMS50MVClass::get3d(int32_t* ptr)
+{
+  get_data();
+  for(int i=10;i<(4*8*4+10);i+=4,ptr++){
+    *ptr = (((buffer[i] << 24) | (buffer[i+1] << 16) | (buffer[i+2] << 8)| buffer[i+3]) / (0x400000 / 1000));
+  }
+  
+  return;
+}
+
+void MMS50MVClass::get3p(uint16_t* ptr)
+{
+  get_data();
+  for ( int i = 4*8*4+10; i < (4*8*4+10+4*8*2); i += 2, ptr++ ) {
+    *ptr = ((buffer[i] << 8)|buffer[i+1]) / 0x10;
+  }
+  return;
+}
+
+/*****************************************************************************/
+/* Private                                                                   */
+/*****************************************************************************/
+bool MMS50MVClass::check_magic(void)
+{
+  bool ret = false;
   if (buffer[0] != 0xe9){
     printf("magic error! %x\n",buffer[0]);
+  }
+  else {
+    ret = true;
+  }
+  return ret;
+}
+
+bool MMS50MVClass::check_sequence_id(void)
+{
+  bool ret = false;
+  if (buffer[1] != buffer[255]){
+    printf("sequence id error! %d,%d\n",buffer[1],buffer[255]);
+  }
+  else {
+    ret = true;
+  }
+  return ret;
+}
+
+void MMS50MVClass::get_data(void)
+{
+  bool result = false;
+  do {
+    memset(buffer,0,256); 
     skip(256);
     set(0, 0xff);
     delay(500);    
@@ -143,66 +172,14 @@ uint16_t MMS50MVClass::get1p()
     set(0, 0);
     delay(500);    
     skip(256);
-    return -1;
-  }
-
-  if (buffer[1] != buffer[255]) {
-    printf("ID error! %d,%d\n",buffer[1],buffer[255]);
-    printf("%x,%d,%d,%d\n",buffer[0],buffer[1],buffer[2],buffer[3]);
-    return -1;
-  }
-
-  return ((buffer[8] << 24)|(buffer[9] << 16));
+    SPI5.transfer(buffer,255);
+    SPI5.transfer(&buffer[255],1);
+    result = check_magic();
+    result &= check_sequence_id();
+  } while ( !result );
+  return;
 }
 
-bool MMS50MVClass::get3d(int32_t* ptr)
-{
-  memset(buffer,0,256);
-  
-  SPI5.transfer(buffer,255);
-  SPI5.transfer(&buffer[255],1);
-
-  if (buffer[0] != 0xe9){
-    printf("magic error! %x\n",buffer[0]);
-    return false;
-  }
-
-  if (buffer[1] != buffer[255]) {
-    printf("ID error! %d,%d\n",buffer[0],buffer[255]);
-    return false;
-  }
-
-//  memcpy(ptr,&buffer[10],4*8*4);
-
-  for(int i=10;i<(4*8*4+10);i+=4,ptr++){
-    *ptr = (((buffer[i] << 24) | (buffer[i+1] << 16) | (buffer[i+2] << 8)| buffer[i+3]) / (0x400000 / 1000));
-//    printf("raw=%d\n",*ptr);
-  }
-  
-  return true;
-}
-
-bool MMS50MVClass::get3p(uint16_t* ptr)
-{
-  memset(buffer,0,256);
-  
-  SPI5.transfer(buffer,255);
-  SPI5.transfer(&buffer[255],1);
-
-  if (buffer[0] != 0xe9){
-    printf("magic error! %x\n",buffer[0]);
-    return false;
-  }
-
-  if (buffer[1] != buffer[255]) {
-    printf("ID error! %d,%d\n",buffer[0],buffer[255]);
-    return false;
-  }
-
-  memcpy(ptr,&buffer[(4*8*4+10)],4*8*2);
-
-  return true;
-}
 
 /* Pre-instantiated Object for this class */
 MMS50MVClass MMS50MV;

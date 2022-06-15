@@ -26,12 +26,9 @@ void loop()
   static  int ledb = 0;
 
   int32_t dis = MMS50MV.get();
-  if(dis<0){
-    return;
-  }
 
   MMS50MV.led(ledr,ledg,ledb);
-  printf("dis=%d(mm)\n",dis);
+  printf("dis=%ld(mm)\n",dis);
 
   // LED color
   int i = dis & 0xff;
