@@ -15,6 +15,15 @@ Spresense Instrument   : v2.2.1 (Base v2.2.1) <br>
 -------------------- 
 ## What's new.
 
+2022/07/19
+
+・シンプルなMQTTのスケッチのセキュア版を追加しました。 <br>
+
+- MQTT <br>
+    - viaLTE <br>
+        - secure_pub : 非認証、暗号でpublishするサンプル <br>
+        - secure_sub : 非認証、暗号でsubscribeするサンプル <br>
+
 2022/06/15
 
 ・ToFセンサ（MM-S50MV）のライブラリを更新
