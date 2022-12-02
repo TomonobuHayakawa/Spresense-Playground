@@ -10,10 +10,47 @@ SPRESENSEで使える各種ライブラリ、サンプルコードを開発・�
 ## 現在の各ボードパッケージのバージョン
 
 Spresense HighSpeedADC : v2.0.2 (Base v2.0.1) <br>
-Spresense Instrument   : v2.2.1 (Base v2.2.1) <br>
+Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 
 -------------------- 
 ## What's new.
+
+
+2022/12/1
+
+・楽器用パッケージ（Spresense Instrument   : v2.6.1 (Base v2.6.0) に楽器のスケッチを対応しました。
+
+https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/tag/v2.6.1
+
+
+2022/11/28
+
+・SubCoreをつかってセンシングするためのサンプルを追加しました。
+
+- SubCoreSensing <br>
+    - DmyData : 実際にはセンシングを行わずダミーデータをMainに送るサンプル。 <br>
+    - Usb : Usb Host Addonを使ったセンサーを想定したサンプル。 <br>
+
+※USB Host Addon 
+https://twitter.com/p_art_lab/status/1444422439396589571
+
+USB Host Addon のライブラリ
+https://github.com/TomonobuHayakawa/USB_Host_Shield_2.0
+
+
+2022/11/28
+
+・SubCoreをつかってセンシングするためのサンプルを追加しました。
+
+- SubCoreSensing <br>
+    - DmyData : 実際にはセンシングを行わずダミーデータをMainに送るサンプル。 <br>
+    - Usb : Usb Host Addonを使ったセンサーを想定したサンプル。 <br>
+
+※USB Host Addon
+
+
+そのためのコード
+https://github.com/TomonobuHayakawa/USB_Host_Shield_2.0
 
 2022/07/19
 
