@@ -13,11 +13,7 @@
 
 //#define ENABLE_THROUGH
 
-#include <arch/chip/cxd56_audio.h>  /* For set_datapath */
-
-extern "C" {
-  extern void board_external_amp_mute_control(bool);
-}
+#include <arch/board/board.h>
 
 FrontEnd *theFrontEnd;
 OutputMixer *theMixer;

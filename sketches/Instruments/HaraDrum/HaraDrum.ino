@@ -24,7 +24,6 @@
 #include <stdlib.h>
 
 #include <arch/board/board.h>
-#include <arch/board/cxd56_audio.h>  /* For set_datapath */
 #define READSAMPLE (240)
 #define BYTEWIDTH (2)
 #define CHNUM (2)
