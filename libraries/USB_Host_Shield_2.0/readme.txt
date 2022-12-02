@@ -1,0 +1,1 @@
+https://github.com/TomonobuHayakawa/USB_Host_Shield_2.0
