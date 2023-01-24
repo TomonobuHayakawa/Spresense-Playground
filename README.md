@@ -58,21 +58,6 @@ https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/tag/v2
     - DmyData : 実際にはセンシングを行わずダミーデータをMainに送るサンプル。 <br>
     - Usb : Usb Host Addonを使ったセンサーを想定したサンプル。 <br>
 
-※USB Host Addon 
-https://twitter.com/p_art_lab/status/1444422439396589571
-
-USB Host Addon のライブラリ
-https://github.com/TomonobuHayakawa/USB_Host_Shield_2.0
-
-
-2022/11/28
-
-・SubCoreをつかってセンシングするためのサンプルを追加しました。
-
-- SubCoreSensing <br>
-    - DmyData : 実際にはセンシングを行わずダミーデータをMainに送るサンプル。 <br>
-    - Usb : Usb Host Addonを使ったセンサーを想定したサンプル。 <br>
-
 ※USB Host Addon
 
 
