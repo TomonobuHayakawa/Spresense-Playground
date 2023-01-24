@@ -19,6 +19,12 @@
 
 #include "MM-S50MV.h"
 
+// #define MMS50MV_DEBUG
+#ifdef MMS50MV_DEBUG
+#define mms50mv_printf printf
+#else
+#define mms50mv_printf(...) do {} while (0)
+#endif
 
 /*****************************************************************************/
 /* Public                                                                    */
@@ -63,19 +69,19 @@ void MMS50MVClass::sync(uint8_t id)
 
 void MMS50MVClass::set(uint8_t cmd, uint8_t val)
 {
-  memset(buffer,0,256);
+  memset(buffer,0,MMS50MV_DATA_SIZE);
   buffer[0] = 0xeb;
   buffer[1] = cmd;
   buffer[2] = 0x01;
   buffer[3] = val;
   buffer[4] = 0xed;
 
-  SPI5.transfer(buffer,256);
+  SPI5.transfer(buffer,MMS50MV_DATA_SIZE);
 }
 
 void MMS50MVClass::led(uint8_t r, uint8_t g, uint8_t b)
 {
-  memset(buffer,0,256);
+  memset(buffer,0,MMS50MV_DATA_SIZE);
   
   buffer[12] = 0xeb;
   buffer[13] = 0xc2;
@@ -95,7 +101,7 @@ void MMS50MVClass::led(uint8_t r, uint8_t g, uint8_t b)
   buffer[35]  = g;
   buffer[36]  = 0xed;
 
-  SPI5.transfer(buffer,256);
+  SPI5.transfer(buffer,MMS50MV_DATA_SIZE);
 }
 
 int32_t MMS50MVClass::get1d()
@@ -139,7 +145,7 @@ bool MMS50MVClass::check_magic(void)
 {
   bool ret = false;
   if (buffer[0] != 0xe9){
-    printf("magic error! %x\n",buffer[0]);
+    mms50mv_printf("magic error! %x\n",buffer[0]);
   }
   else {
     ret = true;
@@ -151,7 +157,7 @@ bool MMS50MVClass::check_sequence_id(void)
 {
   bool ret = false;
   if (buffer[1] != buffer[255]){
-    printf("sequence id error! %d,%d\n",buffer[1],buffer[255]);
+    mms50mv_printf("sequence id error! %d,%d\n",buffer[1],buffer[255]);
   }
   else {
     ret = true;
@@ -162,21 +168,22 @@ bool MMS50MVClass::check_sequence_id(void)
 void MMS50MVClass::get_data(void)
 {
   bool result = false;
-  do {
-    memset(buffer,0,256); 
-    skip(256);
-    set(0, 0xff);
-    delay(500);    
-    skip(256);
-    sync();
-    set(0, 0);
-    delay(500);    
-    skip(256);
-    SPI5.transfer(buffer,255);
-    SPI5.transfer(&buffer[255],1);
+  while (1) {
+    SPI5.transfer(buffer,MMS50MV_DATA_SIZE);
     result = check_magic();
-    result &= check_sequence_id();
-  } while ( !result );
+    if (!result) {
+      continue;
+    }
+    else {
+      result = check_sequence_id();
+      if (!result) {
+        continue;
+      }
+      else {
+        break;
+      }
+    }
+  }
   return;
 }
 

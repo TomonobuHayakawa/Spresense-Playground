@@ -38,6 +38,7 @@
 #define MMS50MV_ACTIVE       0x00
 #define MMS50MV_STANDBY      0x01
 
+#define MMS50MV_DATA_SIZE    256
 
 /*------------------------------------------------------------------*/
 /* Class                                                            */
@@ -63,7 +64,7 @@ public:
 
 private:
 
-  uint8_t buffer[256];
+  uint8_t buffer[MMS50MV_DATA_SIZE];
 
   bool check_magic(void);
   bool check_sequence_id(void);
