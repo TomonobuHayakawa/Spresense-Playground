@@ -150,7 +150,7 @@ void prot_data(float* data, uint16_t color)
 {
   tft.fillRect(BOTTOM_SPACE+1, LEFT_SPACE+1, GRAPH_HEIGHT-2, GRAPH_WIDTH-2, ILI9341_BLACK);
   for(int i=1;i<GRAPH_WIDTH/2-2;i++){
-    tft.drawLine(BOTTOM_SPACE+f_min((*data),(GRAPH_HEIGHT-2)),LEFT_SPACE+i*2,BOTTOM_SPACE+f_min(*(data+1),GRAPH_HEIGHT-2),LEFT_SPACE+(i+1)*2, color);
+    tft.drawLine(BOTTOM_SPACE+f_min((*data)+1,(GRAPH_HEIGHT-2)),LEFT_SPACE+i*2,BOTTOM_SPACE+f_min(*(data+1)+1,GRAPH_HEIGHT-2),LEFT_SPACE+(i+1)*2, color);
     data++;
   }
 }

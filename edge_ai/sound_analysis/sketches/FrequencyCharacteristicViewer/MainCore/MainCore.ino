@@ -25,6 +25,8 @@
 
 #include "CoreInterface.h"
 
+#define  ENABLE_DATA_COLLECTION
+
 FrontEnd *theFrontEnd;
 SDClass theSD;
 
@@ -91,6 +93,10 @@ static bool frontend_done_callback(AsMicFrontendEvent ev, uint32_t result, uint3
  */
 static void frontend_pcm_callback(AsPcmDataParam pcm)
 {
+  if (pcm.is_end) {
+    isEnd = true;
+  }
+
   if (!pcm.is_valid) {
     puts("Invalid data !");
     return;
@@ -104,10 +110,6 @@ static void frontend_pcm_callback(AsPcmDataParam pcm)
   if (CMN_SimpleFifoOffer(&simple_fifo_handle, (const void*)(pcm.mh.getPa()), pcm.size) == 0) {
     puts("Simple FIFO is full !");
     return;
-  }
-
-  if (pcm.is_end) {
-    isEnd = true;
   }
 
   return;
@@ -179,6 +181,10 @@ void setup()
   theFrontEnd->start();
   puts("Capturing Start!");
 
+#ifdef ENABLE_DATA_COLLECTION
+  int store = task_create("Store", 70, 0x1000, store_task, (FAR char* const*) 0);
+#endif /* ENABLE_DATA_COLLECTION */
+
 }
 
 /**
@@ -200,7 +206,7 @@ bool execute_aframe()
       printf("ERROR: Fail to get data from simple FIFO.\n");
       return false;
     }
-
+    
     request.buffer  = proc_buffer;
     request.sample  = size / 2;
 
@@ -210,6 +216,52 @@ bool execute_aframe()
 
   return true;
 }
+
+#ifdef ENABLE_DATA_COLLECTION
+
+#define FRAME_NUMBER 2
+
+struct FrameInfo{
+  float buffer[proc_size];
+  bool renable;
+  bool wenable;
+  FrameInfo():renable(false),wenable(true){}
+};
+
+FrameInfo frame_buffer[FRAME_NUMBER];
+
+const int collection_number = 500;
+
+int store_task(int argc, FAR char *argv[])
+{
+  static int gCounter = 0;
+  char filename[16] = {};
+
+  while(1){
+
+    if(gCounter>=collection_number) while(1){sleep(1);};
+
+    for(int i=0;i<FRAME_NUMBER;i++){
+      if(frame_buffer[i].renable){
+        frame_buffer[i].renable = false;
+        sprintf(filename, "Data/data%03d.csv", gCounter++);
+        puts(filename);
+        if (theSD.exists(filename)) theSD.remove(filename);
+        File myFile = theSD.open(filename, FILE_WRITE);
+        myFile.write(proc_buffer,proc_size);
+        myFile.close();
+        frame_buffer[i].wenable = true;
+        if(gCounter==collection_number){
+          theFrontEnd->stop();
+        }
+      }
+    }
+
+  }
+
+}
+
+#endif /* ENABLE_DATA_COLLECTION */
 
 
 /**
@@ -232,6 +284,15 @@ void loop() {
 
   int ret = MP.Recv(&rcvid, &result, proc_core);
   if(ret >= 0){
+
+#ifdef ENABLE_DATA_COLLECTION
+    for(int i=0;i<FRAME_NUMBER;i++){
+      frame_buffer[i].wenable = false;
+      memcpy(frame_buffer[i].buffer,result->buffer,proc_size);
+      frame_buffer[i].renable =true;
+    }
+#endif /* ENABLE_DATA_COLLECTION */
+
     request.buffer  = result->buffer;
     request.sample  = result->sample;
     MP.Send(sndid, &request, view_core);
