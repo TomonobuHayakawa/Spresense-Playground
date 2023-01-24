@@ -15,6 +15,33 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/1/25
+
+・キーワード検出用のサンプルを更新しました。
+
+key_word_detector を削除。KeywordDetectorを追加。
+
+KeywordDetectorには、以前からある Worker を使用するサンプルと、
+https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/KeywordDetector/KeywordDetector_w_worker
+
+ArduinoのSubCoreを使うサンプルを用意しました。
+https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/KeywordDetector/KeywordDetector_wo_worker
+
+※時間ができたら、NNCを使ったキーワード検出ライブラリを作成する予定です。
+
+
+・音響診断用サンプルで、FFTの波形を見ながら波形データを収集するサンプルを追加しました。
+https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/edge_ai/sound_analysis/sketches/FrequencyCharacteristicViewer
+
+※ただし、波形表示はサンプルレベル。
+
+また、リクエストにより、波形表示の代わりにWiFiからUDPで送るサンプルに差し替えられるように追加しました。
+
+※このサンプルを使用する場合は、GS2200のライブラリを最新にしてください。
+https://github.com/TomonobuHayakawa/GS2200-WiFi
+
+・各サンプルのために必要なライブラリのポインタを追加
+
 
 2022/12/1
 
