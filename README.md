@@ -15,6 +15,24 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/2/19
+
+・音響診断用サンプルのバグを修正しました。
+
+  - SDカードへの書き込みバッファの間違い
+  - WiFi初期化中にキャプチャされたデータを処理できなかった問題の修正
+
+・Processingとの連携用のサンプルを追加
+
+  - 単純なデータプリントサンプル
+
+※こちらは、baggio63446333 さんの
+
+  https://github.com/baggio63446333/SpresenseCameraApps/tree/main/UsbLiveStreaming
+
+をベースに作成しています。
+
+
 2023/1/25
 
 ・キーワード検出用のサンプルを更新しました。
