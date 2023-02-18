@@ -248,7 +248,7 @@ int store_task(int argc, FAR char *argv[])
         puts(filename);
         if (theSD.exists(filename)) theSD.remove(filename);
         File myFile = theSD.open(filename, FILE_WRITE);
-        myFile.write(proc_buffer,proc_size);
+        myFile.write(frame_buffer[i].buffer,proc_size);
         myFile.close();
         frame_buffer[i].wenable = true;
         if(gCounter==collection_number){
