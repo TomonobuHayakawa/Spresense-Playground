@@ -28,9 +28,6 @@ extern uint8_t ESCBuffer[];
 extern uint32_t ESCBufferCnt;
 char server_cid = 0;
 
-/* Multi-core parameters */
-const int subcore = 2;
-
 #define FRAME_NUMBER 10
 #define DATA_SIZE    512 /* tentative! */
 
@@ -64,6 +61,12 @@ void setup()
   /* receive with non-blocking */
   MP.RecvTimeout(1);
 
+  int connect = task_create("Connect", 70, 0x400, connect_task, (FAR char* const*) 0);
+
+}
+
+int connect_task(int argc, FAR char *argv[])
+{
   puts("WiFi Start");
   Init_GS2200_SPI();
 
@@ -96,12 +99,6 @@ void setup()
   puts("Connected");
   printf("IP: %d.%d.%d.%d\r\n\r\n", networkStatus.addr.ipv4[0], networkStatus.addr.ipv4[1], networkStatus.addr.ipv4[2], networkStatus.addr.ipv4[3]);
 
-  int connect = task_create("Connect", 70, 0x400, connect_task, (FAR char* const*) 0);
-
-}
-
-int connect_task(int argc, FAR char *argv[])
-{
   while(1){
 
     for(int i=0;i<FRAME_NUMBER;i++){
