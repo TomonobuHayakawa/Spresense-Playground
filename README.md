@@ -15,16 +15,27 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/2/22
+
+・Processingとの連携用のサンプルを追加（USBSerial経由）
+
+  - 集音した音声データの周波数特性をProcrssingに表示するサンプル
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/FrequencyCharacteristic
+  ※現在、8bitの整数値のみ送っているが、16ビットの小数第2位まで送るように変更予定。
+
+
 2023/2/19
 
 ・音響診断用サンプルのバグを修正しました。
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/edge_ai/sound_analysis/sketches/FrequencyCharacteristicViewer
 
   - SDカードへの書き込みバッファの間違い
   - WiFi初期化中にキャプチャされたデータを処理できなかった問題の修正
 
-・Processingとの連携用のサンプルを追加
+・Processingとの連携用のサンプルを追加（USBSerial経由）
 
   - 単純なデータプリントサンプル
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/SimpleSend
 
 ※こちらは、baggio63446333 さんの
 
