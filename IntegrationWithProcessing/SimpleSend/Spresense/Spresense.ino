@@ -40,7 +40,7 @@ void loop()
   // Receive a start trigger '>'
   if (wait_char('>', 3000)) { // 3sec
     puts("send_i");
-    send_data(2);
+    send_data(4);
   }
   sleep(1);
 }
@@ -54,12 +54,23 @@ int send_data(size_t size)
   SERIAL_OBJECT.write((size >>  8) & 0xFF);
   SERIAL_OBJECT.write((size >>  0) & 0xFF);
 
-  static int   data = 0;
+  static int   data_i = 0;
+  static float data_f = 0;
   // Send binary data
-  SERIAL_OBJECT.write(data);
-  data+=2;
-  SERIAL_OBJECT.write(data);
-  data-=1;
+  SERIAL_OBJECT.write(data_i);
+  data_i+=2;
+  SERIAL_OBJECT.write(data_i);
+  data_i-=1;
+
+  SERIAL_OBJECT.write((uint8_t)((uint16_t)(data_f*100)>>8));
+  SERIAL_OBJECT.write((uint8_t)((uint16_t)(data_f*100)&0xff));
+  printf("%f\n",data_f);
+  printf("%d\n",(uint16_t)(data_f*100));
+  printf("%d\n",(uint8_t)((uint16_t)(data_f*100)>>8));
+  printf("%d\n",(uint8_t)((uint16_t)(data_f*100)&0xff));
+  data_f+=0.3;
+
+//  SERIAL_OBJECT.write('\0');
 
   return 0;
 }

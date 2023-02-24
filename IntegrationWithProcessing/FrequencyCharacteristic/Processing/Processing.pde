@@ -8,6 +8,9 @@ Serial serial;
 final String SERIAL_PORTNAME = "COM10";
 final int    SERIAL_BAUDRATE = 921600;
 
+static int frame_sample = 1024;
+static int data_number = frame_sample / 2;
+
 void setup()
 {
   size(800, 300);
@@ -18,13 +21,13 @@ void setup()
 
 int pos=0;
 
-byte [] data = new byte[100];
+//byte [] data = new byte[data_number];
+float [] data = new float[data_number];
 
 void draw()
 {
    recieve_data();
    draw_graph();
-   println("end");
    pos++;
 }
 
@@ -35,13 +38,11 @@ int base_time = 0;
 void draw_graph()
 {
    background(255);
-   for (int i=1; i< 100;i++) {
-     float stx = map(i-1, 0, 100, 0, width);
-//     float sty = map(vals[i-1], 0, 10, height, 0);
-     float sty = map(data[i-1], 0, 10, height, 0);
-     float etx = map(i, 0, 100, 0, width);
-//     float ety = map(vals[i], 0, 10, height, 0);
-     float ety = map(data[i], 0, 10, height, 0);
+   for (int i=1; i< data_number;i++) {
+     float stx = map(i-1, 0,data_number, 0, width);
+     float sty = map(data[i-1], 0, 100, height, 0);
+     float etx = map(i, 0, data_number, 0, width);
+     float ety = map(data[i], 0,100, height, 0);
      line(stx, sty, etx, ety);
    }
   
@@ -69,16 +70,16 @@ void recieve_data()
     return;
   }
 
-  // for debug
+// for debug
   int now = millis();
   println(count++, ": size=", size, "time=", now - base_time, "[ms]");
   base_time = now;
 
   // Receive binary data
   int timeout = millis() + 5000;
-  for (int i = 0; i < size; ) {
+  for (int i = 0; i < size/2; ) {
     if (serial.available() > 0) {
-      data[i] = (byte)serial.read();
+      data[i] = (float)((serial.read() | serial.read()<<8)/100);
       i++;
     } else {
       if (millis() > timeout) {

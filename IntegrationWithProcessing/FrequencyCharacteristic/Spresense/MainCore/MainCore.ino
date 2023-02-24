@@ -234,8 +234,8 @@ bool execute_aframe()
 
 struct FrameInfo{
   float buffer[proc_size];
-//  uint16_t buffer_i[proc_size];
-  uint8_t buffer_i[proc_size];
+  uint16_t buffer_i[proc_size];
+//  uint8_t buffer_i[proc_size];
   bool renable;
   bool wenable;
   FrameInfo():renable(false),wenable(true){}
@@ -248,6 +248,7 @@ const int collection_number = 500;
 
 void send_data(byte* data,int size)
 {
+  size = size*2;
   if (wait_char('>', 3000)) { // 3sec
     puts("send data");
 
@@ -302,15 +303,14 @@ int store_task(int argc, FAR char *argv[])
         puts(filename);
         if (theSD.exists(filename)) theSD.remove(filename);
         File myFile = theSD.open(filename, FILE_WRITE);
-        int* tmp = (int*)frame_buffer[i].buffer;
-        myFile.write(frame_buffer[i].buffer,proc_size);
+        myFile.write((uint8_t*)frame_buffer[i].buffer,proc_size);
         myFile.close();
 #endif
 
         for(int j=0;j<proc_size;j++){
-          frame_buffer[i].buffer_i[j] = (uint8_t)frame_buffer[i].buffer[j];
+          frame_buffer[i].buffer_i[j] = (uint16_t)(frame_buffer[i].buffer[j]*100);
         }
-        send_data(frame_buffer[i].buffer_i,100);        
+        send_data((uint8_t*)frame_buffer[i].buffer_i,400);        
         
         frame_buffer[i].wenable = true;
         if(gCounter==collection_number){

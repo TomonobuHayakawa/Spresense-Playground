@@ -74,11 +74,22 @@ void draw()
   background(255);
   fill(0);
   for (int i = 0; i < size; ) {
+    println("i=",i);
     if (serial.available() > 0) {
       data[i] = (byte)serial.read();
       println("data=",data[i]);
       text("data="+str(data[i]),10,20+i*15);
       i++;
+      data[i] = (byte)serial.read();
+      println("data=",data[i]);
+      text("data="+str(data[i]),10,20+i*15);
+      i++;
+
+      float data_f = float(serial.read()<<8 | serial.read())/100;
+      println("data_f=",data_f);
+      text("data="+str(data_f),10,20+i*15);
+      i=i+2;
+      
     } else {
       if (millis() > timeout) {
         println("recover2");
