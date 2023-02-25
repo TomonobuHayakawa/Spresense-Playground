@@ -249,41 +249,23 @@ const int collection_number = 500;
 void send_data(byte* data,int size)
 {
   size = size*2;
-  if (wait_char('>', 3000)) { // 3sec
-    puts("send data");
 
-    SERIAL_OBJECT.write('S'); // Payload
-    // Send a binary data size in 4byte
-    SERIAL_OBJECT.write((size >> 24) & 0xFF);
-    SERIAL_OBJECT.write((size >> 16) & 0xFF);
-    SERIAL_OBJECT.write((size >>  8) & 0xFF);
-    SERIAL_OBJECT.write((size >>  0) & 0xFF);
+  puts("send data");
 
-    // Send binary data
-    SERIAL_OBJECT.write(data,size);  
-  }
-}
+  // Send sync words
+  SERIAL_OBJECT.write('S'); // Payload
+  SERIAL_OBJECT.write('P'); // Payload
+  SERIAL_OBJECT.write('R'); // Payload
+  SERIAL_OBJECT.write('S'); // Payload
 
-//
-// Wait for a specified character with timeout
-//
-int wait_char(char code, int timeout)
-{
-  uint64_t expire = millis() + timeout;
+  // Send a binary data size in 4byte
+  SERIAL_OBJECT.write((size >> 24) & 0xFF);
+  SERIAL_OBJECT.write((size >> 16) & 0xFF);
+  SERIAL_OBJECT.write((size >>  8) & 0xFF);
+  SERIAL_OBJECT.write((size >>  0) & 0xFF);
 
-  while (1) {
-    if (SERIAL_OBJECT.available() > 0) {
-      uint8_t cmd = SERIAL_OBJECT.read();
-      if (cmd == code) {
-        return 1;
-      }
-    }
-    if (timeout > 0) {
-      if (millis() > expire) {
-        return 0;
-      }
-    }
-  }
+  // Send binary data
+  SERIAL_OBJECT.write(data,size);  
 }
 
 int store_task(int argc, FAR char *argv[])
@@ -310,7 +292,8 @@ int store_task(int argc, FAR char *argv[])
         for(int j=0;j<proc_size;j++){
           frame_buffer[i].buffer_i[j] = (uint16_t)(frame_buffer[i].buffer[j]*100);
         }
-        send_data((uint8_t*)frame_buffer[i].buffer_i,400);        
+        send_data((uint8_t*)frame_buffer[i].buffer_i,400);
+        usleep(100*1000);
         
         frame_buffer[i].wenable = true;
         if(gCounter==collection_number){
@@ -320,7 +303,6 @@ int store_task(int argc, FAR char *argv[])
       
     }
   }
-
 }
 
 #endif /* ENABLE_DATA_COLLECTION */

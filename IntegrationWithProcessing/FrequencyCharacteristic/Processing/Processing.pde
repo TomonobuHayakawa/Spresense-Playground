@@ -9,7 +9,8 @@ final String SERIAL_PORTNAME = "COM10";
 final int    SERIAL_BAUDRATE = 921600;
 
 static int frame_sample = 1024;
-static int data_number = frame_sample / 2;
+//static int data_number = frame_sample / 2;
+static int data_number = 400;
 
 void setup()
 {
@@ -31,6 +32,30 @@ void draw()
    pos++;
 }
 
+boolean find_sync(int timeout)
+{
+  String sync_words = "0000";
+  int expire = millis() + timeout;
+
+  while (true) {
+    if (serial.available() > 0) {
+      sync_words = sync_words.substring(1);
+      sync_words = sync_words + (char)serial.read();
+      if(sync_words.equals("SPRS")){
+        return true;
+      }
+    } else {
+      delay(50);
+    }
+
+    if (timeout > 0) {
+      if (millis() > expire) {
+        return false;
+      }
+    }
+  }
+}
+  
 // for debug
 int count = 0;
 int base_time = 0;
@@ -52,10 +77,8 @@ void recieve_data()
 {
   int size = 0;
 
-  // Send a start trigger '>'
-  serial.write(">");
-  // Receive a start code 'S'
-  if (1 == wait_char('S', 3000)) {
+  // Search sync words
+  if (find_sync(3000)) {
     // Receive a binary data size in 4byte
     size = serial.read()<<24 | serial.read()<<16 | serial.read()<<8 | serial.read();
   } else {
@@ -88,30 +111,6 @@ void recieve_data()
         return;
       }
       delay(50);
-    }
-  }
-}
-
-//
-// Wait for a specified character with timeout
-//
-int wait_char(char code, int timeout)
-{
-  int expire = millis() + timeout;
-
-  while (true) {
-    if (serial.available() > 0) {
-      int cmd = serial.read();
-      if (cmd == code) {
-        return 1;
-      }
-    } else {
-      delay(50);
-    }
-    if (timeout > 0) {
-      if (millis() > expire) {
-        return 0;
-      }
     }
   }
 }

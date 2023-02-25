@@ -37,16 +37,17 @@ void setup()
 void loop()
 {
   puts("loop");
-  // Receive a start trigger '>'
-  if (wait_char('>', 3000)) { // 3sec
-    puts("send_i");
-    send_data(4);
-  }
+  puts("send");
+  send_data(4);
   sleep(1);
 }
 
 int send_data(size_t size)
 {
+  // Send sync words
+  SERIAL_OBJECT.write('S'); // Payload
+  SERIAL_OBJECT.write('P'); // Payload
+  SERIAL_OBJECT.write('R'); // Payload
   SERIAL_OBJECT.write('S'); // Payload
   // Send a binary data size in 4byte
   SERIAL_OBJECT.write((size >> 24) & 0xFF);
@@ -73,26 +74,4 @@ int send_data(size_t size)
 //  SERIAL_OBJECT.write('\0');
 
   return 0;
-}
-
-//
-// Wait for a specified character with timeout
-//
-int wait_char(char code, int timeout)
-{
-  uint64_t expire = millis() + timeout;
-
-  while (1) {
-    if (SERIAL_OBJECT.available() > 0) {
-      uint8_t cmd = SERIAL_OBJECT.read();
-      if (cmd == code) {
-        return 1;
-      }
-    }
-    if (timeout > 0) {
-      if (millis() > expire) {
-        return 0;
-      }
-    }
-  }
 }

@@ -15,6 +15,10 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/2/25
+
+・UDPなどのWiFi経由のためProcessingとの同期方法を変更
+
 2023/2/24
 
 ・Processingとの連携用のサンプルでfloatを16bitにして送るサンプルに修正。
