@@ -15,6 +15,12 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/3/9
+
+・MM-S50MVは、ある程度整理したので、外部で使いやすいように別ライブラリにした。
+
+https://github.com/TomonobuHayakawa/MM-S50MV
+
 2023/2/25
 
 ・UDPなどのWiFi経由のためProcessingとの同期方法を変更
