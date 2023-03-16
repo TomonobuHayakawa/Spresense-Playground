@@ -20,6 +20,12 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/3/17
+
+・MIDIのライブラリを別リポジトリに移動。サンプルも追加。
+
+https://github.com/TomonobuHayakawa/arduino_midi_library
+
 2023/3/15
 
 ・各 3rdParty Add-Onボードのピンアサイメントを表にしました。</BR>
