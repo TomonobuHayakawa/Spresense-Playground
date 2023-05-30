@@ -20,6 +20,11 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/5/30
+
+・SpreSynth に関する情報を追加しました。
+
+
 2023/3/17
 
 ・MIDIのライブラリを別リポジトリに移動。サンプルも追加。
@@ -353,6 +358,11 @@ Spresense-Playground
  ├ libraries : Arduinoライブラリを置く場所。
  |
  ├ sketchies : Arduinoスケッチを置く場所。
+ |
+ ├ IntegrationWithProcessing : Spresense と Processingを連携させるサンプルを置く場所。
+ |
+ ├ SpreSynth : SpreSynth に関係するデータを置く場所。
+
 ```
 
 ---
