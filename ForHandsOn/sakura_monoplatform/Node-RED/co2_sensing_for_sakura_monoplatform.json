@@ -1,0 +1,818 @@
+[
+    {
+        "id": "dbab9424.ebe0f8",
+        "type": "tab",
+        "label": "グラフ表示と制御",
+        "disabled": false,
+        "info": "本フローはモノプラットフォームのサンプルプログラムです。センサーデータの収集とグラフ表示、赤外線学習リモコンの外部制御を行うことができます。\nnRF9160のサンプルプログラム及びガーバーデータなどは下記のURLで公開しています。\nhttps://github.com/sakura-internet/monoplatform_nrf9160-ltem1rc\n\n■グラフ表示\n\nモノプラットフォームのWebSocket（`wss://ws.sipf.iot.sakura.ad.jp/v0/.....`）サービスから送信されたJSONデータを用いてダッシュボード上にグラフを描画します。\nまた、グラフは`http://<IPアドレス>:<指定したWeb UIポート番号>/ui/`で確認することができます。\n\n以下2点を設定しデプロイすることで動作します。\n\nmonopf_in(WebSocket-inノード)\n    モノプラットフォームサービスアダプタで確認できるWebSocketのURL（`wss://ws.sipf.iot.sakura.ad.jp/v0/.....`）を設定します。\n\n    \n\n■赤外線リモコン操作ボタン\nダッシュボード上のボタンを押下することで、デバイスに制御用のJSONデータを生成し送信します。   \nmonopf_out(WebSocket-outノード)\n    モノプラットフォームサービスアダプタで確認できるWebSocketのURL（`wss://ws.sipf.iot.sakura.ad.jp/v0/.....`）を設定します。\n\n\n\n"
+    },
+    {
+        "id": "6aa91ec7.7c76a",
+        "type": "websocket in",
+        "z": "dbab9424.ebe0f8",
+        "name": "monopf_in",
+        "server": "d3b53355e7c9fea5",
+        "client": "",
+        "x": 100,
+        "y": 80,
+        "wires": [
+            [
+                "8ad619e36890f5b0",
+                "e86ed01cb6e40f0f"
+            ]
+        ]
+    },
+    {
+        "id": "8d91e8af.9d0858",
+        "type": "ui_gauge",
+        "z": "dbab9424.ebe0f8",
+        "name": "CO2_gauge",
+        "group": "3d42d7ce18f2b0b0",
+        "order": 1,
+        "width": "1",
+        "height": "4",
+        "gtype": "donut",
+        "title": "CO2濃度",
+        "label": "ppm",
+        "format": "{{value}}",
+        "min": "400",
+        "max": "3000",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "800",
+        "seg2": "800",
+        "diff": false,
+        "className": "",
+        "x": 790,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "7566db0f.ffb034",
+        "type": "comment",
+        "z": "dbab9424.ebe0f8",
+        "name": "ダッシュボード画面でのグラフ表示",
+        "info": "",
+        "x": 160,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "57c78451.2c0b9c",
+        "type": "debug",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 790,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "349d8a1396ebc1a6",
+        "type": "debug",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 250,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "c6c41d0697142a57",
+        "type": "ui_gauge",
+        "z": "dbab9424.ebe0f8",
+        "name": "TEMP_gauge",
+        "group": "8505d83f00adf9c4",
+        "order": 1,
+        "width": "1",
+        "height": "4",
+        "gtype": "donut",
+        "title": "気温",
+        "label": "℃",
+        "format": "{{value}}",
+        "min": "-20",
+        "max": "60",
+        "colors": [
+            "#0080ff",
+            "#40ea5e",
+            "#ca3838"
+        ],
+        "seg1": "25",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 800,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "cdd0bdcb28f66cb2",
+        "type": "debug",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "false",
+        "x": 790,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "59fa8ef9827c22ba",
+        "type": "ui_chart",
+        "z": "dbab9424.ebe0f8",
+        "name": "HUMI_chart",
+        "group": "31d6a4287129fb94",
+        "order": 2,
+        "width": "7",
+        "height": "4",
+        "label": "",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "100",
+        "removeOlder": "4",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 790,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ae4495b9d60e7693",
+        "type": "ui_gauge",
+        "z": "dbab9424.ebe0f8",
+        "name": "HUMI_gauge",
+        "group": "31d6a4287129fb94",
+        "order": 1,
+        "width": "1",
+        "height": "4",
+        "gtype": "donut",
+        "title": "湿度",
+        "label": "%",
+        "format": "{{value}}",
+        "min": "0",
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "75",
+        "className": "",
+        "x": 790,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "0136f7ec4d29637a",
+        "type": "debug",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "false",
+        "x": 790,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "1129cf19305f86e3",
+        "type": "change",
+        "z": "dbab9424.ebe0f8",
+        "name": "ROUND",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "$round(msg.payload,1)",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 620,
+        "y": 520,
+        "wires": [
+            [
+                "ae4495b9d60e7693",
+                "59fa8ef9827c22ba",
+                "0136f7ec4d29637a"
+            ]
+        ]
+    },
+    {
+        "id": "d8ec6c7a.f841d",
+        "type": "ui_chart",
+        "z": "dbab9424.ebe0f8",
+        "name": "CO2_chart",
+        "group": "3d42d7ce18f2b0b0",
+        "order": 3,
+        "width": "7",
+        "height": "4",
+        "label": "",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "3000",
+        "removeOlder": "4",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#74fb57",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 790,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d557b772fef2c312",
+        "type": "ui_chart",
+        "z": "dbab9424.ebe0f8",
+        "name": "Error_chart",
+        "group": "8555a414442f571b",
+        "order": 2,
+        "width": "7",
+        "height": "4",
+        "label": "",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "100",
+        "removeOlder": "3",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 790,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "be373289ee99e23d",
+        "type": "ui_chart",
+        "z": "dbab9424.ebe0f8",
+        "name": "Error_chart",
+        "group": "8555a414442f571b",
+        "order": 2,
+        "width": "7",
+        "height": "4",
+        "label": "",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "100",
+        "removeOlder": "3",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "86400",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 790,
+        "y": 720,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5af57d2b062971a6",
+        "type": "debug",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 790,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "1fa80f56ef4f6c21",
+        "type": "change",
+        "z": "dbab9424.ebe0f8",
+        "name": "ROUND",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "$round(msg.payload,1)",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 620,
+        "y": 380,
+        "wires": [
+            [
+                "c6c41d0697142a57",
+                "cdd0bdcb28f66cb2",
+                "ae08710692e136a6"
+            ]
+        ]
+    },
+    {
+        "id": "e86ed01cb6e40f0f",
+        "type": "switch",
+        "z": "dbab9424.ebe0f8",
+        "name": "filter type",
+        "property": "type",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "object",
+                "vt": "str"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 260,
+        "y": 80,
+        "wires": [
+            [
+                "2c04268019f61793",
+                "349d8a1396ebc1a6"
+            ],
+            [
+                "349d8a1396ebc1a6"
+            ]
+        ]
+    },
+    {
+        "id": "2c04268019f61793",
+        "type": "split",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 410,
+        "y": 80,
+        "wires": [
+            [
+                "3b830e8c250405fc"
+            ]
+        ]
+    },
+    {
+        "id": "3b830e8c250405fc",
+        "type": "switch",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "property": "payload.tag",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "01",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "02",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "03",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "04",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "05",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 5,
+        "x": 190,
+        "y": 400,
+        "wires": [
+            [
+                "abd67f29f685a63d"
+            ],
+            [
+                "6dac69e1c2f433cd"
+            ],
+            [
+                "a07c4e9d0a39ab35"
+            ],
+            [
+                "e5a984f57e4efc46"
+            ],
+            [
+                "8054a1235680fbf9"
+            ]
+        ],
+        "outputLabels": [
+            "CO2 [ppm]",
+            "Temp. [℃]",
+            "Humid. [%]",
+            "Sensor Error",
+            "Network Error"
+        ]
+    },
+    {
+        "id": "ae08710692e136a6",
+        "type": "ui_chart",
+        "z": "dbab9424.ebe0f8",
+        "name": "TEMP_chart",
+        "group": "8505d83f00adf9c4",
+        "order": 2,
+        "width": "7",
+        "height": "4",
+        "label": "",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "60",
+        "removeOlder": "4",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 790,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0eaa33c150014920",
+        "type": "debug",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 790,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "8ad619e36890f5b0",
+        "type": "debug",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 110,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "abd67f29f685a63d",
+        "type": "change",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.value",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 440,
+        "y": 240,
+        "wires": [
+            [
+                "8d91e8af.9d0858",
+                "d8ec6c7a.f841d",
+                "57c78451.2c0b9c"
+            ]
+        ]
+    },
+    {
+        "id": "6dac69e1c2f433cd",
+        "type": "change",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.value",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 440,
+        "y": 380,
+        "wires": [
+            [
+                "1fa80f56ef4f6c21"
+            ]
+        ]
+    },
+    {
+        "id": "a07c4e9d0a39ab35",
+        "type": "change",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.value",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 440,
+        "y": 520,
+        "wires": [
+            [
+                "1129cf19305f86e3"
+            ]
+        ]
+    },
+    {
+        "id": "e5a984f57e4efc46",
+        "type": "change",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.value",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 440,
+        "y": 620,
+        "wires": [
+            [
+                "d557b772fef2c312",
+                "0eaa33c150014920"
+            ]
+        ]
+    },
+    {
+        "id": "8054a1235680fbf9",
+        "type": "change",
+        "z": "dbab9424.ebe0f8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.value",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 440,
+        "y": 720,
+        "wires": [
+            [
+                "be373289ee99e23d",
+                "5af57d2b062971a6"
+            ]
+        ]
+    },
+    {
+        "id": "d3b53355e7c9fea5",
+        "type": "websocket-listener",
+        "path": "wss://ws.sipf.iot.sakura.ad.jp/v0/26b2eb45-fdb9-4ebc-a74a-5f1014479731",
+        "wholemsg": "true"
+    },
+    {
+        "id": "3d42d7ce18f2b0b0",
+        "type": "ui_group",
+        "name": "CO2濃度",
+        "tab": "34242c41.c92474",
+        "order": 1,
+        "disp": false,
+        "width": "8",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "8505d83f00adf9c4",
+        "type": "ui_group",
+        "name": "温度",
+        "tab": "34242c41.c92474",
+        "order": 2,
+        "disp": false,
+        "width": "8",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "31d6a4287129fb94",
+        "type": "ui_group",
+        "name": "湿度",
+        "tab": "34242c41.c92474",
+        "order": 3,
+        "disp": false,
+        "width": "8",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "8555a414442f571b",
+        "type": "ui_group",
+        "name": "Error Count",
+        "tab": "34242c41.c92474",
+        "order": 6,
+        "disp": true,
+        "width": "8",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "34242c41.c92474",
+        "type": "ui_tab",
+        "name": "LTE Remote Controler",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    }
+]
