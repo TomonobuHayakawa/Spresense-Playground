@@ -1,0 +1,387 @@
+[
+    {
+        "id": "96a804a2f4d12001",
+        "type": "tab",
+        "label": "可視化サンプルフロー",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "4626cc083cf37268",
+        "type": "mqtt in",
+        "z": "96a804a2f4d12001",
+        "name": "dummy result",
+        "topic": "spresense/mqtt",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "48b02275da8afacd",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 170,
+        "y": 140,
+        "wires": [
+            [
+                "befa5f9a1eab5478",
+                "62fe34e0e5c50825",
+                "21a764a6784c55f7"
+            ]
+        ]
+    },
+    {
+        "id": "38a841df9d8c5293",
+        "type": "ui_gauge",
+        "z": "96a804a2f4d12001",
+        "name": "",
+        "group": "d3b48ed962c61cd5",
+        "order": 3,
+        "width": 5,
+        "height": "5",
+        "gtype": "gage",
+        "title": "異常らしさ",
+        "label": "units",
+        "format": "{{value}}",
+        "min": "0",
+        "max": "3",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "0.8",
+        "seg2": "1.2",
+        "diff": false,
+        "className": "",
+        "x": 910,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "befa5f9a1eab5478",
+        "type": "debug",
+        "z": "96a804a2f4d12001",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 420,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "61c4a15354aaac7e",
+        "type": "debug",
+        "z": "96a804a2f4d12001",
+        "name": "debug Payload",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "44ab0392e28676e7",
+        "type": "ui_led",
+        "z": "96a804a2f4d12001",
+        "order": 1,
+        "group": "d3b48ed962c61cd5",
+        "width": "7",
+        "height": "5",
+        "label": "異常検知",
+        "labelPlacement": "left",
+        "labelAlignment": "left",
+        "colorForValue": [
+            {
+                "color": "#ff0000",
+                "value": "false",
+                "valueType": "bool"
+            },
+            {
+                "color": "#008000",
+                "value": "true",
+                "valueType": "bool"
+            }
+        ],
+        "allowColorForValueInMessage": false,
+        "shape": "circle",
+        "showGlow": true,
+        "name": "異常検知",
+        "x": 900,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "450e9f535f0b14fd",
+        "type": "ui_chart",
+        "z": "96a804a2f4d12001",
+        "name": "",
+        "group": "d3b48ed962c61cd5",
+        "order": 5,
+        "width": "16",
+        "height": "4",
+        "label": "異常らしさの時間推移",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "3",
+        "removeOlder": 1,
+        "removeOlderPoints": "300",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 940,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "21a764a6784c55f7",
+        "type": "change",
+        "z": "96a804a2f4d12001",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.result",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 140,
+        "wires": [
+            [
+                "61c4a15354aaac7e",
+                "277dc49c94902938",
+                "44ab0392e28676e7"
+            ]
+        ]
+    },
+    {
+        "id": "277dc49c94902938",
+        "type": "debug",
+        "z": "96a804a2f4d12001",
+        "name": "debug 異常検知",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 920,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "9e1b5211b0f10506",
+        "type": "debug",
+        "z": "96a804a2f4d12001",
+        "name": "debug 正常らしさ",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 930,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "62fe34e0e5c50825",
+        "type": "change",
+        "z": "96a804a2f4d12001",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.value",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 300,
+        "wires": [
+            [
+                "df94d862d73d76e1",
+                "9e1b5211b0f10506",
+                "38a841df9d8c5293",
+                "450e9f535f0b14fd"
+            ]
+        ]
+    },
+    {
+        "id": "df94d862d73d76e1",
+        "type": "debug",
+        "z": "96a804a2f4d12001",
+        "name": "debug Payload",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "1579db53f3d5ba6e",
+        "type": "ui_spacer",
+        "z": "96a804a2f4d12001",
+        "name": "spacer",
+        "group": "d3b48ed962c61cd5",
+        "order": 2,
+        "width": "4",
+        "height": "5"
+    },
+    {
+        "id": "cc5adc86c8a1532a",
+        "type": "ui_spacer",
+        "z": "96a804a2f4d12001",
+        "name": "spacer",
+        "group": "d3b48ed962c61cd5",
+        "order": 4,
+        "width": "16",
+        "height": "1"
+    },
+    {
+        "id": "46cf8593ef8b1a14",
+        "type": "ui_spacer",
+        "z": "96a804a2f4d12001",
+        "name": "spacer",
+        "group": "d3b48ed962c61cd5",
+        "order": 8,
+        "width": "16",
+        "height": "3"
+    },
+    {
+        "id": "863127e5163efa86",
+        "type": "ui_spacer",
+        "z": "96a804a2f4d12001",
+        "name": "spacer",
+        "group": "56328fa3a767536c",
+        "order": 1,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "56a6cfa1e3ee2519",
+        "type": "ui_spacer",
+        "z": "96a804a2f4d12001",
+        "name": "spacer",
+        "group": "d3b48ed962c61cd5",
+        "order": 15,
+        "width": "16",
+        "height": "1"
+    },
+    {
+        "id": "1028d2ca3199e4a8",
+        "type": "ui_spacer",
+        "z": "96a804a2f4d12001",
+        "name": "spacer",
+        "group": "d3b48ed962c61cd5",
+        "order": 21,
+        "width": "16",
+        "height": "4"
+    },
+    {
+        "id": "48b02275da8afacd",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "test.mosquitto.org",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "d3b48ed962c61cd5",
+        "type": "ui_group",
+        "name": "可視化",
+        "tab": "90f467c22cf18d28",
+        "order": 2,
+        "disp": true,
+        "width": "16",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "90f467c22cf18d28",
+        "type": "ui_tab",
+        "name": "可視化サンプル",
+        "icon": "dashboard",
+        "order": 2,
+        "disabled": false,
+        "hidden": false
+    }
+]
