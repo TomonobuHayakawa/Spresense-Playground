@@ -139,6 +139,8 @@ int CLoRa::SendFrame(struct LoRaConfigItem_t &config, uint8_t *send_data,
       subpacket_size = 200;
       break;
   }
+  subpacket_size = subpacket_size - LoRa_Header_Size;
+
   if (size > subpacket_size) {
     SerialMon.printf("send data length too long\n");
     return 1;

@@ -50,46 +50,26 @@ void setup() {
   SerialMon.printf("switch to normal mode\n");
   lora.SwitchToNormalMode();
 
-  // LoRa受信
-  while (1) {
-    if (lora.RecieveFrame(&data) == 0) {
-      SerialMon.printf("recv data:\n");
-      for (int i = 0; i < data.recv_data_len; i++) {
-        SerialMon.printf("%c", data.recv_data[i]);
-      }
-      SerialMon.printf("\n");
-      SerialMon.printf("hex dump:\n");
-      for (int i = 0; i < data.recv_data_len; i++) {
-        SerialMon.printf("%02x ", data.recv_data[i]);
-      }
-      SerialMon.printf("\n");
-      SerialMon.printf("RSSI: %d dBm\n", data.rssi);
-      SerialMon.printf("\n");
-
-      SerialMon.flush();
-    }
-
-    delay(1);
-  }
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  digitalWrite(LED0, HIGH);
-  delay(100);
-  digitalWrite(LED1, HIGH);
-  delay(100);
-  digitalWrite(LED2, HIGH);
-  delay(100);
-  digitalWrite(LED3, HIGH);
-  delay(1000);
+  if (lora.RecieveFrame(&data) == 0) {
+    SerialMon.printf("recv data:\n");
+    for (int i = 0; i < data.recv_data_len; i++) {
+      SerialMon.printf("%c", data.recv_data[i]);
+    }
+    SerialMon.printf("\n");
+    SerialMon.printf("hex dump:\n");
+    for (int i = 0; i < data.recv_data_len; i++) {
+      SerialMon.printf("%02x ", data.recv_data[i]);
+    }
+    SerialMon.printf("\n");
+    SerialMon.printf("RSSI: %d dBm\n", data.rssi);
+    SerialMon.printf("\n");
 
-  digitalWrite(LED0, LOW);
-  delay(100);
-  digitalWrite(LED1, LOW);
-  delay(100);
-  digitalWrite(LED2, LOW);
-  delay(100);
-  digitalWrite(LED3, LOW);
-  delay(1000);
+    SerialMon.flush();
+  }
+
+  delay(1);
+
 }

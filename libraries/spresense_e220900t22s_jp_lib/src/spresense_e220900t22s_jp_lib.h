@@ -11,6 +11,9 @@
 #define LoRa_ModeSettingPin_M0 PIN_D20
 #define LoRa_ModeSettingPin_M1 PIN_D21
 
+// LoRa_Header_Size
+#define LoRa_Header_Size 3
+
 // E220-900T22S(JP)のbaud rate
 #define LoRa_BaudRate 9600
 
