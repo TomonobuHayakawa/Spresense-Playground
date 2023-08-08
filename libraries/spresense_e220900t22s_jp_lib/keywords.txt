@@ -1,0 +1,35 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+CLoRa                       KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+LoadConfigSetting           KEYWORD2
+InitLoRaModule              KEYWORD2
+RecieveFrame                KEYWORD2
+SendFrame                   KEYWORD2
+SwitchToNormalMode          KEYWORD2
+SwitchToWORSendingMode      KEYWORD2
+SwitchToWORReceivingMode    KEYWORD2
+SwitchToConfigurationMode   KEYWORD2
+
+#######################################
+# Structure (KEYWORD3)
+#######################################
+
+LoRaConfigItem_t            KEYWORD3
+RecvFrameE220900T22SJP_t    KEYWORD3
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+
