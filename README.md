@@ -20,6 +20,34 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/8/8
+
+・学生向けのワークショップ向けのサンプル（BLEサンプルなど）追加
+```
+    Spresense-Playground
+        ｜
+        ├ ForHandsOn
+```
+
+・Zeta Add-on 向けライブラリの追加
+```
+    Spresense-Playground
+        ｜
+        ├ libraries
+            ｜
+            ├ TZM902Dx
+```
+
+・LoRa Add-on 向けライブラリの追加
+```
+    Spresense-Playground
+        ｜
+        ├ libraries
+            ｜
+            ├ spresense_e220900t22s_jp_lib
+```
+
+
 2023/5/30
 
 ・SpreSynth に関する情報を追加しました。
