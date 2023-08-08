@@ -1,0 +1,50 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TZM902Dx                    KEYWORD1
+
+RECEIVE_DATA_FRAMES_ACK     KEYWORD1
+RECEIVE_BUFFER_FULL         KEYWORD1
+RECEIVE_LENGTH_ERROR        KEYWORD1
+RECEIVE_CRC_ERROR           KEYWORD1
+
+INQUIRE_VERSION             KEYWORD1
+INQUIRE_MAC                 KEYWORD1
+INQUIRE_TIME                KEYWORD1
+INQUIRE_NETWORK_QUALITY     KEYWORD1
+
+COMMANDS_ACK_SET_SUCCEED    KEYWORD1
+COMMANDS_ACK_SET_FAILED     KEYWORD1
+
+WAKEUP_REASON_DOWNLINK_DATA KEYWORD1
+
+MODULE_STATUS_UNREGISTERED  KEYWORD1
+MODULE_STATUS_REGISTERED    KEYWORD1
+MODULE_STATUS_LONG_SLEEP    KEYWORD1
+MODULE_STATUS_SHORT_SLEEP   KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+init                        KEYWORD2
+connect                     KEYWORD2
+tick                        KEYWORD2
+read                        KEYWORD2
+send_no_retry               KEYWORD2
+send_raw                    KEYWORD2
+
+#######################################
+# Structure (KEYWORD3)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+
