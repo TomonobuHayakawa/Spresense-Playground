@@ -34,6 +34,7 @@ USBSerial UsbSerial;
 #define SERIAL_BAUDRATE 921600
 
 #define  ENABLE_DATA_COLLECTION
+//#define  VIEW_RAW_DATA
 
 FrontEnd *theFrontEnd;
 SDClass theSD;
@@ -57,7 +58,8 @@ bool ErrEnd = false;
 
 /* Multi-core parameters */
 const int proc_core = 1;
-const int view_core = 2;
+//const int view_core = 2;
+const int conn_core = 2;
 
 /**
  * @brief Frontend attention callback
@@ -198,6 +200,21 @@ void setup()
 
 }
 
+#ifdef ENABLE_DATA_COLLECTION
+
+#define FRAME_NUMBER 2
+
+struct FrameInfo{
+  float buffer[proc_size];
+  uint16_t buffer_i[proc_size];
+//  uint8_t buffer_i[proc_size];
+  bool renable;
+  bool wenable;
+  FrameInfo():renable(false),wenable(true){}
+};
+
+FrameInfo frame_buffer[FRAME_NUMBER];
+
 /**
  * @brief Capture a frame of PCM data into buffer for signal processing
  */
@@ -221,30 +238,30 @@ bool execute_aframe()
     request.buffer  = proc_buffer;
     request.sample  = size / 2;
 
+#ifndef VIEW_RAW_DATA
+
     MP.Send(sndid, &request, proc_core);
+
+#else 
+
+    for(int i=0;i<FRAME_NUMBER;i++){
+      if(frame_buffer[i].wenable){
+        frame_buffer[i].wenable = false;
+        memcpy(frame_buffer[i].buffer_i,proc_buffer,size);
+//        for(int j = 0; j<400; j++) frame_buffer[i].buffer_i[j] = j*100;
+        frame_buffer[i].renable = true;
+        break;
+      }
+    }
+    
+#endif /* WIEW_RAW_DATA */
 
   }
 
   return true;
 }
 
-#ifdef ENABLE_DATA_COLLECTION
-
-#define FRAME_NUMBER 2
-
-struct FrameInfo{
-  float buffer[proc_size];
-  uint16_t buffer_i[proc_size];
-//  uint8_t buffer_i[proc_size];
-  bool renable;
-  bool wenable;
-  FrameInfo():renable(false),wenable(true){}
-};
-
-FrameInfo frame_buffer[FRAME_NUMBER];
-
 const int collection_number = 500;
-
 
 void send_data(byte* data,int size)
 {
@@ -289,11 +306,20 @@ int store_task(int argc, FAR char *argv[])
         myFile.close();
 #endif
 
+#ifdef VIEW_RAW_DATA
+
+        send_data((uint8_t*)frame_buffer[i].buffer_i,400);
+
+#else
+
         for(int j=0;j<proc_size;j++){
           frame_buffer[i].buffer_i[j] = (uint16_t)(frame_buffer[i].buffer[j]*100);
         }
         send_data((uint8_t*)frame_buffer[i].buffer_i,400);
-        usleep(100*1000);
+
+#endif /* WIEW_RAW_DATA */
+
+//        usleep(100*1000);
         
         frame_buffer[i].wenable = true;
         if(gCounter==collection_number){
@@ -331,15 +357,18 @@ void loop() {
 
 #ifdef ENABLE_DATA_COLLECTION
     for(int i=0;i<FRAME_NUMBER;i++){
-      frame_buffer[i].wenable = false;
-      memcpy(frame_buffer[i].buffer,result->buffer,proc_size);
-      frame_buffer[i].renable =true;
+      if(frame_buffer[i].wenable){
+        frame_buffer[i].wenable = false;
+        memcpy(frame_buffer[i].buffer,result->buffer,proc_size);
+        frame_buffer[i].renable = true;
+        break;
+      }
     }
 #endif /* ENABLE_DATA_COLLECTION */
 
     request.buffer  = result->buffer;
     request.sample  = result->sample;
-//    MP.Send(sndid, &request, view_core);
+//    MP.Send(sndid, &request, conn_core);
   }
 
   if (isEnd) {
