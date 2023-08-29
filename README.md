@@ -48,10 +48,24 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 ```
 
 
+2023/8/30
+
+・Processingとの連携用のサンプルを追加（WiFi UDP経由）及び、ディレクトリ構成の変更
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/SimpleSend
+
+2023/8/29
+
+・Processinを使って周波数特性を観測するサンプルに、生波形を見る機能を追加しました。
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/FrequencyCharacteristic
+
 2023/5/30
 
 ・SpreSynth に関する情報を追加しました。
 
+2023/8/8
+
+・学生向けハンズオン用のサンプルコードを追加しました。(BLE、WiSUN、LoRa、など)
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/ForHandsOn
 
 2023/3/17
 
