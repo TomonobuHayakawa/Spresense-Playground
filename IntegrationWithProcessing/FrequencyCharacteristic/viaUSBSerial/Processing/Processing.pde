@@ -117,7 +117,7 @@ void recieve_data()
 
 if (!VIEW_RAW_DATA) {
       data_f[i] = (float)((serial.read() | serial.read()<<8)/100);
-      println("data[",i,"] = ", data_f[i]);
+//      println("data[",i,"] = ", data_f[i]);
 }else{ 
       data_i[i] = (short)((serial.read() | serial.read()<<8));
 //      println("data[",i,"] = ", data_i[i]);
