@@ -16,24 +16,16 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
 #include <SDHCI.h>
-#include <SPI.h>
 
 #include <FrontEnd.h>
 #include <MemoryUtil.h>
 
 #include "CoreInterface.h"
 
-#include <USBSerial.h>
+#define  CONSOLE_BAUDRATE  115200
 
-USBSerial UsbSerial;
-
-// Please change the serial setting for user environment
-#define SERIAL_OBJECT   UsbSerial
-#define SERIAL_BAUDRATE 921600
-
-#define  ENABLE_DATA_COLLECTION
+//#define  ENABLE_DATA_COLLECTION
 //#define  VIEW_RAW_DATA
 
 FrontEnd *theFrontEnd;
@@ -42,7 +34,8 @@ SDClass theSD;
 // Audio parameters.
 static const int32_t channel_num  = AS_CHANNEL_MONO;
 static const int32_t bit_length   = AS_BITLENGTH_16;
-static const int32_t frame_sample = 1024;
+//static const int32_t frame_sample = 1024;
+static const int32_t frame_sample = 512;
 static const int32_t frame_size   = frame_sample * (bit_length / 8) * channel_num;
 static const int32_t mic_gain     = 160;
 
@@ -50,7 +43,8 @@ static CMN_SimpleFifoHandle simple_fifo_handle;
 static const int32_t fifo_size  = frame_size * 20;
 static uint32_t fifo_buffer[fifo_size / sizeof(uint32_t)];
 
-static const int32_t proc_size  = frame_size;
+//static const int32_t proc_size  = frame_size;
+static const int32_t proc_size  = 4096*2;
 static uint8_t proc_buffer[proc_size];
 
 bool isEnd = false;
@@ -58,7 +52,6 @@ bool ErrEnd = false;
 
 /* Multi-core parameters */
 const int proc_core = 1;
-//const int view_core = 2;
 const int conn_core = 2;
 
 /**
@@ -132,12 +125,11 @@ static void frontend_pcm_callback(AsPcmDataParam pcm)
  *  Set PCM capture sapling rate parameters to 48 kb/s <br>
  *  Set channel number 4 to capture audio from 4 microphones simultaneously <br>
  */
+char server_cid = 0;
+
 void setup()
 {
-  Serial.begin(115200);
-  
-  SERIAL_OBJECT.begin(SERIAL_BAUDRATE);
-  Serial.println("Done!");
+  Serial.begin(CONSOLE_BAUDRATE);
 
   /* Initialize memory pools and message libs */
   initMemoryPools();
@@ -154,16 +146,19 @@ void setup()
     printf("MP.begin error = %d\n", ret);
   }
   
-/*  ret = MP.begin(view_core);
+  /* Launch SubCore */
+  ret = MP.begin(conn_core);
   if (ret < 0) {
     printf("MP.begin error = %d\n", ret);
-  }*/
+  }
 
   /* receive with non-blocking */
-  MP.RecvTimeout(1);
+  MP.RecvTimeout(10);
 
+#ifdef ENABLE_DATA_COLLECTION
   /* Use SD card */
   theSD.begin();
+#endif /* ENABLE_DATA_COLLECTION */
 
   /* start audio system */
   theFrontEnd = FrontEnd::getInstance();
@@ -191,26 +186,23 @@ void setup()
 
   theFrontEnd->setMicGain(mic_gain);
 
+sleep(10);
   theFrontEnd->start();
   puts("Capturing Start!");
 
-#ifdef ENABLE_DATA_COLLECTION
   int store = task_create("Store", 70, 0x1000, store_task, (FAR char* const*) 0);
-#endif /* ENABLE_DATA_COLLECTION */
 
 }
-
-#ifdef ENABLE_DATA_COLLECTION
 
 #define FRAME_NUMBER 2
 
 struct FrameInfo{
   float buffer[proc_size];
   uint16_t buffer_i[proc_size];
-//  uint8_t buffer_i[proc_size];
+  int sample;
   bool renable;
   bool wenable;
-  FrameInfo():renable(false),wenable(true){}
+  FrameInfo():sample(0),renable(false),wenable(true){}
 };
 
 FrameInfo frame_buffer[FRAME_NUMBER];
@@ -247,6 +239,7 @@ bool execute_aframe()
     for(int i=0;i<FRAME_NUMBER;i++){
       if(frame_buffer[i].wenable){
         frame_buffer[i].wenable = false;
+        frame_buffer[i].sample = size/2;
         memcpy(frame_buffer[i].buffer_i,proc_buffer,size);
 //        for(int j = 0; j<400; j++) frame_buffer[i].buffer_i[j] = j*100;
         frame_buffer[i].renable = true;
@@ -265,24 +258,13 @@ const int collection_number = 500;
 
 void send_data(byte* data,int sample)
 {
-  int size = sample*sizeof(uint16_t);
+  static Request request;
+  int8_t sndid = NOMAL_REQUEST_ID;
 
-  puts("send data");
+  request.buffer  = data;
+  request.sample  = sample;
+  MP.Send(sndid, &request, conn_core);
 
-  // Send sync words
-  SERIAL_OBJECT.write('S'); // Payload
-  SERIAL_OBJECT.write('P'); // Payload
-  SERIAL_OBJECT.write('R'); // Payload
-  SERIAL_OBJECT.write('S'); // Payload
-
-  // Send a binary data size in 4byte
-  SERIAL_OBJECT.write((size >> 24) & 0xFF);
-  SERIAL_OBJECT.write((size >> 16) & 0xFF);
-  SERIAL_OBJECT.write((size >>  8) & 0xFF);
-  SERIAL_OBJECT.write((size >>  0) & 0xFF);
-
-  // Send binary data
-  SERIAL_OBJECT.write(data,size);  
 }
 
 int store_task(int argc, FAR char *argv[])
@@ -297,42 +279,41 @@ int store_task(int argc, FAR char *argv[])
     for(int i=0;i<FRAME_NUMBER;i++){
       if(frame_buffer[i].renable){
         frame_buffer[i].renable = false;
-#if 0
+
+#ifdef ENABLE_DATA_COLLECTION
         sprintf(filename, "Data/data%03d.csv", gCounter++);
         puts(filename);
         if (theSD.exists(filename)) theSD.remove(filename);
         File myFile = theSD.open(filename, FILE_WRITE);
         myFile.write((uint8_t*)frame_buffer[i].buffer,proc_size);
         myFile.close();
-#endif
+        gCounter++;
+#endif /* ENABLE_DATA_COLLECTION */
 
 #ifdef VIEW_RAW_DATA
 
-        send_data((uint8_t*)frame_buffer[i].buffer_i,400);
+        send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample);
 
 #else
-
-        for(int j=0;j<proc_size;j++){
+        for(int j=0;j<frame_buffer[i].sample;j++){
           frame_buffer[i].buffer_i[j] = (uint16_t)(frame_buffer[i].buffer[j]*1000);
         }
-        send_data((uint8_t*)frame_buffer[i].buffer_i,400);
+        send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample);
 
 #endif /* WIEW_RAW_DATA */
 
-//        usleep(100*1000);
+//        usleep(20000*1000);
         
+        frame_buffer[i].sample = 0;
         frame_buffer[i].wenable = true;
+
         if(gCounter==collection_number){
           theFrontEnd->stop();
         }
-      }
-      
+      }      
     }
   }
 }
-
-#endif /* ENABLE_DATA_COLLECTION */
-
 
 /**
  * @brief Main loop
@@ -355,22 +336,17 @@ void loop() {
   int ret = MP.Recv(&rcvid, &result, proc_core);
   if(ret >= 0){
 
-#ifdef ENABLE_DATA_COLLECTION
     for(int i=0;i<FRAME_NUMBER;i++){
       if(frame_buffer[i].wenable){
         frame_buffer[i].wenable = false;
-        memcpy(frame_buffer[i].buffer,result->buffer,proc_size);
+        frame_buffer[i].sample = result->sample;
+        memcpy(frame_buffer[i].buffer,result->buffer,result->sample*2);
         frame_buffer[i].renable = true;
         break;
       }
     }
-#endif /* ENABLE_DATA_COLLECTION */
-
-    request.buffer  = result->buffer;
-    request.sample  = result->sample;
-//    MP.Send(sndid, &request, conn_core);
   }
-
+usleep(1);
   if (isEnd) {
     theFrontEnd->stop();
     goto exitCapturing;

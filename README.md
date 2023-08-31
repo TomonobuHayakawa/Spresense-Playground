@@ -47,6 +47,11 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
             ├ spresense_e220900t22s_jp_lib
 ```
 
+2023/8/31
+
+・WiFiのUDP経由でProcessinを使って周波数特性と生波形を観測するサンプルを追加しました。
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/FrequencyCharacteristic
+
 
 2023/8/30
 
