@@ -25,7 +25,7 @@
 
 #include "CoreInterface.h"
 
-#define  ENABLE_DATA_COLLECTION
+//#define  ENABLE_DATA_COLLECTION
 
 FrontEnd *theFrontEnd;
 SDClass theSD;
@@ -149,8 +149,10 @@ void setup()
   /* receive with non-blocking */
   MP.RecvTimeout(1);
 
-  /* Use SD card */
+#ifdef ENABLE_DATA_COLLECTION
+ /* Use SD card */
   theSD.begin();
+#endif /* ENABLE_DATA_COLLECTION */
 
   /* start audio system */
   theFrontEnd = FrontEnd::getInstance();
@@ -211,6 +213,7 @@ bool execute_aframe()
     request.sample  = size / 2;
 
     MP.Send(sndid, &request, proc_core);
+    MP.Send(sndid, &request, view_core);
 
   }
 

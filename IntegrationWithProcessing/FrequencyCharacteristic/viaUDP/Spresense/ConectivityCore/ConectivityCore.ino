@@ -34,12 +34,13 @@ TWIFI_Params gsparams;
 const int subcore = 2;
 
 #define FRAME_NUMBER 4
-#define DATA_SIZE    700 /* tentative! */
-#define HEADER_SIZE  (8/sizeof(uint16_t))   /* tentative! */
+#define DATA_SIZE    2048 /* tentative! */
+#define HEADER_SIZE  (12/sizeof(uint16_t))   /* tentative! */
 
 struct FrameInfo{
   uint16_t buffer[HEADER_SIZE+DATA_SIZE+1];
-  uint32_t sample;
+  int32_t sample;
+  uint32_t frame_no;
   bool renable;
   bool wenable;
   FrameInfo():renable(false),wenable(true){}
@@ -110,7 +111,7 @@ int connect_task(int argc, FAR char *argv[])
         if(!send_data(frame_buffer[i])){
           puts("send miss!");
           gs2200.stop(server_cid);
-          sleep(2);
+          sleep(1);
           server_cid = gs2200.connectUDP(UDPSRVR_IP, UDPSRVR_PORT, LocalPort);
           usleep(100*1000);
         }
@@ -119,20 +120,32 @@ int connect_task(int argc, FAR char *argv[])
   }
 }
 
+#define SPI_MAX_SIZE   700
+#define TXBUFFER_SIZE  SPI_MAX_SIZE
+
 bool send_data(FrameInfo& frame)
 {
   frame.renable = false;
 
-//  frame.sample = frame.sample+HEADER_SIZE+1;
-//  frame.sample = 400+HEADER_SIZE+1;
-  frame.sample = 400+1;
-  
+  frame.sample = 650;
+
   memcpy(frame.buffer,"SPRS",4);
   memcpy(&frame.buffer[2],&frame.sample,4);
+  memcpy(&frame.buffer[4],&frame.frame_no,4);
+      printf("frame no = %d\n",frame.frame_no);
   frame.buffer[HEADER_SIZE+frame.sample] = '\0';
-  bool ret = gs2200.write(server_cid, (const uint8_t*)frame.buffer, (frame.sample+HEADER_SIZE)*sizeof(uint16_t));
+  frame.sample += HEADER_SIZE+1;
+  uint8_t* ptr = (uint8_t*)frame.buffer;
+  while(frame.sample>0){
+    int write_sample = ((frame.sample > TXBUFFER_SIZE) ? TXBUFFER_SIZE : frame.sample);
+    printf("write_sample = %d\n",write_sample);
+    bool ret = gs2200.write(server_cid, (const uint8_t*)ptr, write_sample*sizeof(uint16_t));
+    if(!ret) return ret;
+    ptr += write_sample*sizeof(uint16_t);
+    frame.sample -= write_sample;
+  }
   frame.wenable = true;
-  return ret;
+  return true;
 }
 
 void loop()
@@ -144,19 +157,19 @@ void loop()
   /* Receive PCM captured buffer from MainCore */
   ret = MP.Recv(&rcvid, &request);
   if (ret >= 0) {
-    write_buffer(request->buffer,request->sample);
+    write_buffer(request->buffer,request->sample,request->frame_no);
   }
 
 }
 
-int write_buffer(uint16_t* data,int sample)
+int write_buffer(uint16_t* data,int sample,uint32_t frame_no)
 {
   for(int i=0;i<FRAME_NUMBER;i++){
     if(frame_buffer[i].wenable){
       frame_buffer[i].wenable = false;
       frame_buffer[i].sample = ((DATA_SIZE > sample) ? sample : DATA_SIZE);
-//      printf("write %x,%d\n",&frame_buffer[i].buffer[HEADER_SIZE],frame_buffer[i].sample*sizeof(uint16_t));
       memcpy(&frame_buffer[i].buffer[HEADER_SIZE],data,sample*sizeof(uint16_t));
+      frame_buffer[i].frame_no = frame_no;
       frame_buffer[i].renable = true;
       return 0;
     }

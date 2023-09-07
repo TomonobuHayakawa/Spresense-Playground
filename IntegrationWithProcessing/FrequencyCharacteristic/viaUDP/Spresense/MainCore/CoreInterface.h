@@ -25,12 +25,14 @@
 struct Request {
   void *buffer;
   int  sample;
-  Request():buffer(0),sample(0){}
+  uint32_t frame_no;
+  Request():buffer(0),sample(0),frame_no(0){}
 };
 
 struct Result {
   void *buffer;
   int  sample;
+  uint32_t frame_no;
   int  channel;
 };
 

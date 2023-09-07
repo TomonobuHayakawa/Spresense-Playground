@@ -19,25 +19,30 @@
 
 void setup()
 {
-  Serial.begin(921600);
-//  Serial.begin(115200);
+//  Serial.begin(921600);
+  Serial.begin(115200);
   while (!Serial);
-  Serial2.begin(921600);
-//   Serial2.begin(115200);
+//  Serial2.begin(921600);
+//  Serial2.begin(31250);
+//  Serial2.begin(38400);
+   Serial2.begin(115200);
   while (!Serial2);
+
+  Serial.println("start");
 }
 
 void loop()
 {
-  while (Serial.available()) {
-//    ledOn(LED0);
+while (Serial.available()) {
+ledOn(LED0);
     Serial2.write(Serial.read());
 //    ledOff(LED0);
   }
+
   while (Serial2.available()) {
-//    ledOn(LED1);
+    ledOn(LED1);
     Serial.write(Serial2.read());
-//    ledOff(LED1);
+    ledOff(LED1);
   }
 
 }

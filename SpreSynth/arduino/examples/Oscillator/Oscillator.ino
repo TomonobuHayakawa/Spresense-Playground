@@ -1,5 +1,5 @@
 /*
- *  ViewCore.ino - Oscillator & Sequencer Application on SpreSynth.
+ *  Oscillator.ino - Oscillator & Sequencer Application on SpreSynth.
  *  Copyright 2023 T.Hayakawa
  *
  *  This library is free software; you can redistribute it and/or

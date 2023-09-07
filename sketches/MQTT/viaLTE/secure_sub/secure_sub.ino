@@ -1,15 +1,23 @@
+
+
+
+
+
+
 #include <SDHCI.h>
 #include <LTE.h>
 #include <ArduinoMqttClient.h>
 
-// APN name
-#define APP_LTE_APN "soracom.io" // replace your APN
+//#define APP_LTE_APN "soracom.io" // replace your APN
+#define APP_LTE_APN "iijmio.jp" // replace your APN
 
 /* APN authentication settings
  * Ignore these parameters when setting LTE_NET_AUTHTYPE_NONE.
  */
-#define APP_LTE_USER_NAME "sora" // replace with your username
-#define APP_LTE_PASSWORD  "sora" // replace with your password
+#define APP_LTE_USER_NAME "mio@iij"     // replace with your username
+#define APP_LTE_PASSWORD  "iij" // replace with your password
+//#define APP_LTE_USER_NAME "sora" // replace with your username
+//#define APP_LTE_PASSWORD  "sora" // replace with your password
 
 // APN IP type
 #define APP_LTE_IP_TYPE (LTE_NET_IPTYPE_V4V6) // IP : IPv4v6
@@ -34,7 +42,7 @@
 #define BROKER_NAME "test.mosquitto.org"   // replace with your broker
 #define BROKER_PORT 8883                   // port 8883 is the default for MQTT over TLS.
                                            // for this client, if required by the server.
-#define ROOTCA_FILE "mosquitto.org.crt"    // Define the path to a file containing CA
+#define ROOTCA_FILE "mosquitto.org.der"    // Define the path to a file containing CA
                                            // certificates that are trusted.
 
 // MQTT topic

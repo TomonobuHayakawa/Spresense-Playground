@@ -26,13 +26,16 @@
 #include <LTE.h>
 
 // APN name
-#define APP_LTE_APN "iijmio.jp" // replace your APN
+//#define APP_LTE_APN "iijmio.jp" // replace your APN
+#define APP_LTE_APN "sakura" // replace your APN
 
 /* APN authentication settings
  * Ignore these parameters when setting LTE_NET_AUTHTYPE_NONE.
  */
-#define APP_LTE_USER_NAME "mio@iij" // replace with your username
-#define APP_LTE_PASSWORD  "iij" // replace with your password
+//#define APP_LTE_USER_NAME "mio@iij" // replace with your username
+//#define APP_LTE_PASSWORD  "iij" // replace with your password
+#define APP_LTE_USER_NAME "" // replace with your username
+#define APP_LTE_PASSWORD  "" // replace with your password
 
 // APN IP type
 #define APP_LTE_IP_TYPE (LTE_NET_IPTYPE_V4V6) // IP : IPv4v6

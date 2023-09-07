@@ -20,8 +20,8 @@
 /*-------------------------------------------------------------------------*
  * Configration
  *-------------------------------------------------------------------------*/
-#define  AP_SSID        "AP_SSID_NAME"
-#define  PASSPHRASE     "123456789"
+#define  AP_SSID        "elecom-2106eb"
+#define  PASSPHRASE     "ax2ukace9d9m"
 
 #define  UDPSRVR_IP     "192.168.2.102"
 #define  UDPSRVR_PORT   "10001"

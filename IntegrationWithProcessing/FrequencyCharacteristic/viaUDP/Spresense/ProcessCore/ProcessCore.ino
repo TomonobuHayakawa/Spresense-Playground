@@ -64,6 +64,8 @@ void setup()
   FFT.begin();
 }
 
+uint32_t g_frame_no = 0;
+
 void loop()
 {
   int      ret;
@@ -85,6 +87,8 @@ void loop()
 
       result[buffer_pos].buffer = (void*)MP.Virt2Phys(&OutBuffer[buffer_pos][i]);
       result[buffer_pos].sample = FFT_LEN/2;
+      result[buffer_pos].frame_no = g_frame_no;
+      g_frame_no++;
       uint16_t *data = result[buffer_pos].buffer;
       ret = MP.Send(sndid, &result[buffer_pos],0);
       if (ret < 0) {

@@ -200,12 +200,15 @@ struct FrameInfo{
   float buffer[proc_size];
   uint16_t buffer_i[proc_size];
   int sample;
+  uint32_t frame_no;
   bool renable;
   bool wenable;
-  FrameInfo():sample(0),renable(false),wenable(true){}
+  FrameInfo():sample(0),frame_no(0),renable(false),wenable(true){}
 };
 
 FrameInfo frame_buffer[FRAME_NUMBER];
+
+uint32_t g_frame_no = 0;
 
 /**
  * @brief Capture a frame of PCM data into buffer for signal processing
@@ -227,11 +230,12 @@ bool execute_aframe()
       return false;
     }
 
-    request.buffer  = proc_buffer;
-    request.sample  = size / 2;
+    request.buffer   = proc_buffer;
+    request.sample   = size / 2;
+    request.frame_no = g_frame_no;
+    g_frame_no++;
 
 #ifndef VIEW_RAW_DATA
-
     MP.Send(sndid, &request, proc_core);
 
 #else 
@@ -240,8 +244,8 @@ bool execute_aframe()
       if(frame_buffer[i].wenable){
         frame_buffer[i].wenable = false;
         frame_buffer[i].sample = size/2;
+        frame_buffer[i].frame_no = g_frame_no;
         memcpy(frame_buffer[i].buffer_i,proc_buffer,size);
-//        for(int j = 0; j<400; j++) frame_buffer[i].buffer_i[j] = j*100;
         frame_buffer[i].renable = true;
         break;
       }
@@ -256,13 +260,14 @@ bool execute_aframe()
 
 const int collection_number = 500;
 
-void send_data(byte* data,int sample)
+void send_data(byte* data,int sample,uint32_t frame_no)
 {
   static Request request;
   int8_t sndid = NOMAL_REQUEST_ID;
 
   request.buffer  = data;
   request.sample  = sample;
+  request.frame_no  = frame_no;
   MP.Send(sndid, &request, conn_core);
 
 }
@@ -292,13 +297,13 @@ int store_task(int argc, FAR char *argv[])
 
 #ifdef VIEW_RAW_DATA
 
-        send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample);
+        send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample,frame_buffer[i].frame_no);
 
 #else
         for(int j=0;j<frame_buffer[i].sample;j++){
           frame_buffer[i].buffer_i[j] = (uint16_t)(frame_buffer[i].buffer[j]*1000);
         }
-        send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample);
+        send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample,frame_buffer[i].frame_no);
 
 #endif /* WIEW_RAW_DATA */
 
@@ -340,6 +345,7 @@ void loop() {
       if(frame_buffer[i].wenable){
         frame_buffer[i].wenable = false;
         frame_buffer[i].sample = result->sample;
+        frame_buffer[i].frame_no = result->frame_no;
         memcpy(frame_buffer[i].buffer,result->buffer,result->sample*2);
         frame_buffer[i].renable = true;
         break;

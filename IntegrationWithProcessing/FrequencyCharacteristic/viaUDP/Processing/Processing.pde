@@ -10,12 +10,11 @@ ControlP5 cp5;
 final String IP = "192.168.2.109";
 final int PORT = 10002;
 
-final boolean VIEW_RAW_DATA = true;
-//final boolean VIEW_RAW_DATA = false;
+//final boolean VIEW_RAW_DATA = true;
+final boolean VIEW_RAW_DATA = false;
 
-//static int frame_sample = 1024;
-//static int data_number = frame_sample / 2;
-static int data_number = (700+1);
+static int frame_sample = 1024;
+static int max_data_number = frame_sample;
 
 String msg = "test_messege";
 
@@ -34,35 +33,63 @@ void UDP_Msg(){
   udp.send(msg,IP,PORT);
 }
 
+byte [] recieve_data;
+boolean recieve_data_ready = false;
+int recieve_number = 0;
+int rest_number = 0;
+int frame_no = 0;
+
 void receive( byte[] data, String ip, int port ) {
 
-  if(!find_sync(data)){
+  if(rest_number > 0){
+    byte [] tmp = concat(recieve_data,data);
+    recieve_data = tmp;
+    rest_number -= (data.length);
+  }else if(!find_sync(data)){
     recover();
     return;
   }
-  int now = millis();
-  println( "receive: \""+data+"\" from "+ip+" on port "+port , "time=", now - base_time, "[ms]");
-  base_time = now;
+  if(rest_number <= 0){
+    recieve_data_ready = true;
+
+    int now = millis();
+    println( "receive: \""+data+"\" from "+ip+" on port "+port , "time=", now - base_time, "[ms]");
+    base_time = now;
+  }
 }
 
-int pos=0;
 
-float [] data_f = new float[data_number];
-short [] data_i = new short[data_number];
-
-byte [] recieve_data;
-boolean recieve_data_ready = false;
 
 boolean find_sync(byte[] data)
 {
   String sync_words = "0000";
 
-  for(int i=0;i<data.length;i++){
+  for(int i=0;i<data.length;){
     sync_words = sync_words.substring(1);
     sync_words = sync_words + (char)data[i];
+    i++;
     if(sync_words.equals("SPRS")){
-      recieve_data = Arrays.copyOfRange(data,(i+1),(data.length));
-      recieve_data_ready = true;
+      recieve_number = data[i+3] & 0xff;
+      recieve_number <<= 8;
+      recieve_number += data[i+2] & 0xff;
+      recieve_number <<= 8;
+      recieve_number += data[i+1] & 0xff;
+      recieve_number <<= 8;
+      recieve_number += (data[i] & 0xff) + 1;
+      recieve_number *= 2;
+      i += 4;
+      frame_no = data[i+3] & 0xff;
+      frame_no <<= 8;
+      frame_no += data[i+2] & 0xff;
+      frame_no <<= 8;
+      frame_no += data[i+1] & 0xff;
+      frame_no <<= 8;
+      frame_no += data[i] & 0xff;
+      i += 4;
+      println("frame_no = ",frame_no);
+      recieve_data = Arrays.copyOfRange(data,(i),(data.length)-i);
+      rest_number = recieve_number - (data.length) + i;
+      if(rest_number <= 0) recieve_data_ready = true;
       return true;
     }
   }
@@ -73,6 +100,8 @@ void draw()
 {
   if(!recieve_data_ready) return;
   
+//   println("draw = ",recieve_data.length);
+//   draw_graph(recieve_data,recieve_data.length);
    draw_graph(recieve_data,recieve_data.length);
    
    recieve_data_ready = false;
