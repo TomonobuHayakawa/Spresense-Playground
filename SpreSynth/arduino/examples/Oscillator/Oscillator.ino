@@ -56,7 +56,8 @@ const int controller_core = 1;
 
 /* DSP file path */
 
-#define DSPBIN_PATH           "/mnt/spif/BIN/OSCPROC"
+//#define DSPBIN_PATH           "/mnt/spif/BIN/OSCPROC"
+#define DSPBIN_PATH           "/mnt/sd0/BIN/OSCPROC"
 
 /* Set volume[db] */
 
