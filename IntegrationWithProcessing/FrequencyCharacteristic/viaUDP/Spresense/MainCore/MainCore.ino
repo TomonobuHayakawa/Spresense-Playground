@@ -26,7 +26,7 @@
 #define  CONSOLE_BAUDRATE  115200
 
 //#define  ENABLE_DATA_COLLECTION
-//#define  VIEW_RAW_DATA
+#define  VIEW_RAW_DATA
 
 FrontEnd *theFrontEnd;
 SDClass theSD;
@@ -118,6 +118,9 @@ static void frontend_pcm_callback(AsPcmDataParam pcm)
   return;
 }
 
+
+//File myFile;
+
 /**
  *  @brief Setup audio device to capture PCM stream
  *
@@ -153,12 +156,16 @@ void setup()
   }
 
   /* receive with non-blocking */
-  MP.RecvTimeout(10);
+  MP.RecvTimeout(1);
 
 #ifdef ENABLE_DATA_COLLECTION
   /* Use SD card */
   theSD.begin();
 #endif /* ENABLE_DATA_COLLECTION */
+
+//  theSD.begin();
+//  if (theSD.exists("raw.raw")) theSD.remove("raw.raw");
+//  myFile = theSD.open("raw.raw", FILE_WRITE);
 
   /* start audio system */
   theFrontEnd = FrontEnd::getInstance();
@@ -298,6 +305,14 @@ int store_task(int argc, FAR char *argv[])
 #ifdef VIEW_RAW_DATA
 
         send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample,frame_buffer[i].frame_no);
+//printf("main sample=%d\n",frame_buffer[i].sample);
+/*      if(gCounter<30){
+        myFile.write((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample*2);
+        gCounter++;
+      }else if(gCounter==30){
+        myFile.close();
+        gCounter++;
+      }*/
 
 #else
         for(int j=0;j<frame_buffer[i].sample;j++){
@@ -306,8 +321,6 @@ int store_task(int argc, FAR char *argv[])
         send_data((uint8_t*)frame_buffer[i].buffer_i,frame_buffer[i].sample,frame_buffer[i].frame_no);
 
 #endif /* WIEW_RAW_DATA */
-
-//        usleep(20000*1000);
         
         frame_buffer[i].sample = 0;
         frame_buffer[i].wenable = true;
@@ -352,7 +365,7 @@ void loop() {
       }
     }
   }
-usleep(1);
+
   if (isEnd) {
     theFrontEnd->stop();
     goto exitCapturing;

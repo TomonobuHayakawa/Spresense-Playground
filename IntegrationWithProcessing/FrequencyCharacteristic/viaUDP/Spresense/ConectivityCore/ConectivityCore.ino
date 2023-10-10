@@ -127,8 +127,6 @@ bool send_data(FrameInfo& frame)
 {
   frame.renable = false;
 
-  frame.sample = 650;
-
   memcpy(frame.buffer,"SPRS",4);
   memcpy(&frame.buffer[2],&frame.sample,4);
   memcpy(&frame.buffer[4],&frame.frame_no,4);

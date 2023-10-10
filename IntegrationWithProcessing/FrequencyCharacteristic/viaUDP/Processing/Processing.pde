@@ -7,16 +7,23 @@ UDP udp;
 ControlP5 cp5;
 
 // Please change the serial setting for user environment
-final String IP = "192.168.2.109";
+final String IP = "192.168.2.133";
 final int PORT = 10002;
 
-//final boolean VIEW_RAW_DATA = true;
-final boolean VIEW_RAW_DATA = false;
+final boolean VIEW_RAW_DATA = true;
+//final boolean VIEW_RAW_DATA  = false;
+
+final boolean SAVE_RAW_DATA  = true;
+//final boolean SAVE_RAW_DATA  = false;
+
+final String  SAVE_FILE_NAME = "data/pcm.raw";
+int           SAVE_DATA_SIZE = 100;
 
 static int frame_sample = 1024;
 static int max_data_number = frame_sample;
 
 String msg = "test_messege";
+OutputStream output;
 
 void setup()
 {
@@ -25,6 +32,12 @@ void setup()
 
   udp = new UDP( this, 10001 );  
   udp.listen( true );
+
+  if(VIEW_RAW_DATA){
+    if(SAVE_RAW_DATA){
+        output = createOutput(SAVE_FILE_NAME);
+    }
+  }
 
   UDP_Msg();
 }
@@ -55,6 +68,10 @@ void receive( byte[] data, String ip, int port ) {
     int now = millis();
     println( "receive: \""+data+"\" from "+ip+" on port "+port , "time=", now - base_time, "[ms]");
     base_time = now;
+  }
+
+  if(SAVE_RAW_DATA){
+    save_data(recieve_data,recieve_data.length);
   }
 }
 
@@ -87,7 +104,7 @@ boolean find_sync(byte[] data)
       frame_no += data[i] & 0xff;
       i += 4;
       println("frame_no = ",frame_no);
-      recieve_data = Arrays.copyOfRange(data,(i),(data.length)-i);
+      recieve_data = Arrays.copyOfRange(data,(i),data.length);
       rest_number = recieve_number - (data.length) + i;
       if(rest_number <= 0) recieve_data_ready = true;
       return true;
@@ -100,17 +117,36 @@ void draw()
 {
   if(!recieve_data_ready) return;
   
+  if(!SAVE_RAW_DATA){
 //   println("draw = ",recieve_data.length);
-//   draw_graph(recieve_data,recieve_data.length);
-   draw_graph(recieve_data,recieve_data.length);
-   
-   recieve_data_ready = false;
-
+     draw_graph(recieve_data,recieve_data.length);
+     recieve_data_ready = false;
+  }
 }
 
 // for debug
 int count = 0;
 int base_time = 0;
+
+void save_data(byte[]data, int size)
+{
+  println("draw size = "+(size-4));
+  
+  for (int i=4; i < size-4; i=i+2) {
+    try {
+      if(SAVE_DATA_SIZE<0){
+        output.flush();
+        output.close();
+        exit();
+      }
+      output.write(byte(data[i+1] & 0xff));
+      output.write(byte(data[i] & 0xff));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  SAVE_DATA_SIZE--;
+}
 
 void draw_graph(byte[]data, int size)
 {
