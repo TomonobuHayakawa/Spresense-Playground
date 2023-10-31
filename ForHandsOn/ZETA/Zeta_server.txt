@@ -1,0 +1,11 @@
+https://zeta.sotpot.jp/network/#/login
+
+ID:alliance_seminar
+PASS:alliance_seminar
+
+----------
+
+https://zview.sotpot.jp/
+
+ID:alliance_seminar
+PASS:seminar1234
