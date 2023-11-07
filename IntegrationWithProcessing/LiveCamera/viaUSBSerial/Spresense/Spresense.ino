@@ -27,30 +27,12 @@ USBSerial UsbSerial;
 
 // Please select the display size
 //int16_t width = CAM_IMGSIZE_QVGA_H,    height = CAM_IMGSIZE_QVGA_V;
-int16_t width = CAM_IMGSIZE_VGA_H,     height = CAM_IMGSIZE_VGA_V;
-//int16_t width = CAM_IMGSIZE_HD_H,      height = CAM_IMGSIZE_HD_V;
+//int16_t width = CAM_IMGSIZE_VGA_H,     height = CAM_IMGSIZE_VGA_V;
+int16_t width = CAM_IMGSIZE_HD_H,      height = CAM_IMGSIZE_HD_V;
 //int16_t width = CAM_IMGSIZE_QUADVGA_H, height = CAM_IMGSIZE_QUADVGA_V;
 //int16_t width = CAM_IMGSIZE_FULLHD_H,  height = CAM_IMGSIZE_FULLHD_V;
 //int16_t width = CAM_IMGSIZE_5M_H,      height = CAM_IMGSIZE_5M_V;
 //int16_t width = CAM_IMGSIZE_3M_H,      height = CAM_IMGSIZE_3M_V;
-
-void CamCB(CamImage img)
-{
-  static int toggle = 0;
-  static uint64_t base_time = 0;
-
-  // for debug
-  uint64_t now = millis();
-  printf("time= %lld [ms]\n", now - base_time);
-  base_time = now;
-  (toggle++ & 1) ? ledOn(LED1) : ledOff(LED1);
-
-  if (img.isAvailable()) {
-    send_jpeg(img.getImgBuff(), img.getImgSize());
-    uint64_t tdiff = millis() - now;
-    printf("time= %lld [ms] %.3lf [Mbps]\n", tdiff, (float)(img.getImgSize() * 8) / tdiff / 1000);
-  }
-}
 
 void setup()
 {
@@ -60,11 +42,7 @@ void setup()
   Serial.println("Done!");
 
   Serial.println("Prepare camera");
-  CamErr err = theCamera.begin(2,
-                        CAM_VIDEO_FPS_15,
-                        width,
-                        height,
-                        CAM_IMAGE_PIX_FMT_JPG);
+  CamErr err = theCamera.begin();
   assert(err == CAM_ERR_SUCCESS);
 
   /* Auto white balance configuration */
@@ -77,13 +55,34 @@ void setup()
   //err = theCamera.setAutoWhiteBalanceMode(CAM_WHITE_BALANCE_SHADE);
   assert(err == CAM_ERR_SUCCESS);
 
-  /* Start video stream */
-  err = theCamera.startStreaming(true, CamCB);
-  assert(err == CAM_ERR_SUCCESS);
+  err = theCamera.setStillPictureImageFormat(
+    width,                    
+    height,
+    CAM_IMAGE_PIX_FMT_JPG);
+  if (err != CAM_ERR_SUCCESS)
+    {
+      puts("error!");
+      exit(1);
+    }
 }
 
 void loop()
 {
+  static int toggle = 0;
+  static uint64_t base_time = 0;
+
+  // for debug
+  CamImage img = theCamera.takePicture();
+  if (img.isAvailable()) {
+    uint64_t now = millis();
+    base_time = now;
+    (toggle++ & 1) ? ledOn(LED1) : ledOff(LED1);
+    send_jpeg(img.getImgBuff(), img.getImgSize());
+    uint64_t tdiff = millis() - now;
+    printf("time= %lld [ms] %.3lf [Mbps]\n", tdiff, (float)(img.getImgSize() * 8) / tdiff / 1000);
+  }else{
+    usleep(10*1000);
+  }
 }
 
 int send_jpeg(const uint8_t* buffer, size_t size)
@@ -109,6 +108,11 @@ int send_jpeg(const uint8_t* buffer, size_t size)
     }
     sent += s;
   } while (sent < size);
+
+  SERIAL_OBJECT.write('E');  // Payload
+  SERIAL_OBJECT.write('N');  // Payload
+  SERIAL_OBJECT.write('D');  // Payload
+  SERIAL_OBJECT.write('\n'); // Payload
 
   return 0;
 }

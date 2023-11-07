@@ -12,9 +12,9 @@ void setup()
 {
   // Please select the display size specified for a spresense sketch
   //size(320, 240);   // QVGA
-  size(640, 480);   // VGA
+  //size(640, 480);   // VGA
   //size(1280, 960);  // QUADVGA
-  //size(1280, 720);  // HD
+  size(1280, 720);  // HD
   //size(1920, 1080); // FULLHD
   //size(2560, 1920); // 5M
   //size(2048, 1536); // 3M
@@ -27,6 +27,7 @@ void draw()
    recieve_data();
 }
 
+// Sync word finder
 boolean find_sync(int timeout)
 {
   String sync_words = "0000";
@@ -50,7 +51,23 @@ boolean find_sync(int timeout)
     }
   }
 }
-  
+
+// End code checker.
+boolean find_end()
+{
+  String end_words = new String();
+  for(int i= 0;i<4;i++){
+    if (serial.available() > 0) {
+      end_words += (char)serial.read();
+    }
+  }
+  if(!end_words.equals("END\n")){
+    println("Do not find end code.");
+    return false;
+  }
+  return true;
+}  
+
 // for debug
 int count = 0;
 int base_time = 0;
@@ -96,6 +113,8 @@ void recieve_data()
       delay(50);
     }
   }
+  
+  if (!find_end()) return;
 
   // Save data as a JPEG file and display it
   saveBytes(dataPath("sample.jpg"), data);
