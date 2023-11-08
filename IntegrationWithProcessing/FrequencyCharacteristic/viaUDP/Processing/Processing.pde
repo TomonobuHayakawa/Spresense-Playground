@@ -2,19 +2,20 @@ import hypermedia.net.*;
 import controlP5.*;
 
 import java.util.*;
+import java.io.*;
 
 UDP udp;
 ControlP5 cp5;
 
 // Please change the serial setting for user environment
-final String IP = "192.168.2.133";
+final String IP = "192.168.2.139";
 final int PORT = 10002;
 
-final boolean VIEW_RAW_DATA = true;
-//final boolean VIEW_RAW_DATA  = false;
+final String DATA_TYPE = "fft";
+//final String DATA_TYPE = "raw";
 
-final boolean SAVE_RAW_DATA  = true;
-//final boolean SAVE_RAW_DATA  = false;
+String MODE_TYPE = "draw";
+//String MODE_TYPE = "file";
 
 final String  SAVE_FILE_NAME = "data/pcm.raw";
 int           SAVE_DATA_SIZE = 100;
@@ -33,8 +34,8 @@ void setup()
   udp = new UDP( this, 10001 );  
   udp.listen( true );
 
-  if(VIEW_RAW_DATA){
-    if(SAVE_RAW_DATA){
+  if(DATA_TYPE.equals("raw")){
+    if(MODE_TYPE.equals("file")){
         output = createOutput(SAVE_FILE_NAME);
     }
   }
@@ -70,17 +71,19 @@ void receive( byte[] data, String ip, int port ) {
     base_time = now;
   }
 
-  if(SAVE_RAW_DATA){
-    save_data(recieve_data,recieve_data.length);
+  if(MODE_TYPE.equals("file")){
+    if(DATA_TYPE.equals("raw")){
+      save_data(recieve_data,recieve_data.length);
+    }else{
+      save_fft_data(recieve_data,recieve_data.length);
+    }
   }
+
 }
-
-
 
 boolean find_sync(byte[] data)
 {
   String sync_words = "0000";
-
   for(int i=0;i<data.length;){
     sync_words = sync_words.substring(1);
     sync_words = sync_words + (char)data[i];
@@ -116,9 +119,8 @@ boolean find_sync(byte[] data)
 void draw()
 {
   if(!recieve_data_ready) return;
-  
-  if(!SAVE_RAW_DATA){
-//   println("draw = ",recieve_data.length);
+
+  if(MODE_TYPE.equals("draw")){
      draw_graph(recieve_data,recieve_data.length);
      recieve_data_ready = false;
   }
@@ -132,7 +134,7 @@ void save_data(byte[]data, int size)
 {
   println("draw size = "+(size-4));
   
-  for (int i=4; i < size-4; i=i+2) {
+  for (int i=0; i < size-2; i=i+2) {
     try {
       if(SAVE_DATA_SIZE<0){
         output.flush();
@@ -148,13 +150,46 @@ void save_data(byte[]data, int size)
   SAVE_DATA_SIZE--;
 }
 
+void save_fft_data(byte[]data, int size)
+{
+  println("draw size = "+(size-4));
+  
+  String  FFT_FILE_NAME = "data/fft.dat";
+  DataOutputStream dout = new DataOutputStream(createOutput(FFT_FILE_NAME));
+  for (int i=0; i < size-2; i=i+2) {
+    try {
+      if(SAVE_DATA_SIZE<0){
+        dout.flush();
+        dout.close();
+        exit();
+      }
+      float data_f = float(int(data[i+1] & 0xff) <<8 | (data[i] & 0xff))/1000;
+      dout.writeFloat(data_f);
+      println(data_f);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+  SAVE_DATA_SIZE--;
+    try {
+        dout.flush();
+        dout.close();
+        exit();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    MODE_TYPE = "draw";
+}
+
 void draw_graph(byte[]data, int size)
 {
    background(255);
 
+//   if(size > 550) size = 550; //表示の速度のため制限してる
+
    for (int i=4; i < size-4; i=i+2) {
 
-if(!VIEW_RAW_DATA){
+if(DATA_TYPE.equals("fft")){
     float data_f_s = float(int(data[i+1] & 0xff) <<8 | (data[i] & 0xff))/1000;
     float data_f_e = float(int(data[i+3] & 0xff) <<8 | (data[i+2] & 0xff))/1000;
     float stx = map(i/2, 0,size/2, 0, width);

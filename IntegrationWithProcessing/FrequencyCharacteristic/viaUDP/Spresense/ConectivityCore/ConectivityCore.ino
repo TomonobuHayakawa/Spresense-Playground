@@ -108,11 +108,14 @@ int connect_task(int argc, FAR char *argv[])
   while(1){
     for(int i=0;i<FRAME_NUMBER;i++){
       if(frame_buffer[i].renable){
+        if(frame_buffer[i].sample > 700) frame_buffer[i].sample = 700;
         if(!send_data(frame_buffer[i])){
           puts("send miss!");
           gs2200.stop(server_cid);
+          puts("stoped!");
           sleep(1);
           server_cid = gs2200.connectUDP(UDPSRVR_IP, UDPSRVR_PORT, LocalPort);
+          puts("connect again!");
           usleep(100*1000);
         }
       }

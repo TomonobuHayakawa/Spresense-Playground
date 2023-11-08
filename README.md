@@ -20,6 +20,11 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/11/9
+
+・UDP経由で、Processingを使ってFFTデータを保存する機能を追加。
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/FrequencyCharacteristic/viaUDP
+
 2023/11/7
 
 ・Processinを使ってカメラのリアルタイム表示を行うサンプルを追加しました。
