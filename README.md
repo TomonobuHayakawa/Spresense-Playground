@@ -20,6 +20,11 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2023/11/17
+
+・サウンドエフェクター向けのサンプルを追加しました。
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/SoundEffector
+
 2023/11/9
 
 ・UDP経由で、Processingを使ってFFTデータを保存する機能を追加。
