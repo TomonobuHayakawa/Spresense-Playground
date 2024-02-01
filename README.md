@@ -15,14 +15,26 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 --------------------
 ## Add-Onボードピンアサイメント
 
-  ![ Add-Onボードピンアサイメント](/data/Add-On_board_pins.xlsx) 
+ 
+  ![ Add-Onボードピンアサイメント](data/Add-On_boards_pins.png) 
+
+  ![ Add-Onボードピンアサイメント(Excel)](/data/Add-On_board_pins.xlsx) 
 
 -------------------- 
 ## What's new.
 
+2024/1/31
+
+・Leafonyプラットフォーム上でのサンプルの追加
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/withLeafony
+
+・PIN情報の更新
+
 2023/11/17
 
 ・サウンドエフェクター向けのサンプルを追加しました。
+
   https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/SoundEffector
 
 2023/11/9
@@ -98,12 +110,6 @@ https://github.com/TomonobuHayakawa/arduino_midi_library
 ・各 3rdParty Add-Onボードのピンアサイメントを表にしました。</BR>
   ![Add-Onボードピンアサイメント](/data/Add-On_board_pins.xlsx) 
 
-2023/3/9
-
-・MM-S50MVは、ある程度整理したので、外部で使いやすいように別ライブラリにした。
-
-https://github.com/TomonobuHayakawa/MM-S50MV
-
 2023/2/25
 
 ・UDPなどのWiFi経由のためProcessingとの同期方法を変更
@@ -117,14 +123,14 @@ https://github.com/TomonobuHayakawa/MM-S50MV
 
 ・Processingとの連携用のサンプルを追加（USBSerial経由）
 
-  - 集音した音声データの周波数特性をProcrssingに表示するサンプル
+  - 集音した音声データの周波数特性をProcrssingに表示するサンプル<br>
   https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/FrequencyCharacteristic
   ※現在、8bitの整数値のみ送っているが、16ビットの小数第2位まで送るように変更予定。
 
 
 2023/2/19
 
-・音響診断用サンプルのバグを修正しました。
+・音響診断用サンプルのバグを修正しました。<br>
   https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/edge_ai/sound_analysis/sketches/FrequencyCharacteristicViewer
 
   - SDカードへの書き込みバッファの間違い
@@ -132,7 +138,7 @@ https://github.com/TomonobuHayakawa/MM-S50MV
 
 ・Processingとの連携用のサンプルを追加（USBSerial経由）
 
-  - 単純なデータプリントサンプル
+  - 単純なデータプリントサンプル<br>
   https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/SimpleSend
 
 ※こちらは、baggio63446333 さんの
@@ -148,10 +154,10 @@ https://github.com/TomonobuHayakawa/MM-S50MV
 
 key_word_detector を削除。KeywordDetectorを追加。
 
-KeywordDetectorには、以前からある Worker を使用するサンプルと、
+KeywordDetectorには、以前からある Worker を使用するサンプルと、<br>
 https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/KeywordDetector/KeywordDetector_w_worker
 
-ArduinoのSubCoreを使うサンプルを用意しました。
+ArduinoのSubCoreを使うサンプルを用意しました。<br>
 https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/KeywordDetector/KeywordDetector_wo_worker
 
 ※時間ができたら、NNCを使ったキーワード検出ライブラリを作成する予定です。
@@ -177,6 +183,7 @@ https://github.com/TomonobuHayakawa/GS2200-WiFi
 https://github.com/TomonobuHayakawa/spresense-arduino-compatible/releases/tag/v2.6.1
 
 
+
 2022/11/28
 
 ・SubCoreをつかってセンシングするためのサンプルを追加しました。
@@ -200,15 +207,6 @@ https://github.com/TomonobuHayakawa/USB_Host_Shield_2.0
         - secure_pub : 非認証、暗号でpublishするサンプル <br>
         - secure_sub : 非認証、暗号でsubscribeするサンプル <br>
 
-2022/06/15
-
-・ToFセンサ（MM-S50MV）のライブラリを更新
-
-- get1pのバグ修正
-- コードの整理
-- 正しいデータが取れるまでリトライに変更
-- OLEDを使ったサンプルの追加
-
 2021/11/19
 
 ・MQTT使って、相互のSpresense のシリアルを入力したら、もう一方のSpresenseのLEDを点灯させるデモを追加。
@@ -227,13 +225,6 @@ https://github.com/TomonobuHayakawa/USB_Host_Shield_2.0
     - viaLTE <br>
         - simple_pub : 非認証、非暗号でpublishするサンプル <br>
         - simple_sub : 非認証、非暗号でsubscribeするサンプル <br>
-
-・MM-S50MVライブラリ（Spresense用TOF）の細かな更新をしました。 <br>
-
-- マクロの準備。 <br>
-- 3次元測定サンプルのパラメータ変更。 <br>
-- 改行コード変更 <br>
-
 
 2021/06/11
 
@@ -308,12 +299,6 @@ sketchies : Arduinoスケッチを置く場所。
 11/17
 
 ・サンプルスケッチ、CO2センシング+Ambient via LTE/GS2200追加
-
-
-6/15
-
-・MM-S50MVライブラリ更新
-   - Magicナンバーのエラー時の処理を修正しました。
 
 6/5
 
