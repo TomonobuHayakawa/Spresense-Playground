@@ -18,10 +18,20 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
  
   ![ Add-Onボードピンアサイメント](data/Add-On_boards_pins.png) 
 
-  ![ Add-Onボードピンアサイメント(Excel)](/data/Add-On_board_pins.xlsx) 
+  ![ Add-Onボードピンアサイメント(PDF)](data/Add-On_board_pins.pdf) 
+
+  ![ Add-Onボードピンアサイメント(Excel)](data/Add-On_board_pins.xlsx) 
 
 -------------------- 
 ## What's new.
+
+2024/7/4
+
+・Add-on ボードPin情報の更新（GNSS/USB Host）
+
+・Spresenseで取得したステレオ音声データを、WiFi UDP経由でProcessingにリアルタイム表示をさせるサンプルの追加。
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/FrequencyCharacteristic/viaUDP_Multi
+
 
 2024/1/31
 
