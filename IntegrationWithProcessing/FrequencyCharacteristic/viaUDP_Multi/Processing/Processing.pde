@@ -8,27 +8,29 @@ UDP udp;
 ControlP5 cp5;
 
 // Please change the serial setting for user environment
-final String IP = "192.168.2.103";
+final String IP = "192.168.2.101";
 final int PORT = 10002;
 
-//final String DATA_TYPE = "fft";/final String DATA_TYPE = "raw";
-String DATA_TYPE = "raw";
+//final String DATA_TYPE = "fft";
+final String DATA_TYPE = "raw";
 
-String MODE_TYPE = "draw";
-//String MODE_TYPE = "file";
+//String MODE_TYPE = "draw";
+String MODE_TYPE = "file";
 
-final String  SAVE_FILE_NAME = "data/pcm.raw";
-int           SAVE_DATA_SIZE = 100;
+final String  SAVE_FILE0_NAME = "data/pcm0.raw";
+final String  SAVE_FILE1_NAME = "data/pcm1.raw";
+int           SAVE_DATA_SIZE = 1000;
 
 static int frame_sample = 1024;
 static int max_data_number = frame_sample;
 
 String msg = "test_messege";
-OutputStream output;
+OutputStream output0;
+OutputStream output1;
 
 void setup()
 {
-  size(800, 400);
+  size(800, 800);
   background(255);
 
   udp = new UDP( this, 10001 );  
@@ -36,7 +38,8 @@ void setup()
 
   if(DATA_TYPE.equals("raw")){
     if(MODE_TYPE.equals("file")){
-        output = createOutput(SAVE_FILE_NAME);
+        output0 = createOutput(SAVE_FILE0_NAME);
+        output1 = createOutput(SAVE_FILE1_NAME);
     }
   }
 
@@ -49,12 +52,14 @@ void UDP_Msg(){
 
 byte [] recieve_data;
 boolean recieve_data_ready = false;
+boolean draw_ready = true;
+int channel_number = 0;
 int recieve_number = 0;
 int rest_number = 0;
 int frame_no = 0;
 
 void receive( byte[] data, String ip, int port ) {
-
+   
   if(rest_number > 0){
     byte [] tmp = concat(recieve_data,data);
     recieve_data = tmp;
@@ -67,7 +72,7 @@ void receive( byte[] data, String ip, int port ) {
     recieve_data_ready = true;
 
     int now = millis();
-    println( "receive: \""+data+"\" from "+ip+" on port "+port , "time=", now - base_time, "[ms]");
+//    println( "receive: \""+data+"\" from "+ip+" on port "+port , "time=", now - base_time, "[ms]");
     base_time = now;
   }
 
@@ -89,15 +94,18 @@ boolean find_sync(byte[] data)
     sync_words = sync_words + (char)data[i];
     i++;
     if(sync_words.equals("SPRS")){
-      recieve_number = data[i+3] & 0xff;
-      recieve_number <<= 8;
-      recieve_number += data[i+2] & 0xff;
-      recieve_number <<= 8;
-      recieve_number += data[i+1] & 0xff;
+      if(draw_ready == true){
+      channel_number = data[i+1] & 0xff;
+      channel_number <<= 8;
+      channel_number += data[i] & 0xff;
+      i += 2;
+      
+      recieve_number = data[i+1] & 0xff;
       recieve_number <<= 8;
       recieve_number += (data[i] & 0xff) + 1;
       recieve_number *= 2;
-      i += 4;
+      i += 2;
+
       frame_no = data[i+3] & 0xff;
       frame_no <<= 8;
       frame_no += data[i+2] & 0xff;
@@ -106,10 +114,16 @@ boolean find_sync(byte[] data)
       frame_no <<= 8;
       frame_no += data[i] & 0xff;
       i += 4;
+//      println("recieve_number = ",recieve_number);
+//      println("data.length = ",data.length);
       println("frame_no = ",frame_no);
-      recieve_data = Arrays.copyOfRange(data,(i),data.length);
-      rest_number = recieve_number - (data.length) + i;
-      if(rest_number <= 0) recieve_data_ready = true;
+      println("channel_number = ",channel_number);
+        recieve_data = Arrays.copyOfRange(data,(i),data.length);
+        rest_number = recieve_number - (data.length) + i;
+        if(rest_number <= 0) recieve_data_ready = true;
+      }else{
+        println("drop frame");
+      }
       return true;
     }
   }
@@ -132,17 +146,24 @@ int base_time = 0;
 
 void save_data(byte[]data, int size)
 {
-  println("draw size = "+(size-4));
+//  println("draw size = "+(size-2));
   
   for (int i=0; i < size-2; i=i+2) {
     try {
       if(SAVE_DATA_SIZE<0){
-        output.flush();
-        output.close();
+        output0.flush();
+        output1.flush();
+        output0.close();
+        output1.close();
         exit();
       }
-      output.write(byte(data[i+1] & 0xff));
-      output.write(byte(data[i] & 0xff));
+      if(channel_number == 0){
+        output0.write(byte(data[i+1] & 0xff));
+        output0.write(byte(data[i] & 0xff));
+      }else{
+        output1.write(byte(data[i+1] & 0xff));
+        output1.write(byte(data[i] & 0xff));
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -185,8 +206,9 @@ void draw_graph(byte[]data, int size)
 {
    background(255);
 
-//   if(size > 550) size = 550; //表示の速度のため制限してる
+   if(size > 550) size = 520; //表示の速度のため制限してる
 
+   draw_ready = false;
    for (int i=4; i < size-4; i=i+2) {
 
 if(DATA_TYPE.equals("fft")){
@@ -198,16 +220,28 @@ if(DATA_TYPE.equals("fft")){
     float ety = map(data_f_e, 0,50, height, 0);
     line(stx, sty, etx, ety);
 }else{
+  if(channel_number == 0){
     int data_i_s = int(data[i+1] << 8 | (data[i] & 0xff));
     int data_i_e = int(data[i+3] << 8 | (data[i+2] & 0xff));
     int stx = (int)map(i, 0,size, 0, width);
-    int sty = (int)map(data_i_s, -32768, 32767, height, 0);
+    int sty = (int)map(data_i_s, -32768, 32767, height/2, 0);
     int etx = (int)map(i, 0, size, 0, width);
-    int ety = (int)map(data_i_e, -32768, 32767, height, 0);
+    int ety = (int)map(data_i_e, -32768, 32767, height/2, 0);
     line(stx, sty, etx, ety);
+  }else{
+    int data_i_s = int(data[i+1] << 8 | (data[i] & 0xff));
+    int data_i_e = int(data[i+3] << 8 | (data[i+2] & 0xff));
+    int stx = (int)map(i, 0,size, 0, width);
+    int sty = (int)map(data_i_s, -32768, 32767, height/2, 0);
+    int etx = (int)map(i, 0, size, 0, width);
+    int ety = (int)map(data_i_e, -32768, 32767, height/2, 0);
+    line(stx, sty+height/2, etx, ety+height/2);
+  }
 }
-
    } 
+   
+  draw_ready = true;
+
 }
 
 //
