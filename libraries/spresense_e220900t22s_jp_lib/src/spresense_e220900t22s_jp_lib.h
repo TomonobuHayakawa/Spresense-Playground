@@ -12,7 +12,19 @@
 #define LoRa_ModeSettingPin_M1 PIN_D21
 
 // LoRa_Header_Size
-#define LoRa_Header_Size 3
+#define LORA_HEADER_SIZE (3)
+
+// LoRa_Subblock_Size
+#define MAX_SUBPACKET_SIZE (200)
+
+#define SUBPACKET_32_BITS (0b11)
+#define SUBPACKET_64_BITS (0b10)
+#define SUBPACKET_128_BITS (0b01)
+#define SUBPACKET_200_BITS (0b00)
+
+// LoRa_Transmission Method
+#define TRANSPARENT_MODE (0b0)
+#define FIX_SIZE_MODE (0b1)
 
 // E220-900T22S(JP)のbaud rate
 #define LoRa_BaudRate 9600
@@ -37,7 +49,7 @@ struct LoRaConfigItem_t {
 };
 
 struct RecvFrameE220900T22SJP_t {
-  uint8_t recv_data[201];
+  uint8_t recv_data[MAX_SUBPACKET_SIZE + LORA_HEADER_SIZE];
   uint8_t recv_data_len;
   int rssi;
 };
@@ -59,13 +71,21 @@ public:
   int RecieveFrame(struct RecvFrameE220900T22SJP_t *recv_frame);
 
   /**
-   * @brief LoRa送信を行う
+   * @brief 固定送信モードでLoRa送信を行う
    * @param config LoRa設定値の格納先
    * @param send_data 送信データ
    * @param size 送信データサイズ
    * @return 0:成功 1:失敗
    */
   int SendFrame(struct LoRaConfigItem_t &config, uint8_t *send_data, int size);
+
+  /**
+   * @brief トランスペアレントモードでLoRa送信を行う
+   * @param send_data 送信データ
+   * @param size 送信データサイズ
+   * @return 0:成功 1:失敗
+   */
+  int SendFrame(uint8_t *send_data, int size);
 
   /**
    * @brief ノーマルモード(M0=0,M1=0)へ移行する
@@ -99,4 +119,5 @@ private:
   uint16_t encryption_key_val;
   uint16_t target_address_val;
   uint8_t target_channel_val;
+  uint8_t transmission_method_val;
 };

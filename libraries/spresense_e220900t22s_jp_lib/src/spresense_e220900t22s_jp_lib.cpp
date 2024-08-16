@@ -23,12 +23,15 @@ int CLoRa::InitLoRaModule(struct LoRaConfigItem_t &config) {
   uint8_t ADDL = config.own_address & 0xff;
   command.push_back(ADDH);
   command.push_back(ADDL);
+  own_address_val = config.own_address;
 
   // Register Address 02H
   uint8_t REG0 = 0;
   REG0 = REG0 | (config.baud_rate << 5);
   REG0 = REG0 | (config.air_data_rate);
   command.push_back(REG0);
+  baud_rate_val = REG0;
+  /* bw_val, sf_val*/
 
   // Register Address 03H
   uint8_t REG1 = 0;
@@ -37,10 +40,26 @@ int CLoRa::InitLoRaModule(struct LoRaConfigItem_t &config) {
   REG1 = REG1 | (config.transmission_pause_flag << 4);
   REG1 = REG1 | (config.transmitting_power);
   command.push_back(REG1);
+  switch(config.subpacket_size){
+  case SUBPACKET_32_BITS :
+    subpacket_size_val = 32;
+    break;
+  case SUBPACKET_64_BITS :
+    subpacket_size_val = 64;
+    break;
+  case SUBPACKET_128_BITS :
+    subpacket_size_val = 128;
+    break;
+  default :
+    subpacket_size_val = 200;
+    break;
+  }
+  transmitting_power_val = config.transmitting_power;
 
   // Register Address 04H
   uint8_t REG2 = config.own_channel;
   command.push_back(REG2);
+  own_channel_val = config.own_channel;
 
   // Register Address 05H
   uint8_t REG3 = 0;
@@ -49,12 +68,18 @@ int CLoRa::InitLoRaModule(struct LoRaConfigItem_t &config) {
   REG3 = REG3 | (config.lbt_flag << 4);
   REG3 = REG3 | (config.wor_cycle);
   command.push_back(REG3);
+  transmission_method_val = config.transmission_method_type;
+  wor_cycle_val = config.wor_cycle;
 
   // Register Address 06H, 07H
   uint8_t CRYPT_H = config.encryption_key >> 8;
   uint8_t CRYPT_L = config.encryption_key & 0xff;
   command.push_back(CRYPT_H);
   command.push_back(CRYPT_L);
+  encryption_key_val = config.encryption_key;
+
+  target_address_val = config.target_address;
+  target_channel_val = config.target_channel;
 
   SerialMon.printf("# Command Request\n");
   for (auto i : command) {
@@ -119,27 +144,71 @@ int CLoRa::RecieveFrame(struct RecvFrameE220900T22SJP_t *recv_frame) {
   return 0;
 }
 
+int CLoRa::SendFrame(uint8_t *send_data, int size) {
+
+  if(transmission_method_val == FIX_SIZE_MODE) {
+    SerialMon.printf("send mode missmatch.\n");
+    return 1;
+  }
+
+  if (size > subpacket_size_val) {
+    SerialMon.printf("send data length too long\n");
+    return 1;
+  }
+
+  uint8_t frame[size] = { 0 };  
+  memmove(frame, send_data, size);
+
+#if 1 /* print debug */
+  for (int i = 0; i < size; i++) {
+    SerialMon.printf("%c", frame[i]);
+  }
+  SerialMon.printf("\n");
+#endif
+
+  for (auto i : frame) {
+    SerialLoRa.write(i);
+  }
+  SerialLoRa.flush();
+  delay(100);
+  while (SerialLoRa.available()) {
+    while (SerialLoRa.available()) {
+      SerialLoRa.read();
+    }
+    delay(100);
+  }
+
+  return 0;
+
+}
+
 int CLoRa::SendFrame(struct LoRaConfigItem_t &config, uint8_t *send_data,
                      int size) {
+
+  if(transmission_method_val == TRANSPARENT_MODE) {
+    SerialMon.printf("send mode missmatch.\n");
+    return 1;
+  }
+
   uint8_t subpacket_size = 0;
   switch (config.subpacket_size) {
-    case 0b00:
+    case SUBPACKET_200_BITS:
       subpacket_size = 200;
       break;
-    case 0b01:
+    case SUBPACKET_128_BITS:
       subpacket_size = 128;
       break;
-    case 0b10:
+    case SUBPACKET_64_BITS:
       subpacket_size = 64;
       break;
-    case 0b11:
+    case SUBPACKET_32_BITS:
       subpacket_size = 32;
       break;
     default:
       subpacket_size = 200;
       break;
   }
-  subpacket_size = subpacket_size - LoRa_Header_Size;
+  subpacket_size = subpacket_size - LORA_HEADER_SIZE;
 
   if (size > subpacket_size) {
     SerialMon.printf("send data length too long\n");

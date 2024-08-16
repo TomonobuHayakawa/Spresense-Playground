@@ -25,6 +25,11 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2024/8/16
+
+・LoRaライブラリを更新。（トランスペアレントモード、WRO送信モードのサンプル追加など）
+
+
 2024/7/4
 
 ・Add-on ボードPin情報の更新（GNSS/USB Host）

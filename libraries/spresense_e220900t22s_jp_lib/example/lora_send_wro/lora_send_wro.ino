@@ -60,9 +60,9 @@ void setup() {
     Serial.printf("init ok\n");
   }
 
-  // ノーマルモード(M0=0,M1=0)へ移行する
-  SerialMon.printf("switch to normal mode\n");
-  lora.SwitchToNormalMode();
+  // WRO送信モード(M0=1,M1=0)へ移行する
+  SerialMon.printf("switch to wro send mode\n");
+  lora.SwitchToWORSendingMode();
 }
 
 void loop() {
