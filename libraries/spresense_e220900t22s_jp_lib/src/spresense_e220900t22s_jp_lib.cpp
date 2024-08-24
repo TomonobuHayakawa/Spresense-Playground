@@ -4,15 +4,22 @@
 template<typename T>
 bool ConfRange(T target, T min, T max);
 
+void CLoRa::begin() {
+  pinMode(LoRa_ModeSettingPin_M0, OUTPUT);
+  pinMode(LoRa_ModeSettingPin_M1, OUTPUT);
+  pinMode(LoRa_AuxPin, INPUT);
+
+  SerialLoRa.begin(LoRa_BaudRate);
+  delay(100);
+
+}
+
 int CLoRa::InitLoRaModule(struct LoRaConfigItem_t &config) {
   int ret = 0;
 
   // コンフィグモード(M0=1,M1=1)へ移行する
   SerialMon.printf("switch to configuration mode\n");
   SwitchToConfigurationMode();
-
-  SerialLoRa.begin(LoRa_BaudRate);
-  delay(100);
 
   // Configuration
   std::vector<uint8_t> command = { 0xc0, 0x00, 0x08 };
@@ -250,36 +257,24 @@ int CLoRa::SendFrame(struct LoRaConfigItem_t &config, uint8_t *send_data,
 }
 
 void CLoRa::SwitchToNormalMode(void) {
-  pinMode(LoRa_ModeSettingPin_M0, OUTPUT);
-  pinMode(LoRa_ModeSettingPin_M1, OUTPUT);
-
   digitalWrite(LoRa_ModeSettingPin_M0, 0);
   digitalWrite(LoRa_ModeSettingPin_M1, 0);
   delay(100);
 }
 
 void CLoRa::SwitchToWORSendingMode(void) {
-  pinMode(LoRa_ModeSettingPin_M0, OUTPUT);
-  pinMode(LoRa_ModeSettingPin_M1, OUTPUT);
-
   digitalWrite(LoRa_ModeSettingPin_M0, 1);
   digitalWrite(LoRa_ModeSettingPin_M1, 0);
   delay(100);
 }
 
 void CLoRa::SwitchToWORReceivingMode(void) {
-  pinMode(LoRa_ModeSettingPin_M0, OUTPUT);
-  pinMode(LoRa_ModeSettingPin_M1, OUTPUT);
-
   digitalWrite(LoRa_ModeSettingPin_M0, 0);
   digitalWrite(LoRa_ModeSettingPin_M1, 1);
   delay(100);
 }
 
 void CLoRa::SwitchToConfigurationMode(void) {
-  pinMode(LoRa_ModeSettingPin_M0, OUTPUT);
-  pinMode(LoRa_ModeSettingPin_M1, OUTPUT);
-
   digitalWrite(LoRa_ModeSettingPin_M0, 1);
   digitalWrite(LoRa_ModeSettingPin_M1, 1);
   delay(100);

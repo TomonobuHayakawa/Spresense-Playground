@@ -37,6 +37,8 @@ void setup() {
   sleep(1);
   Serial.printf("program start\n");
 
+   // LoRaライブラリの初期設定
+  lora.begin();
 
   // E220-900T22S(JP)へのLoRa初期設定
   if (lora.InitLoRaModule(config)) {

@@ -19,6 +19,9 @@ void setup() {
   sleep(1);
   Serial.printf("program start\n");
 
+   // LoRaライブラリの初期設定
+  lora.begin();
+
   // LoRa設定値
   struct LoRaConfigItem_t config = {
     0x0000,   // own_address 0

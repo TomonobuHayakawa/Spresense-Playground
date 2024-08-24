@@ -10,6 +10,7 @@
 // E220-900T22S(JP)へのピンアサイン
 #define LoRa_ModeSettingPin_M0 PIN_D20
 #define LoRa_ModeSettingPin_M1 PIN_D21
+#define LoRa_AuxPin            PIN_D19
 
 // LoRa_Header_Size
 #define LORA_HEADER_SIZE (3)
@@ -56,6 +57,14 @@ struct RecvFrameE220900T22SJP_t {
 
 class CLoRa {
 public:
+
+  /**
+   * @brief ライブラリのの初期化（pinの設定）
+   * @param なし
+   * @return なし
+   */
+  void begin();
+
   /**
    * @brief E220-900T22S(JP)へLoRa初期設定を行う
    * @param config LoRa設定値の格納先
