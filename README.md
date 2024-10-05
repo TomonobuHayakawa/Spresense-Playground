@@ -25,6 +25,13 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2024/10/5
+
+・SpresenseからLINEに通知を送るサンプルの追加
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/withLINE/viaLTE/notify_sample
+
+
 2024/8/16
 
 ・LoRaライブラリを更新。（トランスペアレントモード、WRO送信モードのサンプル追加など）
