@@ -25,6 +25,12 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2024/10/6
+
+・Spresenseをアクセスポイント（WiFi -> LTE）にするサンプルを追加。
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/sketches/AccessPoint/wifi-lte/
+
 2024/10/5
 
 ・SpresenseからLINEに通知を送るサンプルの追加
