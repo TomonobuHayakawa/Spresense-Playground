@@ -146,13 +146,13 @@ void setup()
   /* Launch SubCore */
   int ret = MP.begin(proc_core);
   if (ret < 0) {
-    printf("MP.begin error = %d\n", ret);
+    printf("MP.begin proc_core error = %d\n", ret);
   }
   
   /* Launch SubCore */
   ret = MP.begin(conn_core);
   if (ret < 0) {
-    printf("MP.begin error = %d\n", ret);
+    printf("MP.begin conn_core error = %d\n", ret);
   }
 
   /* receive with non-blocking */

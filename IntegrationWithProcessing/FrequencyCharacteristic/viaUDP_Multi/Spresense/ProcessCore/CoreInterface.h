@@ -21,6 +21,10 @@
 
 #include <MP.h>
 
+#if (SUBCORE != 1)
+#error "Core selection is wrong!!"
+#endif
+
 /* MultiCore definitions */
 struct Request {
   uint16_t *buffer;

@@ -30,9 +30,6 @@
 TelitWiFi gs2200;
 TWIFI_Params gsparams;
 
-/* Multi-core parameters */
-const int subcore = 2;
-
 #define FRAME_NUMBER 4
 #define DATA_SIZE    2048 /* tentative! */
 #define HEADER_SIZE  (12/sizeof(uint16_t))   /* tentative! */

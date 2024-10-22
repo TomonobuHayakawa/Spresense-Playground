@@ -18,9 +18,22 @@
  */
 #include "CoreInterface.h"
 
+#include "IIR.h"
+
 /*-----------------------------------------------------------------*/
 /*
- * FFT parameters
+ * IIR parameters
+ */
+/* Parameters */
+const int   g_channel = 1; /* Number of channels */
+const int   g_cutoff  = 12000; /* Cutoff frequency */
+const float g_Q       = sqrt(0.5); /* Q Value */
+
+IIRClass LPF;
+
+/*-----------------------------------------------------------------*/
+/*
+ *  parameters
  */
 //#define MAX_CHANNEL_NUM 1
 #define MAX_CHANNEL_NUM 2
@@ -48,6 +61,12 @@ void setup()
     errorLoop(2);
   }
 
+  if(!LPF.begin(TYPE_LPF, g_channel, g_cutoff, g_Q)) {
+    int err = LPF.getErrorCause();
+    printf("error! %d\n", err);
+    errorLoop(abs(err));
+  }
+
   /* receive with non-blocking */
   MP.RecvTimeout(100000);
 
@@ -68,8 +87,12 @@ void loop()
       for(int j=0;j<request->sample;j++){
         OutBuffer[buffer_pos][i][j] = *(uint16_t*)(request->buffer+j*request->channel+i);
       }
+      LPF.put((q15_t*)&OutBuffer[buffer_pos][i], request->sample);
+      for(int j=0;j<request->sample;j=j+2){
+        OutBuffer[buffer_pos][i][j/2] = OutBuffer[buffer_pos][i][j];
+      }
       result[buffer_pos].buffer = (void*)MP.Virt2Phys(&OutBuffer[buffer_pos][i]);
-      result[buffer_pos].sample = request->sample;
+      result[buffer_pos].sample = request->sample/2;
       result[buffer_pos].frame_no = request->frame_no;
       result[buffer_pos].channel = i;
 
