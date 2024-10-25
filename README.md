@@ -25,6 +25,12 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2024/10/25
+
+・高速シリアル通信とProcessing を使ったAIカメラのサンプル追加。（数字認識）
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/AiCamera/viaUSBSerial
+
 2024/10/18
 
 ・WiFi UDP経由での音声波形のリアルタイム表示・取得サンプルの更新。（利便性の向上）
