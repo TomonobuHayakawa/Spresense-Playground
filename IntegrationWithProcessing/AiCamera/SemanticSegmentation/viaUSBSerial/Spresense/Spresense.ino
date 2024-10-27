@@ -39,62 +39,84 @@ int16_t width = CAM_IMGSIZE_VGA_H,     height = CAM_IMGSIZE_VGA_V;
 SDClass SD;
 DNNRT dnnrt;
 
-#define OFFSET_X  (104)
-#define OFFSET_Y  (4)
-#define CLIP_WIDTH (112)
-#define CLIP_HEIGHT (224)
+#define OFFSET_X  (48)
+#define OFFSET_Y  (6)
+#define CLIP_WIDTH  (224)
+#define CLIP_HEIGHT  (224)
 #define DNN_WIDTH  (28)
 #define DNN_HEIGHT  (28)
 
-DNNVariable input(DNN_WIDTH*DNN_HEIGHT);
-const char label[11] = {'0','1','2','3','4','5','6','7','8','9',' '};
+// RGBの画像を入力
+DNNVariable input(DNN_WIDTH*DNN_HEIGHT*3);  
 
-uint8_t result_data = 10;
-uint8_t result_prob = 0;
+uint16_t sx, swidth, sy, sheight;
 
 void CamCB(CamImage img)
 {
 
   if (!img.isAvailable()) return;
 
-  // カメラ画像の切り抜きと縮小
-  CamImage small;
-  CamErr err = img.clipAndResizeImageByHW(small
-                     , OFFSET_X, OFFSET_Y
-                     , OFFSET_X + CLIP_WIDTH -1
-                     , OFFSET_Y + CLIP_HEIGHT -1
-                     , DNN_WIDTH, DNN_HEIGHT);
-                     
+  // 画像の切り出しと縮小
+  CamImage small; 
+  CamErr camErr = img.clipAndResizeImageByHW(small
+            ,OFFSET_X ,OFFSET_Y 
+            ,OFFSET_X+CLIP_WIDTH-1 ,OFFSET_Y+CLIP_HEIGHT-1 
+            ,DNN_WIDTH ,DNN_HEIGHT);
   if (!small.isAvailable()) return;
 
-  // 認識用モノクロ画像をDNNVariableに設定
-  uint16_t* imgbuf = (uint16_t*)small.getImgBuff();
-  float *dnnbuf = input.data();
-  for (int n = 0; n < DNN_HEIGHT*DNN_WIDTH; ++n) {
-    // YUV422の輝度成分をモノクロ画像として利用
-    // 学習済モデルの入力に合わせ0.0-1.0に正規化    
-    dnnbuf[n] = (float)(((imgbuf[n] & 0xf000) >> 8) 
-                      | ((imgbuf[n] & 0x00f0) >> 4))/255.;
+  // 画像をYUVからRGB565に変換
+  small.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565); 
+  uint16_t* sbuf = (uint16_t*)small.getImgBuff();
+
+  // RGBのピクセルをフレームに分割
+  float* fbuf_r = input.data();
+  float* fbuf_g = fbuf_r + DNN_WIDTH*DNN_HEIGHT;
+  float* fbuf_b = fbuf_g + DNN_WIDTH*DNN_HEIGHT;
+  for (int i = 0; i < DNN_WIDTH*DNN_HEIGHT; ++i) {
+   fbuf_r[i] = (float)((sbuf[i] >> 11) & 0x1F)/31.0; // 0x1F = 31
+   fbuf_g[i] = (float)((sbuf[i] >>  5) & 0x3F)/63.0; // 0x3F = 64
+   fbuf_b[i] = (float)((sbuf[i])       & 0x1F)/31.0; // 0x1F = 31
   }
-  // 推論の実行
+  
+  // 推論を実行
   dnnrt.inputVariable(input, 0);
   dnnrt.forward();
-  DNNVariable output = dnnrt.outputVariable(0);
-  int index = output.maxIndex();
-  
- // 推論結果の表示
-  String gStrResult;
-  if (index < 11) {
-    result_data = index;
-    result_prob = uint8_t (output[index] * 100);
-    gStrResult = String(label[index]) 
-        + String(":") + String(output[index]);
-  } else {
-    result_data = 10;
-    result_prob = 0;
-    gStrResult = String("Error");    
+  DNNVariable output = dnnrt.outputVariable(0); 
+ 
+  // DNNRTの結果をLCDに出力するために画像化
+  static uint16_t result_buf[DNN_WIDTH*DNN_HEIGHT];
+  for (int i = 0; i < DNN_WIDTH * DNN_HEIGHT; ++i) {
+    uint16_t value = output[i] * 0x3F; // 6bit
+    if (value > 0x3F) value = 0x3F;
+    result_buf[i] = (value << 5);  // Only Green
   }
-  Serial.println(gStrResult);
+  
+  // 認識対象の横幅と横方向座標を取得
+  bool err;
+  int16_t s_sx, s_width;
+  err = get_sx_and_width_of_region(output, DNN_WIDTH, DNN_HEIGHT, &s_sx, &s_width);
+  
+  // 認識対象の縦幅と縦方向座標を取得
+  int16_t s_sy, s_height;
+  sx = swidth = sy = sheight = 0;
+  err = get_sy_and_height_of_region(output, DNN_WIDTH, DNN_HEIGHT, &s_sy, &s_height);
+  if (!err) {
+    Serial.println("detection error");
+    return;
+  }
+  
+  // 何も検出できなかった
+  if (s_width == 0 || s_height == 0) {
+    Serial.println("no detection");
+    return;
+  }
+  
+  // 認証対象のボックスと座標をカメラ画像にあわせて拡大
+  sx = s_sx * (CLIP_WIDTH/DNN_WIDTH) + OFFSET_X;
+  swidth = s_width * (CLIP_WIDTH/DNN_WIDTH);
+  sy = s_sy * (CLIP_HEIGHT/DNN_HEIGHT) + OFFSET_Y;
+  sheight = s_height * (CLIP_HEIGHT/DNN_HEIGHT);
+
 }
 
 void setup()
@@ -106,7 +128,7 @@ void setup()
 
   while (!SD.begin()) {Serial.println("Insert SD card");}
   // SDカードにある学習済モデルの読み込み
-  File nnbfile = SD.open("model.nnb");
+  File nnbfile = SD.open("segmentation.nnb");
 
   if(nnbfile == 0){ puts("NNB Open Error!"); exit(1); }
   // 学習済モデルでDNNRTを開始
@@ -170,10 +192,16 @@ int send_jpeg(const uint8_t* buffer, size_t size)
   SERIAL_OBJECT.write('P'); // Payload
   SERIAL_OBJECT.write('R'); // Payload
   SERIAL_OBJECT.write('S'); // Payload
-  SERIAL_OBJECT.write((char)0); // Payload
-  SERIAL_OBJECT.write((char)result_data); // Payload
-  SERIAL_OBJECT.write((char)0); // Payload
-  SERIAL_OBJECT.write((char)result_prob); // Payload
+  SERIAL_OBJECT.write((char)((sx >> 8) & 0xff)); // Payload
+  SERIAL_OBJECT.write((char)(sx & 0xff)); // Payload
+  SERIAL_OBJECT.write((char)((sy >> 8) & 0xff)); // Payload
+  SERIAL_OBJECT.write((char)(sy & 0xff)); // Payload
+  SERIAL_OBJECT.write((char)((swidth >> 8) & 0xff)); // Payload
+  SERIAL_OBJECT.write((char)(swidth & 0xff)); // Payload
+  SERIAL_OBJECT.write((char)((sheight >> 8) & 0xff)); // Payload
+  SERIAL_OBJECT.write((char)(sheight & 0xff)); // Payload
+
+  printf("sx=%d,swidth=%d,sy=%d,sheight=%d\n",sx,swidth,sy,sheight);
 
   // Send a binary data size in 4byte
   SERIAL_OBJECT.write((size >> 24) & 0xFF);

@@ -25,6 +25,12 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2024/10/27
+
+・高速シリアル通信とProcessing を使ったAIカメラのサンプルに物体検出のサンプルも追加。数字認識は移動。
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/AiCamera/
+
 2024/10/25
 
 ・高速シリアル通信とProcessing を使ったAIカメラのサンプル追加。（数字認識）
