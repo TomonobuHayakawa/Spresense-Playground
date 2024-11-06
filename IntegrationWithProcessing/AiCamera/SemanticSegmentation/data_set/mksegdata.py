@@ -96,6 +96,15 @@ def environment_check(bg):
     os.mkdir(train_dir_path) # trainフォルダーを生成
   else:
     print("/train dir -- OK")
+  train_dir_path = path + "/train/data" # フォルダーへのパス
+
+  train_dir_path = path + "/train/data" # フォルダーへのパス
+  if not os.path.isdir(train_dir_path): # フォルダーがない場合
+    print("make a train directory")
+    os.mkdir(train_dir_path) # trainフォルダーを生成
+  else:
+    print("/train dir -- OK")
+
   # trainフォルダー内のinput/outputフォルダーの準備
   check_input_output_dir(train_dir_path)
 
@@ -107,6 +116,14 @@ def environment_check(bg):
     os.mkdir(valid_dir_path) # validフォルダーを生成
   else:
     print("/valid dir -- OK")
+
+  valid_dir_path = path + "/valid/data" # フォルダーへのパス
+  if not os.path.isdir(valid_dir_path): # フォルダーがない場合
+    print("make a valid directory")
+    os.mkdir(valid_dir_path) # validフォルダーを生成
+  else:
+    print("/valid dir -- OK")
+
   # valid フォルダー内のinput/outputフォルダーの準備
   check_input_output_dir(valid_dir_path)
 
@@ -132,7 +149,8 @@ def check_arguments():
 
 
 def dataset_make_loop(quantity, arg_path):
-  path = os.getcwd() # 現在のフォルダーのパスを取得
+  path = "."
+#  path = os.getcwd() # 現在のフォルダーのパスを取得
 
   print("open background image: " + g_bgPath)
   background = Image.open(g_bgPath) # 背景画像をオープン
@@ -147,7 +165,7 @@ def dataset_make_loop(quantity, arg_path):
            (g_imgSizeW, g_imgSizeH)) # マスク背景画像をオープン
     
   # 引数で指定された名前の管理ファイルを生成、
-  csv_file_path = path + "/" + arg_path + "/" + arg_path + ".csv"
+  csv_file_path = path + "/" + arg_path + "/" + "index" + ".csv"
   print("create the csv list file: " + csv_file_path)
   if os.path.isfile(csv_file_path):
     os.remove(csv_file_path)
@@ -201,16 +219,18 @@ def dataset_make_loop(quantity, arg_path):
     gray_out = ImageOps.grayscale(tmp_black) # マスク画像を8ビット化
     # 画像の保存
     ## 入力画像(input)の保存
-    inp_path = path + "/" + arg_path + "/input/" + str(i) + ".png"
+    inp_path = path + "/" + arg_path + "/data/input/" + str(i) + ".png"
+    csv_inp  = path + "/data/input/" + str(i) + ".png"
     print(" save the input data as " + inp_path)
     cropped_image.save(inp_path)
-    out_path = path + "/" + arg_path + "/output/" + str(i) + ".png"
+    out_path = path + "/" + arg_path + "/data/output/" + str(i) + ".png"
+    csv_out  = path + "/data/output/" + str(i) + ".png"
     ## マスク画像(output)の保存
     print(" save the output data as " + out_path)
     gray_out.save(out_path)
 
     # 管理ファイルに入力画像と出力画像のパスを追加
-    csvfile.write(inp_path + "," + out_path + "\n")
+    csvfile.write(csv_inp + "," + csv_out + "\n")
 
   csvfile.close() # 管理ファイルをクローズ
         
