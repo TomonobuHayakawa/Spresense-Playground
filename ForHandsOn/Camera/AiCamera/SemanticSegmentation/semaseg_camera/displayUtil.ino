@@ -20,7 +20,6 @@
 // ディスプレイの縦横の大きさ
 #define DISPLAY_WIDTH  (320)
 #define DISPLAY_HEIGHT  (240)
-#define THICKNESS (5)
 
 void draw_sideband(uint16_t* buf, int thickness, int color) {
   for (int i = 0; i < DISPLAY_HEIGHT; ++i) {

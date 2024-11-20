@@ -21,6 +21,7 @@
 #include <Adafruit_ILI9341.h>
 #include <SDHCI.h>
 #include <DNNRT.h>
+
 #define TFT_DC  9
 #define TFT_CS  10
 Adafruit_ILI9341 display = Adafruit_ILI9341(TFT_CS, TFT_DC);
@@ -32,21 +33,30 @@ Adafruit_ILI9341 display = Adafruit_ILI9341(TFT_CS, TFT_DC);
 #define DNN_WIDTH  (28)
 #define DNN_HEIGHT  (28)
 
-DNNRT dnnrt;
 SDClass SD;
+DNNRT dnnrt;
+
 // RGBの画像を入力
 DNNVariable input(DNN_WIDTH*DNN_HEIGHT*3);  
 
 void CamCB(CamImage img) {
-  if (!img.isAvailable()) return;
 
-  // 画像の切り出しと縮小
-  CamImage small; 
+  if (!img.isAvailable()) {
+    Serial.println("Image is not available. Try again");
+    return;
+  }
+
+  // カメラ画像の切り抜きと縮小
+  CamImage small;
   CamErr camErr = img.clipAndResizeImageByHW(small
-            ,OFFSET_X ,OFFSET_Y 
-            ,OFFSET_X+CLIP_WIDTH-1 ,OFFSET_Y+CLIP_HEIGHT-1 
-            ,DNN_WIDTH ,DNN_HEIGHT);
-  if (!small.isAvailable()) return;
+                     , OFFSET_X, OFFSET_Y
+                     , OFFSET_X + CLIP_WIDTH -1
+                     , OFFSET_Y + CLIP_HEIGHT -1
+                     , DNN_WIDTH, DNN_HEIGHT);
+  if (!small.isAvailable()){
+    putStringOnLcd("Clip and Reize Error:" + String(camErr), ILI9341_RED);
+    return;
+  }
 
   // 画像をYUVからRGB565に変換
   small.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565); 
@@ -61,11 +71,11 @@ void CamCB(CamImage img) {
    fbuf_g[i] = (float)((sbuf[i] >>  5) & 0x3F)/63.0; // 0x3F = 64
    fbuf_b[i] = (float)((sbuf[i])       & 0x1F)/31.0; // 0x1F = 31
   }
-  
+
   // 推論を実行
   dnnrt.inputVariable(input, 0);
   dnnrt.forward();
-  DNNVariable output = dnnrt.outputVariable(0); 
+  DNNVariable output = dnnrt.outputVariable(0);
  
   // DNNRTの結果をLCDに出力するために画像化
   static uint16_t result_buf[DNN_WIDTH*DNN_HEIGHT];
@@ -74,12 +84,12 @@ void CamCB(CamImage img) {
     if (value > 0x3F) value = 0x3F;
     result_buf[i] = (value << 5);  // Only Green
   }
-  
+
   // 認識対象の横幅と横方向座標を取得
   bool err;
   int16_t s_sx, s_width;
   err = get_sx_and_width_of_region(output, DNN_WIDTH, DNN_HEIGHT, &s_sx, &s_width);
-  
+
   // 認識対象の縦幅と縦方向座標を取得
   int16_t s_sy, s_height;
   int sx, width, sy, height;
@@ -89,40 +99,36 @@ void CamCB(CamImage img) {
     Serial.println("detection error");
     goto disp;
   }
-  
+
   // 何も検出できなかった
   if (s_width == 0 || s_height == 0) {
     Serial.println("no detection");
     goto disp;
   }
-  
+
   // 認証対象のボックスと座標をカメラ画像にあわせて拡大
   sx = s_sx * (CLIP_WIDTH/DNN_WIDTH) + OFFSET_X;
   width = s_width * (CLIP_WIDTH/DNN_WIDTH);
   sy = s_sy * (CLIP_HEIGHT/DNN_HEIGHT) + OFFSET_Y;
   height = s_height * (CLIP_HEIGHT/DNN_HEIGHT);
-    
-disp:
-  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);  
-  uint16_t* buf = (uint16_t*)img.getImgBuff();  
 
-  // 認識対象のボックスをカメラ画像に描画
-  draw_box(buf, sx, sy, width, height); 
-  
+disp:
+  img.convertPixFormat(CAM_IMAGE_PIX_FMT_RGB565);
+  uint16_t* imgBuf = (uint16_t*)img.getImgBuff();
+
   // サイドバンドをフレームバッファに描画
-  draw_sideband(buf, OFFSET_X, ILI9341_BLACK);
-    
+  draw_sideband(imgBuf, OFFSET_X, ILI9341_BLACK);
+
   // DNNRTへの入力画像をLCDの左上に表示
-  display.drawRGBBitmap(0, 0, (uint16_t*)sbuf, DNN_HEIGHT, DNN_WIDTH);  
+  display.drawRGBBitmap(0, 0, (uint16_t*)sbuf, DNN_HEIGHT, DNN_WIDTH);
   // DNNRTの出力画像をLCDの右上に表示
-  display.drawRGBBitmap(320-DNN_WIDTH, 0, result_buf, DNN_WIDTH, DNN_HEIGHT);  
+  display.drawRGBBitmap(320-DNN_WIDTH, 0, result_buf, DNN_WIDTH, DNN_HEIGHT);
   // ボックス描画されたカメラ画像を表示
-  display.drawRGBBitmap(0, DNN_HEIGHT, buf, 320, 240-DNN_HEIGHT);
+  display.drawRGBBitmap(0, DNN_HEIGHT, imgBuf, 320, 240-DNN_HEIGHT);
 }
 
 
 void setup() {
-
   Serial.begin(115200);
 
   display.begin();
@@ -132,7 +138,7 @@ void setup() {
   while (!SD.begin()) { 
     putStringOnLcd("Insert SD card", ILI9341_RED); 
   }
-  
+  // SDカードにある学習済モデルの読み込み
   File nnbfile = SD.open("segmentation.nnb");
   if (!nnbfile) {
     Serial.print("nnb not found");
