@@ -2,6 +2,8 @@
  * BLE central
  *
  */
+ 
+#error This sample is already unspport. Use this library(https://github.com/TomonobuHayakawa/BLE1507_Arduino).
 
 /****************************************************************************
  * Included Files
