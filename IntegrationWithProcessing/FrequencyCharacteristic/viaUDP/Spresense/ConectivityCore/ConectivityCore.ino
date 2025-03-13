@@ -24,11 +24,14 @@
 
 #define  CONSOLE_BAUDRATE  115200
 
+//#define  USE_DHCP
+
 /*-------------------------------------------------------------------------*
  * Globals:
  *-------------------------------------------------------------------------*/
 TelitWiFi gs2200;
 TWIFI_Params gsparams;
+TWIFI_Adress adrs;
 
 #define FRAME_NUMBER 4
 #define DATA_SIZE    2048 /* tentative! */
@@ -71,7 +74,15 @@ void setup()
   /* Initialize AT Command Library Buffer */
   gsparams.mode = ATCMD_MODE_STATION;
   gsparams.psave = ATCMD_PSAVE_DEFAULT;
+
+#ifdef USE_DHCP
   if (gs2200.begin(gsparams)) {
+#else
+  strcpy(adrs.device, DEVICE_IP);
+  strcpy(adrs.gateway, GATWAY_IP);
+  strcpy(adrs.subnet, SUBNET_MASK);
+  if (gs2200.begin(gsparams,false,adrs)) {
+#endif
     ConsoleLog("GS2200 Initilization Fails");
     while(1);
   }

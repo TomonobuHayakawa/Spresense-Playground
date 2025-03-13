@@ -8,7 +8,7 @@ UDP udp;
 ControlP5 cp5;
 
 // Please change the serial setting for user environment
-final String IP = "192.168.2.101";
+final String IP = "192.168.2.20";
 final int PORT = 10002;
 
 //final String DATA_TYPE = "fft";

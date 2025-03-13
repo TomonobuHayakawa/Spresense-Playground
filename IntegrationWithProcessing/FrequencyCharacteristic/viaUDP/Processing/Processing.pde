@@ -8,11 +8,11 @@ UDP udp;
 ControlP5 cp5;
 
 // Please change the serial setting for user environment
-final String IP = "192.168.2.139";
+final String IP = "192.168.2.20";
 final int PORT = 10002;
 
-final String DATA_TYPE = "fft";
-//final String DATA_TYPE = "raw";
+//final String DATA_TYPE = "fft";
+final String DATA_TYPE = "raw";
 
 String MODE_TYPE = "draw";
 //String MODE_TYPE = "file";

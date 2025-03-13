@@ -28,4 +28,8 @@
 
 #define  LocalPort      "10002"
 
+#define  DEVICE_IP      "192.168.2.20"
+#define  GATWAY_IP      "192.168.2.1"
+#define  SUBNET_MASK    "255.255.255.0"
+
 #endif /*_CONFIG_H_*/
