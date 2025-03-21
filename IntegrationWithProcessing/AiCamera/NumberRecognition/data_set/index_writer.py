@@ -1,11 +1,13 @@
+from PIL import Image
 import random
 import os
 
 from pathlib import Path
 
-types_list = {0,1,2,3,4,5,6,7,8,9,10};
-types_number = 11;
+types_list = {0,1,2,3};
 image_number = 100;
+
+types_number = len(types_list);
 
 filenpath = [];
 data_path = "./data"
@@ -26,7 +28,12 @@ def write_to_file(types, count,filename):
             type_path = Path(data_path + "/" + str(i))
 
             for img in type_path.iterdir():
-              if img.is_file() and img.suffix.lower() in ".png":
+              if img.is_file() and img.suffix.lower() in ".bmp":
+                image = Image.open(img)
+                pngname = str(img)[:-4] + ".png"
+                image.save(pngname)
+                filenpath.append(f"{pngname},{i}\n")
+              elif img.is_file() and img.suffix.lower() in ".png":
                 filenpath.append(f"{type_path}\\{img.name},{i}\n")
 
         random.shuffle(filenpath)
