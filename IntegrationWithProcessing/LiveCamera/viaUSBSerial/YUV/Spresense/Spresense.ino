@@ -1,6 +1,6 @@
 /*
- *  Main.ino - Demo application .
- *  Copyright 2023 T.Hayakawa
+ *  Spresense.ino - Live Camera(YUV) with Processing via USB serial.
+ *  Copyright 2025 T.Hayakawa
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -26,9 +26,9 @@ USBSerial UsbSerial;
 #define SERIAL_BAUDRATE 921600
 
 // Please select the display size
-//int16_t width = CAM_IMGSIZE_QVGA_H,    height = CAM_IMGSIZE_QVGA_V;
+int16_t width = CAM_IMGSIZE_QVGA_H,    height = CAM_IMGSIZE_QVGA_V;
 //int16_t width = CAM_IMGSIZE_VGA_H,     height = CAM_IMGSIZE_VGA_V;
-int16_t width = CAM_IMGSIZE_HD_H,      height = CAM_IMGSIZE_HD_V;
+//int16_t width = CAM_IMGSIZE_HD_H,      height = CAM_IMGSIZE_HD_V;
 //int16_t width = CAM_IMGSIZE_QUADVGA_H, height = CAM_IMGSIZE_QUADVGA_V;
 //int16_t width = CAM_IMGSIZE_FULLHD_H,  height = CAM_IMGSIZE_FULLHD_V;
 //int16_t width = CAM_IMGSIZE_5M_H,      height = CAM_IMGSIZE_5M_V;
@@ -58,7 +58,7 @@ void setup()
   err = theCamera.setStillPictureImageFormat(
     width,                    
     height,
-    CAM_IMAGE_PIX_FMT_JPG);
+    CAM_IMAGE_PIX_FMT_YUV422);
   if (err != CAM_ERR_SUCCESS)
     {
       puts("error!");

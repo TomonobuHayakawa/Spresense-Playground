@@ -31,6 +31,10 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 
   https://github.com/TomonobuHayakawa/Spresense-Playground/IntegrationWithProcessing/LiveCamera/viaUDP
 
+・Processing にリアルタイム画像を表示するサンプルをJPEGだけでなくYUVを送れるようにした。
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/IntegrationWithProcessing/LiveCamera/viaUSBSerial
+
 2024/10/28
 
 ・高速シリアル通信とProcessing を使ったAIカメラ（数字認識）でのデータ取得用のコード追加。
