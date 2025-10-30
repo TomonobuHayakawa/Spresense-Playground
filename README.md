@@ -25,6 +25,12 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2025/10/30
+
+・WiFi UDPを使ってProcessing にリアルタイム画像を表示するサンプルコードの追加。
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/IntegrationWithProcessing/LiveCamera/viaUDP
+
 2024/10/28
 
 ・高速シリアル通信とProcessing を使ったAIカメラ（数字認識）でのデータ取得用のコード追加。
