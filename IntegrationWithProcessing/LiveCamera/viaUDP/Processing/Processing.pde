@@ -7,6 +7,16 @@ import java.io.*;
 UDP udp;
 ControlP5 cp5;
 
+// Named rotation angles for readability.
+final float R_0   = 0.0;
+final float R_90  = HALF_PI;
+final float R_180 = PI;
+final float R_270 = PI + HALF_PI;
+
+// Select one: R_0, R_90, R_180, R_270
+final float ROTATION_ANGLE = R_0;
+final boolean ROTATION_SWAP_WH = (abs(cos(ROTATION_ANGLE)) < 0.5);
+
 final String TARGET_IP = "192.168.2.20";
 final int TARGET_PORT = 10002;
 
@@ -128,11 +138,26 @@ void draw()
   saveBytes(dataPath("sample.jpg"), receivedData);
   PImage img = loadImage(dataPath("sample.jpg"));
   println("x = ", img.width, "  y = ", img.height);
-  image(img, 0, 0);
+  drawRotatedImage(img);
 
   receivedDataReady = false;
   receivedData = new byte[0];
   remainingBytes = 0;
+}
+
+void drawRotatedImage(PImage img)
+{
+  pushMatrix();
+  imageMode(CENTER);
+  translate(width / 2.0, height / 2.0);
+  rotate(ROTATION_ANGLE);
+  if (!ROTATION_SWAP_WH) {
+    image(img, 0, 0, width, height);
+  } else {
+    image(img, 0, 0, height, width);
+  }
+  popMatrix();
+  imageMode(CORNER);
 }
 
 void recover()

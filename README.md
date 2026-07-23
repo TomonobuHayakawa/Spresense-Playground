@@ -25,6 +25,13 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2026/7/23
+
+・LiveCamera (viaUSBSerial/JPEG) の Processing 側表示に固定回転設定を追加。
+  `R_0`, `R_90`, `R_180`, `R_270` から `ROTATION_ANGLE` を選択可能。
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/LiveCamera/viaUSBSerial/JPEG
+
 2025/10/30
 
 ・WiFi UDPを使ってProcessing にリアルタイム画像を表示するサンプルコードの追加。
@@ -462,15 +469,23 @@ FFTライブラリのFFTのTap数、最大のチャンネル数が固定でし�
 ```
 Spresense-Playground
  |
+ ├ data : ドキュメント用データを置く場所。
+ |
+ ├ edge_ai : Edge AI 関連のコードを置く場所。
+ |
  ├ examples : SDK上のサンプルコードを置く場所。
+ |
+ ├ ForHandsOn : ハンズオン向けのサンプルを置く場所。
  |
  ├ libraries : Arduinoライブラリを置く場所。
  |
- ├ sketchies : Arduinoスケッチを置く場所。
+ ├ sketches : Arduinoスケッチを置く場所。
  |
  ├ IntegrationWithProcessing : Spresense と Processingを連携させるサンプルを置く場所。
  |
  ├ SpreSynth : SpreSynth に関係するデータを置く場所。
+ |
+ └ withLeafony : Leafony連携サンプルを置く場所。
 
 ```
 
@@ -492,59 +507,97 @@ Spresense-Playground
 
 ---
 ## Arduino スケッチリスト
+- AccessPoint
+  - wifi-lte
+    - README: sketches/AccessPoint/wifi-lte/README.md
+    - Spresense
+      - LimitedAP
+      - MainCore
 - AudioPlayers
-    - audio_with_sensing
-    - diy_player
-    - diy_player_wo_sensing
-    - NetRadio_w_sensing
-    - player_with_effect_mic
-    - player_with_mic
-
+  - audio_with_sensing
+    - dual_players_with_sensing
+  - diy_player
+  - diy_player_wo_sensing
+  - net_radio_w_sensing
+  - player_with_effect_mic
+  - player_with_mic
 - AudioRendering
-    - rendering_objif
-
+  - rendering_objif
+- Camera
+  - viaWiFi
+    - WebCamera
+    - WebStreaming
+- CecTalker
 - CO2Sensing
-    - viaLTE
-        - CO2_sensing_to_Ambient
-        - CO2_sensing_to_Machinist
-    - viaSigfox
-        - CO2_sensing_via_Sigfox
-    - viaWiFi
-        - CO2_sensing_via_WiFi
-
+  - viaLTE
+    - CO2_sensing_to_Ambient
+    - CO2_sensing_to_Machinist
+  - viaSigfox
+    - CO2_sensing_via_Sigfox
+  - viaWiFi
+    - CO2_sensing_via_WiFi
 - Co-Spresense
-    - Pickup
-    - TerminalControl
-    - VoiceControl
-
-- Instruments
-    - Metronome
-    - SmartCajon
-    - SmartDrum
-    - YuruHorn
-    - YuruSynth
-    
-- keyword_detector_demo
-
-- M11S
-    - Jpeg_ESP8266_CamServer
-    - Jpeg_shot_with_SD
-
-- MQTT
-    - viaLTE
-        - simple_pub : 非認証、非暗号でpublishするサンプル
-        - simple_sub : 非認証、非暗号でsubscribeするサンプル
-
-- SoundEffector
-    - multi_core
-    - single_core
-
-- USB_UART
+  - Pickup
+  - TerminalControl
+  - VoiceControl
+- HighSpeedCamera
 - I2cScanner
-
+- Instruments
+  - Chocoboard
+  - HaraDrum
+  - Metronome
+    - Keyboard_SubCore
+  - SmartCajon
+  - SmartDrum
+  - YuruHorn
+    - dsp
+    - YuruHorn_MainCore
+    - YuruHorn_SubCore1
+    - YuruHorn_SubCore2
+  - YuruSynth
+    - dsp
+    - Keyboard_SubCore
+- KeywordDetector
+  - KeywordDetector_w_worker
+  - KeywordDetector_wo_worker
+    - MainCore
+    - SubCore
 - LowPowerSensing
-    - bme680_ulp_plus_via_sigfox
-    - bme680_uulp_plus_via_sigfox
-
+  - bme680_ulp_plus_via_sigfox
+  - bme680_uulp_plus_via_sigfox
+  - CommunicationTemplate
+  - 新しいフォルダー
+- M11S
+  - Jpeg_ESP8266_CamServer
+  - Jpeg_shot_with_SD
+- MQTT
+  - viaLTE
+    - M2M
+      - m2m_client0
+      - m2m_client1
+    - secure_pub
+    - secure_sub
+    - simple_pub
+    - simple_sub
+- SoundEffector
+  - MultiCore
+    - Mixer4ch
+      - FilterCore
+      - MainAudio
+  - SingleCore
+    - Mixer4ch
+    - MixerStereo
+- SubCoreSensing
+  - DmyData
+    - MainCore
+    - SubCore1
+  - Usb
+    - MainCore
+    - SubCore1
+- USB_UART
+- voiceUI_player
 - weight_sensing
+- withLINE
+  - viaLTE
+    - notify_sample
 

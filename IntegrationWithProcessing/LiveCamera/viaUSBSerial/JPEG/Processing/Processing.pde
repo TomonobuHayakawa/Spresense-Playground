@@ -3,6 +3,15 @@ import java.text.SimpleDateFormat;
 import processing.serial.*;
 
 Serial serial;
+// Named rotation angles for readability.
+final float R_0   = 0.0;
+final float R_90  = HALF_PI;
+final float R_180 = PI;
+final float R_270 = PI + HALF_PI;
+
+// Select one: R_0, R_90, R_180, R_270
+final float ROTATION_ANGLE = R_0;
+final boolean ROTATION_SWAP_WH = (abs(cos(ROTATION_ANGLE)) < 0.5);
 
 // Please change the serial setting for user environment
 final String SERIAL_PORTNAME = "COM10";
@@ -120,8 +129,23 @@ void recieve_data()
   saveBytes(dataPath("sample.jpg"), data);
   PImage img = loadImage(dataPath("sample.jpg"));
   println("x = ",img.width,"  y = ",img.height);
-  image(img, 0, 0);
+  drawRotatedImage(img);
 
+}
+
+void drawRotatedImage(PImage img)
+{
+  pushMatrix();
+  imageMode(CENTER);
+  translate(width / 2.0, height / 2.0);
+  rotate(ROTATION_ANGLE);
+  if (!ROTATION_SWAP_WH) {
+    image(img, 0, 0, width, height);
+  } else {
+    image(img, 0, 0, height, width);
+  }
+  popMatrix();
+  imageMode(CORNER);
 }
 
 //

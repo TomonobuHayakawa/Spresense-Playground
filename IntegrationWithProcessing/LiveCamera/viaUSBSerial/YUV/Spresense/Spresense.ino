@@ -77,7 +77,7 @@ void loop()
     uint64_t now = millis();
     base_time = now;
     (toggle++ & 1) ? ledOn(LED1) : ledOff(LED1);
-    send_jpeg(img.getImgBuff(), img.getImgSize());
+    send_data(img.getImgBuff(), img.getImgSize());
     uint64_t tdiff = millis() - now;
     printf("time= %lld [ms] %.3lf [Mbps]\n", tdiff, (float)(img.getImgSize() * 8) / tdiff / 1000);
   }else{
@@ -85,7 +85,7 @@ void loop()
   }
 }
 
-int send_jpeg(const uint8_t* buffer, size_t size)
+int send_data(const uint8_t* buffer, size_t size)
 {
 //  usleep(200*1000);
   SERIAL_OBJECT.write('S'); // Payload
