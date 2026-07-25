@@ -3,6 +3,8 @@ import controlP5.*;
 
 import java.util.*;
 import java.io.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 UDP udp;
 ControlP5 cp5;
@@ -49,6 +51,27 @@ boolean receivedDataReady = false;
 int receivedSize = 0;
 int remainingBytes = 0;
 int frameNumber = 0;
+
+PImage decode_jpeg_from_bytes(byte[] data)
+{
+  try {
+    BufferedImage bi = ImageIO.read(new ByteArrayInputStream(data));
+    if (bi == null) {
+      return null;
+    }
+
+    int w = bi.getWidth();
+    int h = bi.getHeight();
+    PImage img = createImage(w, h, RGB);
+    img.loadPixels();
+    bi.getRGB(0, 0, w, h, img.pixels, 0, w);
+    img.updatePixels();
+    return img;
+  } catch (Exception e) {
+    println("jpeg decode fail");
+    return null;
+  }
+}
 
 // previous short packet buffer
 byte[] partialBuffer = new byte[0];
@@ -134,9 +157,13 @@ void draw()
 {
   if (!receivedDataReady) return;
 
-  // Save data as a JPEG file and display it
-  saveBytes(dataPath("sample.jpg"), receivedData);
-  PImage img = loadImage(dataPath("sample.jpg"));
+  PImage img = decode_jpeg_from_bytes(receivedData);
+  if (img == null) {
+    receivedDataReady = false;
+    receivedData = new byte[0];
+    remainingBytes = 0;
+    return;
+  }
   println("x = ", img.width, "  y = ", img.height);
   drawRotatedImage(img);
 

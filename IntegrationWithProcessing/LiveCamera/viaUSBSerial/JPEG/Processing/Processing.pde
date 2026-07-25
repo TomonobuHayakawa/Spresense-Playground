@@ -1,5 +1,8 @@
 import java.util.Date;
 import java.text.SimpleDateFormat;
+import java.io.ByteArrayInputStream;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 import processing.serial.*;
 
 Serial serial;
@@ -81,6 +84,27 @@ boolean find_end()
 int count = 0;
 int base_time = 0;
 
+PImage decode_jpeg_from_bytes(byte[] data)
+{
+  try {
+    BufferedImage bi = ImageIO.read(new ByteArrayInputStream(data));
+    if (bi == null) {
+      return null;
+    }
+
+    int w = bi.getWidth();
+    int h = bi.getHeight();
+    PImage img = createImage(w, h, RGB);
+    img.loadPixels();
+    bi.getRGB(0, 0, w, h, img.pixels, 0, w);
+    img.updatePixels();
+    return img;
+  } catch (Exception e) {
+    println("jpeg decode fail");
+    return null;
+  }
+}
+
 void recieve_data()
 {
   int size = 0;
@@ -125,9 +149,8 @@ void recieve_data()
   
   if (!find_end()) return;
 
-  // Save data as a JPEG file and display it
-  saveBytes(dataPath("sample.jpg"), data);
-  PImage img = loadImage(dataPath("sample.jpg"));
+  PImage img = decode_jpeg_from_bytes(data);
+  if (img == null) return;
   println("x = ",img.width,"  y = ",img.height);
   drawRotatedImage(img);
 
