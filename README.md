@@ -25,6 +25,18 @@ Spresense Instrument   : v2.6.1 (Base v2.6.0) <br>
 -------------------- 
 ## What's new.
 
+2026/7/25
+
+・AiCamera に ImpactMonitoring のサンプルを追加・更新。
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/AiCamera/ImpactMonitoring/viaUSBSerial
+
+・AICamera / LiveCamera 配下の Processing(JPEG) で、`sample.jpg` の作成を廃止。
+  受信 JPEG はメモリ上で直接デコードする方式に変更。
+
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/AiCamera
+  https://github.com/TomonobuHayakawa/Spresense-Playground/tree/master/IntegrationWithProcessing/LiveCamera
+
 2026/7/23
 
 ・LiveCamera (viaUSBSerial/JPEG) の Processing 側表示に固定回転設定を追加。
@@ -506,98 +518,102 @@ Spresense-Playground
 * Oscillator
 
 ---
+##Processinng連携アプリケーションリスト
+- AiCamera : AIカメラ連携サンプル
+  - ImpactMonitoring : 衝撃検知で画像を表示
+    - viaUSBSerial : 
+  - NumberRecognition : 数字認識カメラ
+    - data_set : 学習/評価向けのデータセット置き場
+    - viaUSBSerial : 
+      - DataCollection : 数字認識用の画像データ収集サンプル
+  - SemanticSegmentation : 物体検知カメラ
+    - data_set : 物体検知用データ生成ツール
+    - viaUSBSerial : 
+- FrequencyCharacteristic : 音声周波数特性の可視化
+  - viaUDP : WiFi UDPでストリーミング
+  - viaUSBSerial : USBシリアル経由で表示
+- LiveCamera : カメラ映像のリアルタイム表示
+  - viaUDP : WiFi UDP経由の表示サンプル
+    - Browser : ブラウザ表示向けの補助サンプル
+  - viaUSBSerial : USBシリアル経由の表示サンプル
+    - JPEG : JPEG圧縮画像を送って表示
+    - YUV : YUVデータを送って表示
+- SimpleSend : Processing連携の最小送受信サンプル
+  - viaUDP : UDP通信の最小構成サンプル
+  - viaUSBSerial : USBシリアル通信の最小構成サンプル
+
+---
 ## Arduino スケッチリスト
-- AccessPoint
-  - wifi-lte
-    - README: sketches/AccessPoint/wifi-lte/README.md
-    - Spresense
-      - LimitedAP
-      - MainCore
-- AudioPlayers
-  - audio_with_sensing
-    - dual_players_with_sensing
-  - diy_player
-  - diy_player_wo_sensing
-  - net_radio_w_sensing
-  - player_with_effect_mic
-  - player_with_mic
-- AudioRendering
-  - rendering_objif
-- Camera
-  - viaWiFi
-    - WebCamera
-    - WebStreaming
-- CecTalker
-- CO2Sensing
-  - viaLTE
-    - CO2_sensing_to_Ambient
-    - CO2_sensing_to_Machinist
-  - viaSigfox
-    - CO2_sensing_via_Sigfox
-  - viaWiFi
-    - CO2_sensing_via_WiFi
-- Co-Spresense
-  - Pickup
-  - TerminalControl
-  - VoiceControl
-- HighSpeedCamera
-- I2cScanner
-- Instruments
-  - Chocoboard
-  - HaraDrum
-  - Metronome
-    - Keyboard_SubCore
-  - SmartCajon
-  - SmartDrum
-  - YuruHorn
-    - dsp
-    - YuruHorn_MainCore
-    - YuruHorn_SubCore1
-    - YuruHorn_SubCore2
-  - YuruSynth
-    - dsp
-    - Keyboard_SubCore
-- KeywordDetector
-  - KeywordDetector_w_worker
-  - KeywordDetector_wo_worker
-    - MainCore
-    - SubCore
-- LowPowerSensing
-  - bme680_ulp_plus_via_sigfox
-  - bme680_uulp_plus_via_sigfox
-  - CommunicationTemplate
-  - 新しいフォルダー
-- M11S
-  - Jpeg_ESP8266_CamServer
-  - Jpeg_shot_with_SD
-- MQTT
-  - viaLTE
-    - M2M
-      - m2m_client0
-      - m2m_client1
-    - secure_pub
-    - secure_sub
-    - simple_pub
-    - simple_sub
-- SoundEffector
-  - MultiCore
-    - Mixer4ch
-      - FilterCore
-      - MainAudio
-  - SingleCore
-    - Mixer4ch
-    - MixerStereo
-- SubCoreSensing
-  - DmyData
-    - MainCore
-    - SubCore1
-  - Usb
-    - MainCore
-    - SubCore1
-- USB_UART
-- voiceUI_player
-- weight_sensing
-- withLINE
-  - viaLTE
-    - notify_sample
+- AccessPoint : Spresenseをアクセスポイントとして使うサンプル
+  - wifi-lte : WiFiとLTEの中継・ゲートウェイ構成
+- AudioPlayers : 音声再生系プレイヤーサンプル
+  - audio_with_sensing : センサ連携しながら音声再生
+    - dual_players_with_sensing : 2系統プレイヤー同時再生
+  - diy_player : カスタム再生処理の基本版
+  - diy_player_wo_sensing : センサ無しのシンプル再生
+  - net_radio_w_sensing : ネットラジオ再生とセンシング
+  - player_with_effect_mic : マイク入力とエフェクト再生
+  - player_with_mic : マイク入力併用の再生サンプル
+- AudioRendering : 音声レンダリング関連のサンプル
+  - rendering_objif : ObjectIFを使ったレンダリング例
+- Camera : カメラ映像の配信・表示サンプル
+  - viaWiFi : WiFi経由でのカメラ連携
+    - WebCamera : 静止画ベースのWebカメラ表示
+    - WebStreaming : Web向けストリーミング表示
+- CecTalker : CEC Talker用サンプル
+- CO2Sensing : CO2/環境情報センシングサンプル
+  - viaLTE : LTE経由のクラウド連携
+    - CO2_sensing_to_Ambient : Ambientへデータ送信
+    - CO2_sensing_to_Machinist : Machinistへデータ送信
+  - viaSigfox : Sigfox経由での低消費電力送信
+    - CO2_sensing_via_Sigfox : Sigfox送信の基本例
+  - viaWiFi : WiFi経由でのクラウド連携
+    - CO2_sensing_via_WiFi : WiFi送信の基本例
+- Co-Spresense : 学習用ロボット制御サンプル
+  - Pickup : 連携動作の取得/受信例
+  - TerminalControl : 端末からの制御連携
+  - VoiceControl : 音声コマンドによる制御
+- HighSpeedCamera : 高速撮影向けカメラ制御サンプル
+- I2cScanner : I2Cデバイス探索用ユーティリティ
+- Instruments : 楽器系インタラクティブサンプル
+  - Chocoboard : 簡易電子楽器ボード
+  - HaraDrum : ドラム風インターフェース
+  - Metronome : メトロノームサンプル
+  - SmartCajon : カホン風楽器サンプル
+  - SmartDrum : スマートドラムサンプル
+  - YuruHorn : ゆるホルン系サンプル
+  - YuruSynth : シンセ系ゆる楽器サンプル
+- KeywordDetector : キーワード検出サンプル
+  - KeywordDetector_w_worker : Worker利用版
+  - KeywordDetector_wo_worker : SubCore利用版
+- LowPowerSensing : 低消費電力センシングサンプル
+  - bme680_ulp_plus_via_sigfox : BME680 ULP+をSigfox送信
+  - bme680_uulp_plus_via_sigfox : BME680 UULP+をSigfox送信
+- M11S : M11S向けカメラ連携サンプル
+  - Jpeg_ESP8266_CamServer : ESP8266カメラサーバ連携
+  - Jpeg_shot_with_SD : JPEG撮影とSD保存
+- MQTT : MQTT通信サンプル
+  - viaLTE : LTE経由でのMQTT連携
+    - M2M : 端末間(M2M)通信サンプル
+      - m2m_client0 : M2Mクライアント0
+      - m2m_client1 : M2Mクライアント1
+    - secure_pub : TLS対応Publishサンプル
+    - secure_sub : TLS対応Subscribeサンプル
+    - simple_pub : シンプルPublishサンプル
+    - simple_sub : シンプルSubscribeサンプル
+- SoundEffector : オーディオエフェクタサンプル
+  - MultiCore : マルチコア構成
+    - Mixer4ch : 4chミキサー構成
+  - SingleCore : シングルコア構成
+    - Mixer4ch : 4chミキサー構成
+    - MixerStereo : ステレオミキサー構成
+- SubCoreSensing : SubCoreセンシング連携サンプル
+  - DmyData : ダミーデータ送受信
+  - Usb : USB経由の送受信
+- USB_UART : USB-UART通信の基本サンプル
+- voiceUI_player : 音声UI連携プレイヤーサンプル
+- weight_sensing : 重量センサ連携サンプル
+- withLINE : LINE通知連携サンプル
+  - viaLTE : LTE経由での通知
+    - notify_sample : 通知送信の基本例
 
