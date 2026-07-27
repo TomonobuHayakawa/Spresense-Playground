@@ -15,6 +15,7 @@ final float R_270 = PI + HALF_PI;
 // Select one: R_0, R_90, R_180, R_270
 final float ROTATION_ANGLE = R_0;
 final boolean ROTATION_SWAP_WH = (abs(cos(ROTATION_ANGLE)) < 0.5);
+final boolean MIRRORING = false;
 
 // Base display size (must match camera output size setting)
 final int FRAME_WIDTH = 1280;
@@ -193,6 +194,10 @@ void drawRotatedImage(PImage img)
   pushMatrix();
   imageMode(CENTER);
   translate(width / 2.0, height / 2.0);
+  if (MIRRORING) {
+    // Flip in screen space so it behaves as left-right mirror on display.
+    scale(-1.0, 1.0);
+  }
   rotate(ROTATION_ANGLE);
   image(img, 0, 0, img.width, img.height);
   popMatrix();
